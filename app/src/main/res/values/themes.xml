@@ -6,4 +6,16 @@
     </style>
 
     <style name="Theme.PUT0" parent="Base.Theme.PUT0" />
+
+    <style name="CustomAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <!-- Cambia el color de fondo del diálogo -->
+        <item name="android:background">#121212</item>
+
+        <!-- Cambia el color del título -->
+        <item name="android:textColorPrimary">#FFFFFF</item>
+
+    </style>
+
+
+
 </resources>

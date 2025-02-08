@@ -2,4 +2,41 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="primaryColorLight">#007AFF</color>
+    <color name="primaryVariantLight">#005BBB</color>
+    <color name="onPrimaryLight">#FFFFFF</color>
+
+    <color name="secondaryColorLight">#FF4080CA</color>
+    <color name="secondaryVariantLight">#3264CA</color>
+    <color name="onSecondaryLight">#FFFFFF</color>
+
+    <color name="backgroundLight">#FFFFFF</color>
+    <color name="onBackgroundLight">#000000</color>
+
+    <color name="surfaceLight">#F2F2F7</color>
+    <color name="onSurfaceLight">#000000</color>
+
+    <color name="errorLight">#FF3B30</color>
+    <color name="onErrorLight">#FFFFFF</color>
+
+    <!--Drak-->
+    <color name="primaryColorDark">#0A84FF</color>
+    <color name="primaryVariantDark">#0066CC</color>
+    <color name="onPrimaryDark">#FFFFFF</color>
+
+    <color name="secondaryColorDark">#3298D7</color>
+    <color name="secondaryVariantDark">#286EA7</color>
+    <color name="onSecondaryDark">#FFFFFF</color>
+
+    <color name="backgroundDark">#000000</color>
+    <color name="onBackgroundDark">#FFFFFF</color>
+
+    <color name="surfaceDark">#1C1C1E</color>
+    <color name="onSurfaceDark">#FFFFFF</color>
+
+    <color name="errorDark">#FF453A</color>
+    <color name="onErrorDark">#000000</color>
+
+    <color name="btns">#FF4080CA</color>
 </resources>

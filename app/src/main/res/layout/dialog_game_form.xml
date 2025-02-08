@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#565555"
+    android:clipToPadding="false"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="12dp"
+            android:text="Crear nueva partida"
+            android:textColor="@color/backgroundLight"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/edit_game_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_extra_light"
+            android:layout_marginBottom="12dp"
+            android:hint="Nombre de la partida"
+            android:text="PRUEBA"
+            android:inputType="text"
+            android:padding="12dp"
+            android:textColor="@color/backgroundLight"
+            android:textColorHint="@color/backgroundLight"  />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:text="Mínimo de jugadores"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/backgroundLight" />
+
+        <Spinner
+            android:id="@+id/spinner_min_players"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="#565555"
+            android:entries="@array/player_options"
+            android:textColor="@color/backgroundLight"
+            android:textColorHint="@color/backgroundLight" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:text="Máximo de jugadores"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/backgroundLight" />
+
+        <Spinner
+            android:id="@+id/spinner_max_players"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="#565555"
+            android:entries="@array/player_options"
+            android:textColor="@color/backgroundLight"
+            android:textColorHint="@color/backgroundLight" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter_light"
+                android:layout_marginEnd="8dp"
+                android:text="Cancelar" />
+
+            <Button
+                android:id="@+id/btn_submit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter_light"
+                android:text="Aceptar" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">PUT0</string>
+    <string name="login">Login</string>
+    <string name="register">register</string>
+    <string name="select_max_players">Seleccionar el maximo de ljugadores</string>
+    <string name="select_min_players">Seleccionar el minimo de jugadores</string>
+    <string-array name="player_options">
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
 </resources>
