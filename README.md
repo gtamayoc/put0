@@ -39,7 +39,8 @@ PUT0 se juega con:
 ### Orden de las Cartas
  
 > ```2 < 3 < 4 < 5 < 6 < 7 < 8 < 9 < 10 < J < Q < K < A```
-> *Nota: A, 2 y 10 tienen propiedades especiales y pueden usarse en cualquier situación*
+>
+> *A, 2 y 10 tienen propiedades especiales y pueden usarse en cualquier situación*
 
 ### Flujo del Juego
 1. Se selecciona una carta aleatoria para comenzar
