@@ -1,33 +1,75 @@
 package gtc.dcc.put0.core.model;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.Objects;
 
 public class Card {
-    private String suit; // Ejemplo: "Corazones", "Diamantes"
-    private String value; // Ejemplo: "As", "2", ..., "Rey"
-    private String imagePath; // Ruta a la imagen de la carta (opcional)
-    private int resourceId; // ID del recurso visual de la carta
-    private boolean faceUp;
+    @SerializedName("suit")
+    private final Suit suit;
 
-    public Card(String suit, String value, int resourceId) {
+    // Server sends "value": 10 (int)
+    @SerializedName("value")
+    private final int rankValue;
+
+    // Internal Rank object
+    private final Rank rank;
+
+    private int resourceId;
+    private boolean faceUp;
+    private boolean isSelected;
+
+    public Card(Suit suit, Rank rank, int resourceId) {
         this.suit = suit;
-        this.value = value;
-        this.imagePath = imagePath;
+        this.rank = rank;
+        this.rankValue = rank != null ? rank.getValue() : 0;
         this.resourceId = resourceId;
         this.faceUp = false;
+        this.isSelected = false;
+    }
+
+    public Card(Suit suit, Rank rank) {
+        this(suit, rank, 0);
+    }
+
+    public Card(Suit suit, int rankValue) {
+        this.suit = suit;
+        this.rankValue = rankValue;
+        this.rank = mapValueToRank(rankValue);
+        this.resourceId = 0;
+    }
+
+    // Helper to map int to Rank
+    private static Rank mapValueToRank(int value) {
+        for (Rank r : Rank.values()) {
+            if (r.getValue() == value)
+                return r;
+        }
+        return Rank.ACE; // Default or null?
     }
 
     // Getters
-    public String getSuit() {
+    public Suit getSuit() {
         return suit;
     }
 
-    public String getValue() {
-        return value;
+    public Rank getRank() {
+        // If constructed via Gson, rank might be null if we don't init it.
+        // Wait, Gson sets fields directly using Unsafe.
+        // If 'rank' is not in JSON, it remains null.
+        // So this approach fails unless we calculate it lazily.
+        if (rank == null) {
+            return mapValueToRank(rankValue);
+        }
+        return rank;
     }
 
-    public String getImagePath() {
-        return imagePath;
+    public String getValue() {
+        return String.valueOf(getRankValue());
+    }
+
+    public int getRankValue() {
+        // Ensure we use the deserialized value
+        return rankValue;
     }
 
     public int getResourceId() {
@@ -38,17 +80,43 @@ public class Card {
         this.resourceId = resourceId;
     }
 
+    public boolean isFaceUp() {
+        return faceUp;
+    }
+
+    public void setFaceUp(boolean faceUp) {
+        this.faceUp = faceUp;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Card card = (Card) o;
-        return value.equals(card.value);
+        return suit == card.suit && getRank() == card.getRank();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(suit, getRank());
+    }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "suit=" + suit +
+                ", rank=" + getRank() +
+                ", value=" + rankValue +
+                '}';
     }
 }

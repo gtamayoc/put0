@@ -95,4 +95,25 @@ dependencies {
     implementation (libs.bottomsheets)
     implementation (libs.core)
 
+    // Networking - Retrofit & OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson.v290)
+    implementation(libs.logging.interceptor)
+
+    // WebSocket - Stomp
+    implementation(libs.stompprotocolandroid)
+    implementation(libs.rxjava)
+    implementation(libs.rxandroid)
+    implementation(libs.rxjava3)
+    implementation(libs.rxandroid3)
+
+    // Pure Java Logic & Utils
+    implementation("com.google.guava:guava:33.0.0-android")
+    implementation("org.squirrelframework:squirrel-foundation:0.3.9")
+
+    // UI Animations
+    implementation("com.airbnb.android:lottie:6.4.0")
+    
+    // LeakCanary
+    debugImplementation(libs.leakcanary)
 }

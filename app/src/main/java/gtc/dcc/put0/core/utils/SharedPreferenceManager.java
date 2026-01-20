@@ -1,9 +1,8 @@
 package gtc.dcc.put0.core.utils;
 
-
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
+import gtc.dcc.put0.core.utils.CoreLogger;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
@@ -18,10 +17,10 @@ public class SharedPreferenceManager {
     private static final String PREFS_NAME = "gtc.dcc.put0.PREFS";
     private static final String TOKEN_KEY = "auth_token";
     private static SharedPreferences sharedPreferences;
-    private static Gson gson = new Gson();  // Declarado como estático para ser utilizado sin necesidad de instanciar
+    private static Gson gson = new Gson(); // Declarado como estático para ser utilizado sin necesidad de instanciar
 
-
-    // Método para inicializar EncryptedSharedPreferences (se debe llamar en la clase Application o al iniciar la app)
+    // Método para inicializar EncryptedSharedPreferences (se debe llamar en la
+    // clase Application o al iniciar la app)
     public static void initialize(Context context) {
         if (sharedPreferences == null) {
             try {
@@ -31,19 +30,29 @@ public class SharedPreferenceManager {
                         masterKeyAlias,
                         context,
                         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                );
+                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
             } catch (GeneralSecurityException | IOException e) {
-                Log.e("PUTO", "Error al inicializar preferencias cifradas" + e);
+                CoreLogger.e(e,
+                        "Error initializing EncryptedSharedPreferences. Falling back to standard SharedPreferences.");
+                sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             }
         }
     }
 
+    // Direct String methods to avoid Gson for simple configs
+    public static void saveString(String key, String value) {
+        if (sharedPreferences != null) {
+            sharedPreferences.edit().putString(key, value).apply();
+        }
+    }
+
+    public static String getString(String key, String defaultValue) {
+        return sharedPreferences != null ? sharedPreferences.getString(key, defaultValue) : defaultValue;
+    }
+
     // Método para guardar el token
     public static void setToken(String authToken) {
-        if (sharedPreferences != null) {
-            sharedPreferences.edit().putString(TOKEN_KEY, authToken).apply();
-        }
+        saveString(TOKEN_KEY, authToken);
     }
 
     // Método para obtener el token

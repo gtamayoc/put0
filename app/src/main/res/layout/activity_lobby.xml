@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo_main"
+    tools:context=".core.view.LobbyActivity">
+
+    <TextView
+        android:id="@+id/tv_lobby_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="LOBBY"
+        android:textColor="@color/white"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Left Panel: Game Info -->
+    <LinearLayout
+        android:id="@+id/ll_info_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp"
+        app:layout_constraintBottom_toTopOf="@id/ll_action_buttons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rv_lobby_players"
+        app:layout_constraintTop_toBottomOf="@id/tv_lobby_title"
+        app:layout_constraintWidth_percent="0.4">
+
+        <TextView
+            android:id="@+id/tv_game_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CODE"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:letterSpacing="0.1"
+            android:shadowColor="#000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4"/>
+
+        <TextView
+            android:id="@+id/tv_mode_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Mode: Solo vs Bot"
+            android:textSize="18sp"
+            android:textColor="@color/white"/>
+
+        <TextView
+            android:id="@+id/tv_player_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Players: 1/1"
+            android:textSize="18sp"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+    <!-- Right Panel: Player List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_lobby_players"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:background="#80000000"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_lobby_title"
+        app:layout_constraintBottom_toTopOf="@id/ll_action_buttons"
+        app:layout_constraintStart_toEndOf="@id/ll_info_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_player_list"/>
+
+    <!-- Bottom: Action Buttons -->
+    <LinearLayout
+        android:id="@+id/ll_action_buttons"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/btn_share_code"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Share Code"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:layout_marginEnd="16dp"/>
+
+        <Button
+            android:id="@+id/btn_start_game"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="START GAME"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

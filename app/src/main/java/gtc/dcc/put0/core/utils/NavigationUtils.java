@@ -4,28 +4,32 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.orhanobut.logger.Logger;
+import gtc.dcc.put0.core.utils.CoreLogger;
 
 public final class NavigationUtils {
-    private NavigationUtils() {} // Prevenir instanciación
+    private NavigationUtils() {
+    } // Prevenir instanciación
 
     /**
      * Navega a la siguiente Activity
-     * @param context Contexto actual
+     * 
+     * @param context     Contexto actual
      * @param targetClass Clase de la Activity destino
      */
     public static void navigateToNextFinis(Activity context, Class<?> targetClass) {
-        Logger.d("Navigating to: " + targetClass.getName());
+        CoreLogger.d("Navigating to: " + targetClass.getName());
         Intent intent = new Intent(context, targetClass);
         context.startActivity(intent);
     }
+
     /**
      * Navega a la siguiente Activity y finaliza la actual
-     * @param context Contexto actual
+     * 
+     * @param context     Contexto actual
      * @param targetClass Clase de la Activity destino
      */
     public static void navigateToNext(Activity context, Class<?> targetClass) {
-        Logger.d("Navigating to: " + targetClass.getName());
+        CoreLogger.d("Navigating to: " + targetClass.getName());
         Intent intent = new Intent(context, targetClass);
         context.startActivity(intent);
         context.finish();

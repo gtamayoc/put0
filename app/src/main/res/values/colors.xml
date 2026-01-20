@@ -39,4 +39,18 @@
     <color name="onErrorDark">#000000</color>
 
     <color name="btns">#FF4080CA</color>
+
+    <!-- Poker Table Colors -->
+    <color name="poker_green">#1A472A</color>
+    <color name="poker_green_dark">#0D2616</color>
+    
+    <!-- Material3 Colors from Design -->
+    <color name="md_surface">#1C1B1F</color>
+    <color name="md_primary">#D0BCFF</color>
+    <color name="md_on_primary">#381E72</color>
+    <color name="md_secondary_container">#4A4458</color>
+    <color name="md_on_secondary_container">#E8DEF8</color>
+    <color name="md_tertiary_container">#7D5260</color>
+    <color name="md_on_tertiary_container">#FFD8E4</color>
+    <color name="md_background_overlay">#66000000</color>
 </resources>

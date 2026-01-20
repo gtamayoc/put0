@@ -1,20 +1,26 @@
 package gtc.dcc.put0.core.model;
 
 public enum GamePhase {
-    INITIAL_SETUP,
-    PLAYER_TURN,
-    OPPONENT_TURN,
+    SETUP,
+    MAZO_INICIAL,
+    SEGUNDO_MAZO,
+    OCULTAS,
+    FASE_EXTRA,
     GAME_OVER;
 
     @Override
     public String toString() {
         switch (this) {
-            case INITIAL_SETUP:
-                return "Fase Inicial";
-            case PLAYER_TURN:
-                return "Turno del Jugador";
-            case OPPONENT_TURN:
-                return "Turno del Oponente";
+            case SETUP:
+                return "Preparando Juego";
+            case MAZO_INICIAL:
+                return "Mazo Inicial";
+            case SEGUNDO_MAZO:
+                return "Segundo Mazo";
+            case OCULTAS:
+                return "Cartas Ocultas";
+            case FASE_EXTRA:
+                return "Fase Extra";
             case GAME_OVER:
                 return "Juego Terminado";
             default:

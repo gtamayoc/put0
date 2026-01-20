@@ -1,177 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
     app:cardCornerRadius="8dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="8dp">
 
-        <!-- Cabecera del jugador -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/playerName"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:gravity="center"
+            android:text="Jugador 1"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toStartOf="@+id/playerStatusIcon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/playerStatusIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/base"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/playerName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/playerName" />
+
+        <!-- Ronda 1 Container -->
+        <LinearLayout
+            android:id="@+id/ronda1Container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="10dp"
+            app:layout_constraintEnd_toStartOf="@+id/ronda2Container"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/playerName">
 
             <TextView
-                android:id="@+id/playerName"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:layout_width="0dp"
+                android:id="@+id/ronda_1"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Jugador 1"
+                android:text="ronda 1"
                 android:textColor="@color/black"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
-            <ImageView
-                android:id="@+id/playerStatusIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/base"
-                android:visibility="gone" />
+            <LinearLayout
+                android:id="@+id/hiddenCardsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="-15dp"
+                    android:rotation="-15"
+                    android:src="@drawable/base" />
+
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="-15dp"
+                    android:src="@drawable/base" />
+
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:rotation="15"
+                    android:src="@drawable/base" />
+            </LinearLayout>
         </LinearLayout>
 
-
+        <!-- Ronda 2 Container -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/ronda2Container"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
             android:gravity="center"
-            android:padding="8dp">
+            android:orientation="vertical"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ronda1Container"
+            app:layout_constraintTop_toBottomOf="@+id/playerName">
 
-
-            <!-- Cartas ocultas en tríos -->
-            <HorizontalScrollView
+            <TextView
+                android:id="@+id/ronda_2"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:text="ronda 2"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
 
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="15dp"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/ronda_1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ronda 1"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <!-- Primer trío de cartas ocultas -->
-                    <LinearLayout
-                        android:id="@+id/hiddenCardsContainer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:layout_marginEnd="-20dp"
-                            android:rotation="-15"
-                            android:src="@drawable/base" />
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:layout_marginEnd="-20dp"
-                            android:src="@drawable/base" />
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:rotation="15"
-                            android:src="@drawable/base" />
-                    </LinearLayout>
-                </LinearLayout>
-            </HorizontalScrollView>
-
-
-            <!-- Cartas visibles en tríos -->
-            <HorizontalScrollView
+            <LinearLayout
+                android:id="@+id/visibleCardsContainer"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="15dp"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="-15dp"
+                    android:rotation="-15"
+                    android:src="@drawable/base" />
 
-                    <TextView
-                        android:id="@+id/ronda_2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ronda 2"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-                    <!-- Primer trío de cartas ocultas -->
-                    <LinearLayout
-                        android:id="@+id/visibleCardsContainer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="-15dp"
+                    android:src="@drawable/base" />
 
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:layout_marginEnd="-20dp"
-                            android:rotation="-15"
-                            android:src="@drawable/base" />
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:layout_marginEnd="-20dp"
-                            android:src="@drawable/base" />
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="60dp"
-                            android:rotation="15"
-                            android:src="@drawable/base" />
-                    </LinearLayout>
-                </LinearLayout>
-            </HorizontalScrollView>
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="50dp"
+                    android:rotation="15"
+                    android:src="@drawable/base" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
             android:id="@+id/cartas_mano"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:layout_weight="1"
+            android:layout_marginTop="8dp"
             android:text="Cartas en mano"
             android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ronda1Container" />
 
-        <!-- Cartas del oponente con mejor visualización -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/opponentCards"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:clipToPadding="false"
-            android:paddingHorizontal="16dp"
-            android:layout_marginVertical="8dp"/>
-    </LinearLayout>
+            android:paddingHorizontal="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cartas_mano"
+            tools:listitem="@layout/item_card" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>
-
-

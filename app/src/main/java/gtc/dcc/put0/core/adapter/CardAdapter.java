@@ -30,6 +30,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     public interface OnCardClickListener {
         void onCardClick(Card card, boolean isCurrentlyHidden);
+
         void onSelectionChanged(List<Card> selectedCards);
     }
 
@@ -37,7 +38,8 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.cards = new ArrayList<>(cards);
         this.isPlayerHand = isPlayerHand;
         this.isHidden = isHidden;
-        setHasStableIds(true);
+        // setHasStableIds(true); // Disable to avoid potential collisions if duplicates
+        // exist
     }
 
     public void setOnCardClickListener(OnCardClickListener listener) {
@@ -76,21 +78,17 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
         if (shouldSort) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Collections.sort(cardsToUpdate, Comparator.comparingInt(card -> DeckUtils.getCardValue(card.getValue())));
+                // Use a proper comparator if available, for now sort by value
+                Collections.sort(cardsToUpdate, Comparator.comparingInt(Card::getRankValue));
             }
         }
 
-        // Guardar selecciones actuales
-        List<Card> currentlySelected = new ArrayList<>(selectedCards);
-
-        // Usar DiffUtil para mejorar el rendimiento
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new CardDiffCallback(this.cards, cardsToUpdate));
-
-        // Actualizar datos
+        // DiffUtil can be tricky with mutable/immutable mixed checking.
+        // For stability in this verification phase, we use notifyDataSetChanged.
         this.cards.clear();
         this.cards.addAll(cardsToUpdate);
 
-        // Restaurar selecciones si las cartas aún existen
+        List<Card> currentlySelected = new ArrayList<>(selectedCards);
         selectedCards.clear();
         for (Card card : currentlySelected) {
             if (cards.contains(card)) {
@@ -98,15 +96,22 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
         }
 
-        diffResult.dispatchUpdatesTo(this);
+        notifyDataSetChanged();
 
-        // Notificar cambios en la selección
+        /*
+         * DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new
+         * CardDiffCallback(this.cards, cardsToUpdate));
+         * this.cards.clear();
+         * this.cards.addAll(cardsToUpdate);
+         * ...
+         * diffResult.dispatchUpdatesTo(this);
+         */
+
         if (onCardClickListener != null) {
             onCardClickListener.onSelectionChanged(selectedCards);
         }
     }
 
-    // Añadir método para ordenamiento aleatorio
     public void shuffleCards() {
         List<Card> shuffledCards = new ArrayList<>(cards);
         Collections.shuffle(shuffledCards);
@@ -124,11 +129,16 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         Card card = cards.get(position);
+        gtc.dcc.put0.core.utils.CoreLogger.d("CardAdapter: Binding card at " + position + ": " + card);
         holder.bind(card);
     }
 
     @Override
     public int getItemCount() {
+        if (cards == null)
+            return 0;
+        // gtc.dcc.put0.core.utils.CoreLogger.d("CardAdapter: Item count: " +
+        // cards.size()); // Too spammy?
         return cards.size();
     }
 
@@ -139,11 +149,13 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     class CardViewHolder extends RecyclerView.ViewHolder {
         private final ImageView cardImage;
+        private final View selectionOverlay; // New field
 
         @SuppressLint("WrongViewCast")
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             cardImage = itemView.findViewById(R.id.cardImage);
+            selectionOverlay = itemView.findViewById(R.id.selectionOverlay); // Initialize
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -154,15 +166,16 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         }
 
         void bind(Card card) {
-            // Establecer la imagen de la carta
             if (isHidden) {
                 cardImage.setImageResource(R.drawable.base);
             } else {
-                cardImage.setImageResource(card.getResourceId());
+                int resourceId = DeckUtils.getCardResourceId(itemView.getContext(), card);
+                cardImage.setImageResource(resourceId);
             }
-
-            // Aplicar estado seleccionado/no seleccionado
-            itemView.setSelected(selectedCards.contains(card));
+            // Update visibility of the overlay based on selection
+            if (selectionOverlay != null) {
+                selectionOverlay.setVisibility(selectedCards.contains(card) ? View.VISIBLE : View.GONE);
+            }
         }
 
         private void handleCardClick(Card card) {

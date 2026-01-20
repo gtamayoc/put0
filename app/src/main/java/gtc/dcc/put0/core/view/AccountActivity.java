@@ -6,7 +6,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.orhanobut.logger.Logger;
+import gtc.dcc.put0.core.utils.CoreLogger;
 
 import gtc.dcc.put0.R;
 import gtc.dcc.put0.core.model.ResponseDetails;
@@ -19,10 +19,8 @@ import gtc.dcc.put0.databinding.ActivityAccountBinding;
 
 public class AccountActivity extends AppCompatActivity {
 
-
     private MainViewModel viewModel;
     private ActivityAccountBinding binding;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,8 +44,8 @@ public class AccountActivity extends AppCompatActivity {
     }
 
     private void updateUserInfo(String email, String imageUrl) {
-//        Glide.with(this).load(imageUrl).into(binding.profileLogo);
-        Logger.d("User email: " + email);
+        // Glide.with(this).load(imageUrl).into(binding.profileLogo);
+        CoreLogger.d("User email: " + email);
     }
 
     private void handleUserResponse(ResponseDetails response) {
@@ -63,7 +61,7 @@ public class AccountActivity extends AppCompatActivity {
     }
 
     private void handleSignOutError() {
-        //AuthUtils.signOut(this, LoginActivity.class);
+        // AuthUtils.signOut(this, LoginActivity.class);
         Toast.makeText(this, "General error RegisterGoogle.", Toast.LENGTH_LONG).show();
     }
 

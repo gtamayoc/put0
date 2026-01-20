@@ -2,33 +2,42 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_margin="2dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_width="80dp"
+    android:layout_height="120dp"
+    android:layout_margin="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:cardPreventCornerOverlap="true"
+    app:cardUseCompatPadding="true">
 
-    <FrameLayout
+    <ImageView
+        android:id="@+id/cardImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:contentDescription="Card Image"/>
+
+    <!-- Overlay for selection state -->
+    <View
+        android:id="@+id/selectionOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#662196F3"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/cardCount"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="4dp"
+        android:background="@drawable/card_count_background"
+        android:padding="2dp"
+        android:textColor="@android:color/white"
+        android:textSize="10sp"
+        android:visibility="gone"/>
 
-        <ImageView
-            android:id="@+id/cardImage"
-            android:layout_width="80dp"
-            android:layout_height="120dp"
-            android:scaleType="fitXY"/>
-
-        <TextView
-            android:id="@+id/cardCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="8dp"
-            android:background="@drawable/card_count_background"
-            android:padding="4dp"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:visibility="gone"/>
-
-    </FrameLayout>
 </androidx.cardview.widget.CardView>

@@ -28,7 +28,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.orhanobut.logger.Logger;
+import gtc.dcc.put0.core.utils.CoreLogger;
 
 import gtc.dcc.put0.R;
 import gtc.dcc.put0.core.model.ResponseDetails;
@@ -59,25 +59,24 @@ public class LoginActivity extends AppCompatActivity {
         loadViewModel();
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
         SharedPreferenceManager.clearToken();
-        //signOut();
-        Logger.d("LoginActivity onResume Login ");
+        // signOut();
+        CoreLogger.d("LoginActivity onResume Login ");
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null)
             return;
 
-        Logger.d("LoginActivity updateUI " + currentUser.getDisplayName());
+        CoreLogger.d("LoginActivity updateUI " + currentUser.getDisplayName());
         NavigationUtils.navigateToNext(this, MainActivity.class);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Logger.d("LoginActivity onPause Login");
+        CoreLogger.d("LoginActivity onPause Login");
     }
 
     private void signIn() {
@@ -89,10 +88,10 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseAuth.getInstance().signOut();
         mainActivity.signOut().addOnCompleteListener(this, task -> {
             // Usuario desconectado
-            Logger.d("LoginActivity Se desconecto");
+            CoreLogger.d("LoginActivity Se desconecto");
         }).addOnFailureListener(this, task -> {
             // Usuario desconectado
-            Logger.d("LoginActivity Usuario no conectado");
+            CoreLogger.d("LoginActivity Usuario no conectado");
         });
     }
 
@@ -105,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 signOut();
                 Toast.makeText(this, "Service ERROR.", Toast.LENGTH_LONG).show();
-                Logger.d("Response is null.");
+                CoreLogger.d("Response is null.");
             }
         });
 
@@ -117,7 +116,7 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 signOut();
                 Toast.makeText(this, "General error RegisterGoogle.", Toast.LENGTH_LONG).show();
-                Logger.d("Response is null.");
+                CoreLogger.d("Response is null.");
             }
         });
 
@@ -145,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
         // ViewModel
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        Logger.d("LoginActivity Google");
+        CoreLogger.d("LoginActivity Google");
         try {
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestIdToken(getString(R.string.default_web_client_id))
@@ -155,7 +154,7 @@ public class LoginActivity extends AppCompatActivity {
             // Initialize Firebase Auth
             mAuth = FirebaseAuth.getInstance();
         } catch (Exception e) {
-            Logger.d("LoginActivity Google Exception " + e.getMessage());
+            CoreLogger.d("LoginActivity Google Exception " + e.getMessage());
         }
 
     }
@@ -174,25 +173,26 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void updateUI(FirebaseUser currentUser) {
-        Logger.d("LoginActivity updateUI ");
+        CoreLogger.d("LoginActivity updateUI ");
         // ...
         if (currentUser == null)
             return;
 
-        Logger.d("LoginActivity updateUI " + currentUser.getDisplayName());
+        CoreLogger.d("LoginActivity updateUI " + currentUser.getDisplayName());
         NavigationUtils.navigateToNext(this, MainActivity.class);
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        /*if (binding.facebookButton.isEnabled()) {
-            Logger.d("ffacebookButton:");
-            // Pasar el resultado a CallbackManager de Facebook
-            callbackManager.onActivityResult(requestCode, resultCode, data);
-        }*/
+        /*
+         * if (binding.facebookButton.isEnabled()) {
+         * CoreLogger.d("ffacebookButton:");
+         * // Pasar el resultado a CallbackManager de Facebook
+         * callbackManager.onActivityResult(requestCode, resultCode, data);
+         * }
+         */
 
         // Manejo de resultados de Google Sign-In
         if (requestCode == RC_SIGN_IN) {
@@ -200,15 +200,14 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 // Google Sign In was successful, authenticate with Firebase
                 GoogleSignInAccount account = task.getResult(ApiException.class);
-                Logger.d("LoginActivity firebaseAuthWithGoogle:" + account.getId());
+                CoreLogger.d("LoginActivity firebaseAuthWithGoogle:" + account.getId());
                 firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 // Google Sign In failed, update UI appropriately
-                Logger.d("LoginActivity Google sign in failed: " + e.getMessage());
+                CoreLogger.d("LoginActivity Google sign in failed: " + e.getMessage());
                 e.printStackTrace();
             }
         }
-
 
     }
 
@@ -219,12 +218,12 @@ public class LoginActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                     // Sign in success, update UI with the signed-in user's information
-                    Logger.d("LoginActivity signInWithCredential:success");
+                    CoreLogger.d("LoginActivity signInWithCredential:success");
                     FirebaseUser user = mAuth.getCurrentUser();
                     completeUserRegistration(user);
                 } else {
                     // If sign in fails, display a message to the user.
-                    Logger.d("LoginActivity signInWithCredential:failure " + task.getException());
+                    CoreLogger.d("LoginActivity signInWithCredential:failure " + task.getException());
                     updateUI(null);
                 }
             }
@@ -233,7 +232,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void completeUserRegistration(FirebaseUser firebaseUser) {
         if (firebaseUser == null) {
-            Logger.d("FirebaseUser is null, cannot proceed.");
+            CoreLogger.d("FirebaseUser is null, cannot proceed.");
             Toast.makeText(this, "FirebaseUser is null, cannot proceed.", Toast.LENGTH_LONG).show();
             return;
         }
@@ -241,12 +240,12 @@ public class LoginActivity extends AppCompatActivity {
 
         NavigationUtils.navigateToNext(this, MainActivity.class);
         // Guardar el usuario usando el ViewModel
-        //userViewModel.loginGoogle(userData(firebaseUser));
+        // userViewModel.loginGoogle(userData(firebaseUser));
     }
 
     // Métodos auxiliares para mejorar la organización y legibilidad
     private void handleSuccessfulLogin() {
-        Logger.d("Login successful! Token received.");
+        CoreLogger.d("Login successful! Token received.");
         Toast.makeText(this, "Autenticación exitosa", Toast.LENGTH_SHORT).show();
         NavigationUtils.navigateToNext(this, MainActivity.class);
         // Opcional: Almacenar token en SharedPreferences
@@ -259,7 +258,7 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             signOut();
             Toast.makeText(this, "Login fallido - " + message, Toast.LENGTH_LONG).show();
-            Logger.d("Login failed.");
+            CoreLogger.d("Login failed.");
         }
     }
 
@@ -277,18 +276,17 @@ public class LoginActivity extends AppCompatActivity {
     private void handleLoginFailure(ResponseDetails response) {
         if (response != null && response.getMessage() != null) {
             Toast.makeText(this, "Login fallido - " + response.getMessage(), Toast.LENGTH_SHORT).show();
-            Logger.d("Login failed: " + response.getMessage());
+            CoreLogger.d("Login failed: " + response.getMessage());
         } else {
-            Logger.d("Login failed: Response is null or has no message.");
+            CoreLogger.d("Login failed: Response is null or has no message.");
             Toast.makeText(this, "Login fallido", Toast.LENGTH_SHORT).show();
         }
     }
 
-
     // Métodos auxiliares para mejorar la organización y legibilidad
     private void handleSuccessfulRegistration() {
         SharedPreferenceManager.clearToken();
-        Logger.d("Registration successful!");
+        CoreLogger.d("Registration successful!");
         Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show();
 
         try {
@@ -306,7 +304,7 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             signOut();
             Toast.makeText(this, "Registro fallido - " + message, Toast.LENGTH_LONG).show();
-            Logger.d("Registration failed.");
+            CoreLogger.d("Registration failed.");
         }
     }
 
@@ -326,11 +324,10 @@ public class LoginActivity extends AppCompatActivity {
                 "Salir",
                 () -> {
                     signOut(); // Lógica personalizada
-                    finishAndRemoveTask();  // Cierra la actividad
+                    finishAndRemoveTask(); // Cierra la actividad
                     System.exit(0);
                 },
-                "Cancelar"
-        );
+                "Cancelar");
     }
 
     @Override

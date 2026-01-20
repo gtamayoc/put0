@@ -1,9 +1,7 @@
 package gtc.dcc.put0.core.utils;
 
 import androidx.recyclerview.widget.DiffUtil;
-
 import java.util.List;
-
 import gtc.dcc.put0.core.model.Card;
 
 public class CardDiffCallback extends DiffUtil.Callback {
@@ -27,13 +25,13 @@ public class CardDiffCallback extends DiffUtil.Callback {
 
     @Override
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-        // Comparar por una ID única o referencia de objeto
+        // Assuming value+suit is unique enough for this simple view
         return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
     }
 
     @Override
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-        // Comparar el contenido de las cartas
-        return oldList.get(oldItemPosition).getValue().equals(newList.get(newItemPosition).getValue());
+        return oldList.get(oldItemPosition).getRankValue() == newList.get(newItemPosition).getRankValue()
+                && oldList.get(oldItemPosition).getSuit() == newList.get(newItemPosition).getSuit();
     }
 }

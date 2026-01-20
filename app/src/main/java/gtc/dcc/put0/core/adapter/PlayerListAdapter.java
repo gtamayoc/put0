@@ -6,16 +6,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import gtc.dcc.put0.R;
-import gtc.dcc.put0.core.model.Player;
+import gtc.dcc.put0.core.data.model.Player;
 import gtc.dcc.put0.core.utils.PlayerDiffCallback;
 
 public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.PlayerViewHolder> {
@@ -24,8 +22,9 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
     private static final int ANIMATION_DURATION = 300;
     private OnPlayerClickListener onPlayerClickListener;
     private boolean multipleSelectionEnabled = false;
-    private int maxSelectablePlayers = 3; // Puedes ajustar este valor según tus necesidades
+    private int maxSelectablePlayers = 3;
     private final List<Player> selectedPlayers = new ArrayList<>();
+    private String currentPlayerId;
 
     public interface OnPlayerClickListener {
         void onPlayerClick(Player player);
@@ -41,6 +40,11 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
 
     public void setOnPlayerClickListener(OnPlayerClickListener listener) {
         this.onPlayerClickListener = listener;
+    }
+
+    public void setCurrentPlayerId(String playerId) {
+        this.currentPlayerId = playerId;
+        notifyDataSetChanged();
     }
 
     public void setMultipleSelectionEnabled(boolean enabled) {
@@ -67,32 +71,13 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
     }
 
     public void updateData(List<Player> newPlayers) {
-        if (newPlayers == null) return;
-
-        // Crear nuevas listas para evitar problemas de referencia
+        if (newPlayers == null)
+            return;
         List<Player> newList = new ArrayList<>(newPlayers);
         List<Player> oldList = new ArrayList<>(this.players);
-
-        // Calcular diferencias
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new PlayerDiffCallback(oldList, newList), true);
-
-        // Limpiar y actualizar datos
         this.players.clear();
         this.players.addAll(newList);
-
-        // Aplicar cambios
-        diffResult.dispatchUpdatesTo(this);
-
-        // Forzar refresco de la vista si es necesario
-        notifyDataSetChanged();
-    }
-
-    public void updateData2(List<Player> newPlayers) {
-        if (newPlayers == null) return;
-
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new PlayerDiffCallback(this.players, newPlayers));
-        this.players.clear();
-        this.players.addAll(newPlayers);
         diffResult.dispatchUpdatesTo(this);
     }
 
@@ -108,8 +93,6 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
     public void onBindViewHolder(@NonNull PlayerViewHolder holder, int position) {
         Player player = players.get(position);
         holder.bind(player);
-
-        // Animación de entrada
         if (holder.itemView.getAlpha() != 1f) {
             holder.itemView.setAlpha(0f);
             holder.itemView.setTranslationX(-50f);
@@ -151,20 +134,18 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
         }
 
         void bind(Player player) {
-            // Asegurarse de que todas las vistas se actualicen
-            userName.setText(player.getNames());
+            userName.setText(player.getName());
 
+            boolean isTurn = currentPlayerId != null && currentPlayerId.equals(player.getId());
             String statusText = String.format("%s | Cartas: %d",
-                    player.isCurrentTurn() ? "En turno" : "Esperando",
-                    player.getCardsCount());
+                    isTurn ? "En turno" : "Esperando",
+                    player.getCardCount());
             userStatus.setText(statusText);
 
             // Actualizar colores y estados
-            userStatus.setTextColor(player.isCurrentTurn() ?
-                    context.getColor(R.color.btns) :
-                    context.getColor(R.color.backgroundLight));
+            userStatus
+                    .setTextColor(isTurn ? context.getColor(R.color.btns) : context.getColor(R.color.backgroundLight));
 
-            // Forzar refresco de la vista
             itemView.invalidate();
         }
 

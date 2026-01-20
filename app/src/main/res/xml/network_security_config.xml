@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Domain configuration for development -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Allow cleartext traffic for Android Emulator loopback -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Add other local IPs here if needed for physical device debugging -->
+    </domain-config>
+
+    <!-- Default configuration for production: Allow cleartext for dev simplicity -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
