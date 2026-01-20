@@ -1,0 +1,89 @@
+# Reglas del Juego PUT0
+
+## Descripción General
+
+El juego del PUT0 es un juego de cartas que utiliza dos mazos de póker estándar (104 cartas en total). Un mazo tiene el reverso de color rojo y el otro de color negro. Las cartas mantienen los símbolos tradicionales: picas (♠), corazones (♥), tréboles (♣) y diamantes (♦). Este juego está diseñado para un máximo de 6 jugadores y un mínimo de 2.
+
+## Preparación del Juego
+
+### Cantidad de Jugadores
+- Mínimo: 2 jugadores
+- Máximo: 6 jugadores (dinámico, ajustable por parámetros)
+
+### Reparto Inicial
+A cada jugador se le entregan 3 cartas boca abajo (desconocidas para ellos).
+
+Se juegan dos rondas adicionales de reparto:
+- Segunda Ronda: Se reparten 3 cartas boca arriba visibles para todos los jugadores.
+- Tercera Ronda: Se reparten 3 cartas boca abajo. Cada jugador puede:
+  - Verlas y decidir si reemplazar las cartas de la segunda ronda.
+  - Si decide reemplazar, las cartas de la tercera ronda se vuelven visibles para todos, y las cartas de la tercera ronda serán su mano activa.
+  - Si decide mantener las cartas de la segunda ronda, las cartas de la tercera ronda permanecen ocultas y no se utilizan en esa fase.
+
+### Cartas en Mano
+Cada jugador podrá tener un máximo de 9 cartas al finalizar las rondas de reparto.
+
+## Mecánica del Juego
+
+### Orden de las Cartas
+Las cartas tienen un nivel de poder en el siguiente orden:
+2 < 3 < 4 < 5 < 6 < 7 < 8 < 9 < 10 < J < Q < K < A
+
+### Regla Inicial
+El juego comienza con una carta inicial elegida aleatoriamente por un jugador. Luego, el turno avanza en sentido horario. Cada vez que un jugador lanza una carta, debe tomar otra del mazo inicial.
+
+Ejemplo: Si la carta inicial es un 5, el siguiente jugador debe colocar una carta igual o superior al 5.
+
+### Acciones Especiales
+
+#### Carta 10
+- Al colocar un 10, se descartan todas las cartas visibles en la mesa.
+- El jugador que lanza el 10 toma una carta extra del mazo inicial.
+- Luego, el jugador lanza una nueva carta para reiniciar el mazo visible.
+- Finalmente, toma otra carta del mazo inicial para asegurarse de tener nuevamente 3 cartas en mano.
+
+#### As (A)
+- El As es la carta más poderosa.
+- Un As solo puede ser superado por otro As.
+
+#### Descartes Automáticos
+Si se acumulan exactamente 4 cartas iguales en la mesa, todas estas se descartan automáticamente.
+
+Ejemplo: Si hay cuatro 9 en la mesa, estas se eliminan del mazo visible.
+
+### Dinámica del Mazo Inicial
+- Cada jugador sigue jugando hasta que se agoten las cartas del mazo inicial.
+- Si un jugador se queda con 3 cartas o menos después de agotado el mazo inicial, ya no puede tomar más cartas del mazo porque no deberían quedar disponibles.
+- Los jugadores deben seguir jugando con las cartas restantes en su mano hasta quedarse sin cartas.
+
+### Fase Final Adicional
+Si en la última jugada un jugador lanza su última carta pero debe quedarse con las cartas visibles de la mesa, este entra en una fase extra.
+- En esta fase, el jugador debe intentar deshacerse de las cartas acumuladas en la mesa.
+- Si logra lanzar la última carta de su mazo visible y además destapa todas las cartas ocultas, este jugador gana automáticamente.
+
+## Fases del Juego
+
+### Fase 1
+- Los jugadores utilizan el mazo inicial para jugar y toman cartas de este mientras esté disponible.
+- Una vez agotado el mazo inicial, los jugadores deben jugar con las cartas restantes en su mano.
+
+### Fase 2
+- Cuando un jugador se queda sin cartas, puede tomar el segundo mazo oculto.
+- Este mazo pasa a ser visible solo para el jugador que lo utiliza y oculto para los demás.
+
+### Fase 3
+- Si un jugador termina con las cartas de la fase 2, podrá tomar una carta al azar de las cartas ocultas restantes.
+- Si la carta obtenida es menor que la carta visible en la mesa, el jugador debe llevarse todas las cartas visibles a su mazo.
+- El turno pasa al siguiente jugador en sentido horario.
+
+### Fase Final Extra
+- Un jugador entra en esta fase si debe quedarse con las cartas visibles de la mesa al lanzar su última carta.
+- En esta fase, debe jugar las cartas acumuladas en su mazo hasta deshacerse de todas.
+- Si logra lanzar su última carta y además destapar y jugar sus cartas ocultas, gana automáticamente el juego.
+
+## Objetivo del Juego
+El objetivo es deshacerse de todas las cartas en la mano antes que los demás jugadores y avanzar a las fases superiores. El primer jugador sin cartas será considerado el ganador y los demás "el PUT0".
+
+## Variaciones y Opciones Dinámicas
+- Número de jugadores: Puede ser ajustado según los parámetros iniciales.
+- Cartas especiales adicionales: Puede incluirse una dinámica para modificar las reglas con otras cartas especiales en futuras iteraciones del juego.
