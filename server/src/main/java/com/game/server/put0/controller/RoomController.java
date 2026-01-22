@@ -162,26 +162,19 @@ public class RoomController {
      * POST /api/rooms/{gameId}/leave
      */
     @PostMapping("/{gameId}/leave")
-    public ResponseEntity<Void> leaveRoom(@PathVariable String gameId, @RequestBody JoinRoomRequest request) { // Reusing JoinRoomRequest for playerId
+    public ResponseEntity<Void> leaveRoom(@PathVariable String gameId, @RequestBody LeaveRoomRequest request) {
         try {
-            roomService.leaveRoom(gameId, request.getPlayerName()); // Assuming request.getPlayerName() is actually passing ID in some contexts, but here we need ID. 
-            // Wait, JoinRoomRequest has playerName, but we need playerId ideally. 
-            // For now, let's assume the client passes the UUID if available, or we might need a LeaveRoomRequest.
-            // Let's use JoinRoomRequest but interpret playerName as playerId if possible?
-            // Actually, better to just use a simple map or DTO. 
-            // Let's assume the user sends { "gameId": "...", "playerName": "..." } and we remove by name if ID matches?
-            // GameEngine.removePlayer matches by ID. 
-            // Client should send their ID. 
-            // Let's change the param to be just the DTO.
+            // Validate that path variable matches body if body contains gameId
+            if (request.getGameId() != null && !request.getGameId().equals(gameId)) {
+                return ResponseEntity.badRequest().build();
+            }
             
-            // Actually, let's check JoinRoomRequest definition.
+            roomService.leaveRoom(gameId, request.getPlayerId());
             
-           roomService.leaveRoom(gameId, request.getPlayerName()); // Currently unimplemented param in service is string, passing name/id.
-           
-           // Notify others
-           messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateUpdate(null, "Player left", GameStateUpdate.UpdateType.PLAYER_LEFT));
-           
-           return ResponseEntity.ok().build();
+            // Notify others
+            messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateUpdate(null, "Player left", GameStateUpdate.UpdateType.PLAYER_LEFT));
+            
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Error leaving room: {}", e.getMessage());
             return ResponseEntity.badRequest().build();

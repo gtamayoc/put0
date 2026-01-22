@@ -119,7 +119,7 @@ class GameEngineTest {
         assertEquals(9, cards1); // 3 Hidden + 3 Visible + 3 Hand
         
         // 104 cards total - 18 dealt = 86 remaining
-        assertEquals(86, game.getDeck().size());
+        assertEquals(86, game.getMainDeck().size());
     }
     
     @Test
@@ -149,9 +149,9 @@ class GameEngineTest {
         
         // If we played a 10, table will be empty, otherwise it should have 1 card
         if (cardToPlay.getValue() == 10) {
-            assertEquals(0, game.getTable().size());
+            assertEquals(0, game.getTablePile().size());
         } else {
-            assertEquals(1, game.getTable().size());
+            assertEquals(1, game.getTablePile().size());
             assertEquals(cardToPlay, game.getTopCard());
         }
     }
@@ -194,8 +194,8 @@ class GameEngineTest {
         GameState game = gameEngine.getGame(gameId);
         
         // Add some cards to the table first
-        game.getTable().add(new Card(5, Suit.HEARTS));
-        game.getTable().add(new Card(7, Suit.DIAMONDS));
+        game.getTablePile().add(new Card(5, Suit.HEARTS));
+        game.getTablePile().add(new Card(7, Suit.DIAMONDS));
         
         // Find and play a 10
         Player currentPlayer = game.getCurrentPlayer();
@@ -209,7 +209,7 @@ class GameEngineTest {
         gameEngine.playCard(gameId, currentPlayer.getId(), ten);
         
         // Table should be cleared
-        assertTrue(game.getTable().isEmpty());
+        assertTrue(game.getTablePile().isEmpty());
         // Same player should still have turn (after clearing)
         assertEquals(currentPlayerIndex, game.getCurrentPlayerIndex());
     }
@@ -265,11 +265,11 @@ class GameEngineTest {
         // Note: 2 is special (always playable), so use 3 vs King
         
         // Set high card on table
-        game.getTable().add(new Card(13, Suit.SPADES)); // King
+        game.getTablePile().add(new Card(13, Suit.SPADES)); // King
         
         // ensure deck has cards
-        if (game.getDeck().isEmpty()) {
-             game.getDeck().add(new Card(5, Suit.CLUBS));
+        if (game.getMainDeck().isEmpty()) {
+             game.getMainDeck().add(new Card(5, Suit.CLUBS));
         }
         
         int initialHandSize = currentPlayer.getCardCount();
@@ -301,14 +301,138 @@ class GameEngineTest {
         currentPlayer.getHiddenCards().clear();
         
         // Deck must be empty to avoid auto-draw on play
-        game.getDeck().clear();
+        game.getMainDeck().clear();
         
         // Give one winning card
         Card lastCard = new Card(14, Suit.SPADES); // strong card
         currentPlayer.addCard(lastCard);
         
         // Ensure it can be played (clear table or low card)
-        game.getTable().clear();
+        game.getTablePile().clear();
+        
+        gameEngine.playCard(gameId, currentPlayer.getId(), lastCard);
+        
+        assertEquals(GameStatus.FINISHED, game.getStatus());
+        assertEquals(currentPlayer.getId(), game.getWinnerId());
+    }
+
+    @Test
+    @DisplayName("Should move visible cards to hand when deck and hand are empty (Phase 3 transition)")
+    void testPhase3Transition() {
+        String gameId = "test-game-13";
+        gameEngine.createGame(gameId);
+        
+        Player player1 = new Player("p1", "Player1", false);
+        Player player2 = new Player("p2", "Player2", false);
+        gameEngine.addPlayer(gameId, player1);
+        gameEngine.addPlayer(gameId, player2);
+        
+        gameEngine.startGame(gameId);
+        GameState game = gameEngine.getGame(gameId);
+        
+        // Setup Phase 3 transition scenario
+        Player currentPlayer = game.getCurrentPlayer();
+        currentPlayer.getHand().clear();
+        game.getMainDeck().clear();
+        
+        // Ensure visible cards exist
+        Card visibleCard = new Card(5, Suit.HEARTS);
+        currentPlayer.getVisibleCards().clear();
+        currentPlayer.getVisibleCards().add(visibleCard);
+        
+        // Add ONE card to hand to play it and trigger replenishHand
+        Card lastHandCard = new Card(10, Suit.CLUBS); 
+        currentPlayer.addCard(lastHandCard);
+        
+        gameEngine.playCard(gameId, currentPlayer.getId(), lastHandCard);
+        
+        // After playing the last hand card, replenishHand is called.
+        // It should have moved visibleCard to hand.
+        assertTrue(currentPlayer.getVisibleCards().isEmpty());
+        assertEquals(1, currentPlayer.getHand().size());
+        assertEquals(visibleCard, currentPlayer.getHand().get(0));
+    }
+
+    @Test
+    @DisplayName("Should handle Phase 4 transition and regression on failed blind play")
+    void testPhase4TransitionAndRegression() {
+        String gameId = "test-game-14";
+        gameEngine.createGame(gameId);
+        
+        Player player1 = new Player("p1", "Player1", false);
+        Player player2 = new Player("p2", "Player2", false);
+        gameEngine.addPlayer(gameId, player1);
+        gameEngine.addPlayer(gameId, player2);
+        
+        gameEngine.startGame(gameId);
+        GameState game = gameEngine.getGame(gameId);
+        
+        Player currentPlayer = game.getCurrentPlayer();
+        currentPlayer.getHand().clear();
+        currentPlayer.getVisibleCards().clear();
+        currentPlayer.getHiddenCards().clear(); // Clear initial dealt hidden cards
+        game.getMainDeck().clear();
+        
+        // Phase 4 Setup: only hidden cards remain
+        Card c1 = new Card(3, Suit.HEARTS); // unplayable if top is high
+        Card c2 = new Card(4, Suit.CLUBS);
+        currentPlayer.getHiddenCards().add(c1);
+        currentPlayer.getHiddenCards().add(c2);
+        
+        // One card in hand to trigger replenishHand (from hidden)
+        Card trigger = new Card(10, Suit.SPADES);
+        currentPlayer.addCard(trigger);
+        
+        gameEngine.playCard(gameId, currentPlayer.getId(), trigger);
+        
+        // Verify F4 Transition
+        assertEquals(2, currentPlayer.getHand().size());
+        assertTrue(currentPlayer.getHiddenCards().isEmpty());
+        assertTrue(currentPlayer.getHand().get(0).isHidden());
+        assertTrue(currentPlayer.getHand().get(1).isHidden());
+        
+        // Setup table with high card to force failure
+        game.getTablePile().add(new Card(13, Suit.SPADES)); // King
+        
+        // Attempt blind play (c1 = 3)
+        gameEngine.playCard(gameId, currentPlayer.getId(), c1);
+        
+        // Verify Regression
+        // 1. Failed card (c1) is revealed and now in player's hand (collected from table)
+        // Actually, in the engine, c1 is added to table, then table is collected.
+        assertTrue(currentPlayer.getHand().contains(c1));
+        assertFalse(c1.isHidden());
+        
+        // 2. Remaining hidden card (c2) should have moved back to hiddenCards pile
+        assertTrue(currentPlayer.getHand().stream().noneMatch(Card::isHidden));
+        assertEquals(1, currentPlayer.getHiddenCards().size());
+        assertEquals(c2, currentPlayer.getHiddenCards().get(0));
+    }
+
+    @Test
+    @DisplayName("Should detect victory in Phase 4")
+    void testPhase4Victory() {
+        String gameId = "test-game-15";
+        gameEngine.createGame(gameId);
+        
+        Player player1 = new Player("p1", "Player1", false);
+        Player player2 = new Player("p2", "Player2", false);
+        gameEngine.addPlayer(gameId, player1);
+        gameEngine.addPlayer(gameId, player2);
+        
+        gameEngine.startGame(gameId);
+        GameState game = gameEngine.getGame(gameId);
+        
+        Player currentPlayer = game.getCurrentPlayer();
+        currentPlayer.getHand().clear();
+        currentPlayer.getVisibleCards().clear();
+        currentPlayer.getHiddenCards().clear();
+        game.getMainDeck().clear();
+        
+        // Final hidden card
+        Card lastCard = new Card(14, Suit.SPADES); // Ace
+        lastCard.setHidden(true);
+        currentPlayer.addCard(lastCard);
         
         gameEngine.playCard(gameId, currentPlayer.getId(), lastCard);
         

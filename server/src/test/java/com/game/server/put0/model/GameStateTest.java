@@ -58,8 +58,8 @@ class GameStateTest {
         Card card1 = new Card(5, Suit.HEARTS);
         Card card2 = new Card(7, Suit.DIAMONDS);
         
-        gameState.getTable().add(card1);
-        gameState.getTable().add(card2);
+        gameState.getTablePile().add(card1);
+        gameState.getTablePile().add(card2);
         
         assertEquals(card2, gameState.getTopCard());
     }
@@ -90,26 +90,26 @@ class GameStateTest {
     @Test
     @DisplayName("Should clear table")
     void testClearTable() {
-        gameState.getTable().add(new Card(5, Suit.HEARTS));
-        gameState.getTable().add(new Card(7, Suit.DIAMONDS));
+        gameState.getTablePile().add(new Card(5, Suit.HEARTS));
+        gameState.getTablePile().add(new Card(7, Suit.DIAMONDS));
         
-        assertEquals(2, gameState.getTable().size());
+        assertEquals(2, gameState.getTablePile().size());
         
         gameState.clearTable();
         
-        assertTrue(gameState.getTable().isEmpty());
+        assertTrue(gameState.getTablePile().isEmpty());
     }
     
     @Test
     @DisplayName("Should detect when table should be cleared (4 of same value)")
     void testShouldClearTable() {
-        gameState.getTable().add(new Card(5, Suit.HEARTS));
-        gameState.getTable().add(new Card(5, Suit.DIAMONDS));
-        gameState.getTable().add(new Card(5, Suit.CLUBS));
+        gameState.getTablePile().add(new Card(5, Suit.HEARTS));
+        gameState.getTablePile().add(new Card(5, Suit.DIAMONDS));
+        gameState.getTablePile().add(new Card(5, Suit.CLUBS));
         
         assertFalse(gameState.shouldClearTable());
         
-        gameState.getTable().add(new Card(5, Suit.SPADES));
+        gameState.getTablePile().add(new Card(5, Suit.SPADES));
         
         assertTrue(gameState.shouldClearTable());
     }
@@ -117,8 +117,8 @@ class GameStateTest {
     @Test
     @DisplayName("Should not clear table with less than 4 cards")
     void testShouldNotClearTableWithLessThan4Cards() {
-        gameState.getTable().add(new Card(5, Suit.HEARTS));
-        gameState.getTable().add(new Card(5, Suit.DIAMONDS));
+        gameState.getTablePile().add(new Card(5, Suit.HEARTS));
+        gameState.getTablePile().add(new Card(5, Suit.DIAMONDS));
         
         assertFalse(gameState.shouldClearTable());
     }
@@ -126,10 +126,10 @@ class GameStateTest {
     @Test
     @DisplayName("Should not clear table when last 4 cards are different")
     void testShouldNotClearTableWithDifferentValues() {
-        gameState.getTable().add(new Card(5, Suit.HEARTS));
-        gameState.getTable().add(new Card(5, Suit.DIAMONDS));
-        gameState.getTable().add(new Card(5, Suit.CLUBS));
-        gameState.getTable().add(new Card(7, Suit.SPADES)); // Different value
+        gameState.getTablePile().add(new Card(5, Suit.HEARTS));
+        gameState.getTablePile().add(new Card(5, Suit.DIAMONDS));
+        gameState.getTablePile().add(new Card(5, Suit.CLUBS));
+        gameState.getTablePile().add(new Card(7, Suit.SPADES)); // Different value
         
         assertFalse(gameState.shouldClearTable());
     }

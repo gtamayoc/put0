@@ -25,6 +25,15 @@ public class RoomService {
      * @return The game ID and player ID
      */
     public RoomCreationResult createRoom(String playerName, int botCount, com.game.server.put0.model.MatchMode mode) {
+        if (playerName == null || playerName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Player name cannot be empty");
+        }
+        if (botCount < 0 || botCount > 3) {
+            throw new IllegalArgumentException("Bot count must be between 0 and 3");
+        }
+        if (mode == null) {
+            throw new IllegalArgumentException("Match mode is required");
+        }
         String gameId = UUID.randomUUID().toString();
         String playerId = UUID.randomUUID().toString();
         

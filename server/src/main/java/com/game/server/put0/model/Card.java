@@ -24,6 +24,17 @@ public class Card {
      * Card suit: HEARTS, DIAMONDS, CLUBS, SPADES
      */
     private Suit suit;
+
+    /**
+     * Whether the card is hidden (Phase 4).
+     */
+    private boolean hidden = false;
+
+    public Card(int value, Suit suit) {
+        this.value = value;
+        this.suit = suit;
+        this.hidden = false;
+    }
     
     /**
      * Checks if this card can be played on top of the given card.
@@ -79,6 +90,22 @@ public class Card {
         return this.value;
     }
     
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Card card = (Card) o;
+        // Only compare value and suit, NOT hidden flag
+        return value == card.value && suit == card.suit;
+    }
+
+    @Override
+    public int hashCode() {
+        // Only hash value and suit, NOT hidden flag
+        return 31 * value + (suit != null ? suit.hashCode() : 0);
+    }
+
     @Override
     public String toString() {
         return valueToString() + " of " + suit;

@@ -25,6 +25,7 @@ public class GameStateUpdate {
         GAME_FINISHED,
         PLAYER_JOINED,
         PLAYER_LEFT,
+        TABLE_COLLECTED,
         ERROR
     }
 }

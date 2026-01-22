@@ -43,12 +43,14 @@ public class GameEngine {
             throw new IllegalArgumentException("Game not found: " + gameId);
         }
         
-        if (game.getStatus() != GameStatus.WAITING) {
-            throw new IllegalStateException("Cannot add player to game in progress");
+        synchronized(game) {
+            if (game.getStatus() != GameStatus.WAITING) {
+                throw new IllegalStateException("Cannot add player to game in progress");
+            }
+            
+            game.addPlayer(player);
+            log.info("Added player {} to game {}", player.getName(), gameId);
         }
-        
-        game.addPlayer(player);
-        log.info("Added player {} to game {}", player.getName(), gameId);
     }
     
     /**
@@ -60,24 +62,26 @@ public class GameEngine {
             throw new IllegalArgumentException("Game not found: " + gameId);
         }
         
-        if (game.getStatus() == GameStatus.PLAYING) {
-            log.info("Game {} already started, ignoring start request", gameId);
-            return;
+        synchronized(game) {
+            if (game.getStatus() == GameStatus.PLAYING) {
+                log.info("Game {} already started, ignoring start request", gameId);
+                return;
+            }
+            
+            if (!game.canStart()) {
+                throw new IllegalStateException("Game cannot start - need at least 2 players");
+            }
+            
+            // Create and shuffle deck (2 Decks = 104 Cards)
+            game.setMainDeck(createDeck());
+            Collections.shuffle(game.getMainDeck());
+            
+            // Deal cards according to rules: 3 Hidden, 3 Visible, 3 Hand
+            dealCards(game);
+            
+            game.setStatus(GameStatus.PLAYING);
+            log.info("Started game {} with {} players", gameId, game.getPlayers().size());
         }
-        
-        if (!game.canStart()) {
-            throw new IllegalStateException("Game cannot start - need at least 2 players");
-        }
-        
-        // Create and shuffle deck (2 Decks = 104 Cards)
-        game.setDeck(createDeck());
-        Collections.shuffle(game.getDeck());
-        
-        // Deal cards according to rules: 3 Hidden, 3 Visible, 3 Hand
-        dealCards(game);
-        
-        game.setStatus(GameStatus.PLAYING);
-        log.info("Started game {} with {} players", gameId, game.getPlayers().size());
     }
     
     /**
@@ -100,27 +104,27 @@ public class GameEngine {
      * Deals 3 cards Hidden, 3 Visible, 3 to Hand for each player.
      */
     private void dealCards(GameState game) {
-        List<Card> deck = game.getDeck();
+        List<Card> deck = game.getMainDeck();
         List<Player> players = game.getPlayers();
         
         // 1. Deal 3 Hidden Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getHiddenCards().add(deck.remove(0));
+                if (!deck.isEmpty()) player.getHiddenCards().add(deck.remove(deck.size() - 1));
             }
         }
 
         // 2. Deal 3 Visible Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getVisibleCards().add(deck.remove(0));
+                if (!deck.isEmpty()) player.getVisibleCards().add(deck.remove(deck.size() - 1));
             }
         }
 
         // 3. Deal 3 Hand Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getHand().add(deck.remove(0));
+                if (!deck.isEmpty()) player.getHand().add(deck.remove(deck.size() - 1));
             }
         }
         
@@ -140,96 +144,135 @@ public class GameEngine {
             throw new IllegalStateException("Game is not in progress");
         }
         
-        Player currentPlayer = game.getCurrentPlayer();
-        if (!currentPlayer.getId().equals(playerId)) {
-            throw new IllegalStateException("Not this player's turn");
-        }
-        
-        // Validate card can be played AND is reachable in current phase
-        Card topCard = game.getTopCard();
-        
-        // Strict Phase Validation: Player can only play what getPlayableCards returns
-        List<Card> validMoves = currentPlayer.getPlayableCards(topCard);
-        
-        // Note: contains() checks equality. With 2 decks, identical cards exist.
-        if (!validMoves.contains(card)) {
-             throw new IllegalArgumentException("Invalid move: Card not available or not playable in current phase (Hand -> Visible -> Hidden)");
-        }
-        
-        // Check if card is actually playable on top card
-        // For phases 1 and 2, validMoves only contains playable cards.
-        // For phase 3 (Hidden), validMoves contains ALL hidden cards, so we must check here.
-        if (!card.canPlayOn(topCard)) {
-            // FAILED PLAY (Phase 3 Hidden Card failure)
-            log.info("Player {} failed to play {} on top card {}", playerId, card, topCard);
+        synchronized(game) {
+            Player currentPlayer = game.getCurrentPlayer();
+            if (!currentPlayer.getId().equals(playerId)) {
+                throw new IllegalStateException("Not this player's turn");
+            }
             
-            // Remove the card from player's hidden pile
-            currentPlayer.removeCard(card);
+            // Validate card can be played AND is reachable in current phase
+            Card topCard = game.getTopCard();
             
-            // Add the failed card to the table before collecting
-            game.getTable().add(card);
+            // Strict Phase Validation: Player can only play what getPlayableCards returns
+            List<Card> validMoves = currentPlayer.getPlayableCards(topCard);
             
-            // Rules say: "Si la carta robada es menor... debe recoger todas las cartas visibles"
-            game.collectTable(currentPlayer);
+            // Note: contains() checks equality. With 2 decks, identical cards exist.
+            if (!validMoves.contains(card)) {
+                log.warn("[GAME-INVALID] Player {} tried to play {} but it's not in valid moves. Valid: {}", currentPlayer.getName(), card, validMoves);
+                throw new IllegalArgumentException("Invalid move: Card not available or not playable in current phase");
+            }
             
-            game.nextTurn();
-            return;
-        }
+            // Reveal hidden card if played
+            if (card.isHidden()) {
+                card.setHidden(false);
+            }
 
-        // Remove card from player's hand (managed by Player logic)
-        if (!currentPlayer.removeCard(card)) {
-            // Should be covered by above check, but safety net
-            throw new IllegalArgumentException("Player does not have this card");
-        }
-        
-        // Add card to table
-        game.getTable().add(card);
-        log.info("Player {} played {} on game {}", playerId, card, gameId);
-        
-        // Check for table clear conditions
-        if (card.clearsTable() || game.shouldClearTable()) {
-            game.clearTable();
-            log.info("Table cleared in game {} by {}", gameId, card);
-            // Same player plays again after clearing? 
-            // Rules say: "Se juega una nueva carta para reiniciar". Yes, player goes again.
-            // Also "Robo extra con 10". If implemented, handle here.
+            // Check if card is actually playable on top card
+            if (!card.canPlayOn(topCard)) {
+                // FAILED PLAY (Phase 3 or 4 failure)
+                log.info("[GAME-ACTION] Player {} FAILED to play {} on top card {}. Penalty: Eat Table.", currentPlayer.getName(), card, topCard);
+                
+                // If this was Phase 4 (hand had other hidden cards), move them back to hiddenCards pile (Regression)
+                List<Card> remainingHidden = currentPlayer.getHand().stream()
+                        .filter(Card::isHidden)
+                        .toList();
+                
+                if (!remainingHidden.isEmpty()) {
+                    log.info("[GAME-REGRESSION] Player {} failed blind play. Suspending Phase 4. Moving {} cards back to hidden pile.", 
+                            currentPlayer.getName(), remainingHidden.size());
+                    currentPlayer.getHiddenCards().addAll(remainingHidden);
+                    currentPlayer.getHand().removeIf(Card::isHidden);
+                }
+
+                // Remove the failed card from player's hand/hidden pile
+                currentPlayer.removeCard(card);
+                
+                // Add the failed card to the table before collecting
+                game.getTablePile().add(card);
+                
+                int tableSizeBefore = game.getTablePile().size();
+                // Rules: Player collects all table cards
+                game.collectTable(currentPlayer);
+                log.info("[GAME-PENALTY] Player {} collected {} cards from table.", currentPlayer.getName(), tableSizeBefore);
+                
+                game.nextTurn();
+                log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
+                return;
+            }
+
+            // Remove card from player's hand (managed by Player logic)
+            if (!currentPlayer.removeCard(card)) {
+                log.error("[GAME-ERROR] Could not remove card {} from player {}", card, currentPlayer.getName());
+                throw new IllegalArgumentException("Player does not have this card");
+            }
             
-            // Auto-draw if needed before replay?
+            // Add card to table
+            game.getTablePile().add(card);
+            log.info("[GAME-ACTION] Player {} PLAYED {} on top of {}. Table size: {}", currentPlayer.getName(), card, topCard, game.getTablePile().size());
+            
+            // Check for table clear conditions
+            if (card.clearsTable() || game.shouldClearTable()) {
+                game.clearTable();
+                log.info("[GAME-EVENT] Table CLEARED by {}. {} goes again.", currentPlayer.getName(), currentPlayer.getName());
+                
+                // Replenish hand before playing again (Phase 1)
+                replenishHand(game, currentPlayer);
+                // Player goes again (no nextTurn())
+                return;
+            }
+            
+            // Replenish hand from mainDeck if needed (Phase 1)
             replenishHand(game, currentPlayer);
-            return;
-        }
-        
-        // Replenish hand from deck if needed (Target 3 cards in hand)
-        replenishHand(game, currentPlayer);
 
-        // Check if player won
-        if (currentPlayer.hasWon()) {
-            game.setStatus(GameStatus.FINISHED);
-            game.setWinnerId(playerId);
-            log.info("Player {} won game {}", playerId, gameId);
-            return;
+            // Check if player won
+            if (currentPlayer.hasWon()) {
+                game.setStatus(GameStatus.FINISHED);
+                game.setWinnerId(playerId);
+                log.info("[GAME-OVER] Player {} WON the game!", currentPlayer.getName());
+                return;
+            }
+            
+            // Move to next player
+            game.nextTurn();
+            log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
         }
-        
-        // Move to next player
-        game.nextTurn();
     }
     
     /**
-     * Replenishes player's hand to 3 cards if deck is available.
-     * Only applies if playing from Hand phase (detected if hand < 3).
+     * Replenishes player's hand to 3 cards if deck is available (Phase 1).
      */
     private void replenishHand(GameState game, Player player) {
-        // Only draw if we are still using the deck? 
-        // Rules: "Se roba una carta después de jugar (mientras haya disponibles)"
-        // Typically you maintain 3 cards in hand.
-        while (player.getHand().size() < 3 && !game.getDeck().isEmpty()) {
-            player.getHand().add(game.getDeck().remove(0));
+        // Phase 1: Draw from main deck (3 cards target)
+        while (player.getHand().size() < 3 && !game.getMainDeck().isEmpty()) {
+            player.getHand().add(game.getMainDeck().remove(game.getMainDeck().size() - 1));
+        }
+        
+        // Transition to Phase 3 (Visible Cards to hand)
+        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() && !player.getVisibleCards().isEmpty()) {
+            log.info("[GAME-PHASE] Transitioning player {} to Visible Cards phase (F3).", player.getName());
+            player.getHand().addAll(player.getVisibleCards());
+            player.getVisibleCards().clear();
+        }
+
+        // Transition to Phase 4 (Hidden Cards to hand)
+        // Happens only when hand, deck, AND visible cards are exhausted
+        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() && 
+            player.getVisibleCards().isEmpty() && !player.getHiddenCards().isEmpty()) {
+            log.info("[GAME-PHASE] Transitioning player {} to Hidden Cards phase (F4). Moving {} cards.", 
+                    player.getName(), player.getHiddenCards().size());
+            
+            // Move ALL hidden cards to hand and mark them as hidden for blind play
+            for (Card card : player.getHiddenCards()) {
+                card.setHidden(true);
+                player.getHand().add(card);
+            }
+            player.getHiddenCards().clear();
         }
     }
 
     /**
      * Draws a card from the deck for the current player.
-     * Used when player has no valid moves.
+     * Used when player has no valid moves or chooses to pick up.
      */
     public void drawCard(String gameId, String playerId) {
         GameState game = games.get(gameId);
@@ -237,44 +280,61 @@ public class GameEngine {
             throw new IllegalArgumentException("Game not found: " + gameId);
         }
         
-        Player currentPlayer = game.getCurrentPlayer();
-        if (!currentPlayer.getId().equals(playerId)) {
-            throw new IllegalStateException("Not this player's turn");
-        }
-        
-        // Check if player has any playable cards
-        List<Card> playableCards = currentPlayer.getPlayableCards(game.getTopCard());
-        if (!playableCards.isEmpty()) {
-            // Technically, if they have hidden cards only, they assume risk. 
-            // But if they have Hand/Visible playable, they shouldn't just draw blindly to avoid playing?
-            // Actually, usually you draw if you CANNOT play.
-            throw new IllegalStateException("Player has playable cards and cannot draw");
-        }
-        
-        // Draw card from deck
-        if (game.getDeck().isEmpty()) {
-            // If deck is empty and you can't play... you pick up the table? 
-            // Rules: "Si la carta oculta es menor... debe recoger todas las cartas visibles".
-            // That applies to Hidden phase. 
-            // What if stuck in Hand phase?
-            // "Robo automático después de jugar".
-            // Typically you pick up the pile if you can't play.
-            game.collectTable(currentPlayer); // Need to implement this in GameState or here help
+        synchronized(game) {
+            Player currentPlayer = game.getCurrentPlayer();
+            if (!currentPlayer.getId().equals(playerId)) {
+                throw new IllegalStateException("Not this player's turn");
+            }
+            
+            // If mainDeck is not empty -> Draw one card (Phase 1)
+            if (!game.getMainDeck().isEmpty()) {
+                 Card drawnCard = game.getMainDeck().remove(game.getMainDeck().size() - 1);
+                 currentPlayer.addCard(drawnCard);
+                 log.info("[GAME-ACTION] Player {} DREW a card. Deck remaining: {}", currentPlayer.getName(), game.getMainDeck().size());
+                 game.nextTurn();
+                 log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
+                 return;
+            }
+            
+            // If undefined play or Phase transition logic requires picking up table
+            // When deck is empty and player cannot play, they must pick up the Table Pile
+            int tableSize = game.getTablePile().size();
+            game.collectTable(currentPlayer);
+            log.info("[GAME-ACTION] Player {} collected {} cards from table (Deck empty).", currentPlayer.getName(), tableSize);
             
             game.nextTurn();
-            return;
+            log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
         }
-        
-        // Standard draw logic (one card? or until playable?)
-        // Usually you draw one and if it works you play, else pass/collect.
-        // For simple implementation: Draw one.
-        Card drawnCard = game.getDeck().remove(0);
-        currentPlayer.addCard(drawnCard);
-        log.info("Player {} drew a card in game {}", playerId, gameId);
-        
-        // If the drawn card is playable, they can play it? 
-        // Usually turn ends after draw unless specified.
-        game.nextTurn();
+    }
+
+    /**
+     * Helper to collect table cards (Passive/Voluntary action).
+     * Used when player chooses to pick up the table instead of playing.
+     */
+    public void collectTable(String gameId, String playerId) {
+        GameState game = games.get(gameId);
+        if (game == null) {
+            throw new IllegalArgumentException("Game not found: " + gameId);
+        }
+
+        synchronized(game) {
+            Player currentPlayer = game.getCurrentPlayer();
+            if (!currentPlayer.getId().equals(playerId)) {
+                throw new IllegalStateException("Not this player's turn to collect");
+            }
+
+            if (game.getTablePile().isEmpty()) {
+                throw new IllegalStateException("Table is empty, nothing to collect");
+            }
+
+            // Perform collection using GameState's logic
+            int tableSize = game.getTablePile().size();
+            game.collectTable(currentPlayer);
+            log.info("[GAME-ACTION] Player {} collected {} cards (voluntary).", currentPlayer.getName(), tableSize);
+
+            game.nextTurn();
+            log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
+        }
     }
     
     /**
@@ -294,14 +354,19 @@ public class GameEngine {
             return;
         }
         
-        game.getPlayers().removeIf(p -> p.getId().equals(playerId));
-        log.info("Removed player {} from game {}", playerId, gameId);
-        
-        if (game.getPlayers().isEmpty() || game.getPlayers().stream().allMatch(Player::isBot)) {
-            removeGame(gameId);
-        } else {
-            // Should we notify others? handled by controller/websocket usually
-            // If the game was running, we might need to adjust current player index
+        synchronized(game) {
+            game.getPlayers().removeIf(p -> p.getId().equals(playerId));
+            log.info("Removed player {} from game {}", playerId, gameId);
+            
+            if (game.getPlayers().isEmpty() || game.getPlayers().stream().allMatch(Player::isBot)) {
+                removeGame(gameId);
+            } else {
+                // Should we notify others? handled by controller/websocket usually
+                // If the game was running, we might need to adjust current player index
+                if (game.getStatus() == GameStatus.PLAYING && game.getCurrentPlayerIndex() >= game.getPlayers().size()) {
+                     game.setCurrentPlayerIndex(0); // Reset or handle appropriately
+                }
+            }
         }
     }
 

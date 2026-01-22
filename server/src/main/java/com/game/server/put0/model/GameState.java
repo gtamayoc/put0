@@ -15,8 +15,16 @@ public class GameState {
     
     private String gameId;
     private List<Player> players = new ArrayList<>();
-    private List<Card> deck = new ArrayList<>();
-    private List<Card> table = new ArrayList<>();
+    
+    // Pile 1: Main Deck (Drawing source)
+    private List<Card> mainDeck = new ArrayList<>();
+    
+    // Pile 2: Table Pile (Active play area)
+    private List<Card> tablePile = new ArrayList<>();
+    
+    // Pile 3: Discard Pile (Burned cards)
+    private List<Card> discardPile = new ArrayList<>();
+    
     private int currentPlayerIndex = 0;
     private GameStatus status = GameStatus.WAITING;
     private String winnerId;
@@ -40,10 +48,10 @@ public class GameState {
      * Gets the top card on the table (most recently played).
      */
     public Card getTopCard() {
-        if (table.isEmpty()) {
+        if (tablePile.isEmpty()) {
             return null;
         }
-        return table.get(table.size() - 1);
+        return tablePile.get(tablePile.size() - 1);
     }
     
     /**
@@ -55,9 +63,13 @@ public class GameState {
     
     /**
      * Clears the table (when a 10 is played or 4 cards of same value).
+     * Moves cards to discardPile ("Quemadas").
      */
     public void clearTable() {
-        table.clear();
+        if (!tablePile.isEmpty()) {
+            discardPile.addAll(tablePile);
+            tablePile.clear();
+        }
     }
     
     /**
@@ -65,13 +77,13 @@ public class GameState {
      * This triggers a table clear.
      */
     public boolean shouldClearTable() {
-        if (table.size() < 4) {
+        if (tablePile.size() < 4) {
             return false;
         }
         
-        int lastValue = table.get(table.size() - 1).getValue();
-        for (int i = table.size() - 4; i < table.size(); i++) {
-            if (table.get(i).getValue() != lastValue) {
+        int lastValue = tablePile.get(tablePile.size() - 1).getValue();
+        for (int i = tablePile.size() - 4; i < tablePile.size(); i++) {
+            if (tablePile.get(i).getValue() != lastValue) {
                 return false;
             }
         }
@@ -90,9 +102,9 @@ public class GameState {
      * Used when a player cannot play (penalty) or during Hidden phase bad guess.
      */
     public void collectTable(Player player) {
-        if (!table.isEmpty()) {
-            player.getHand().addAll(table);
-            table.clear();
+        if (!tablePile.isEmpty()) {
+            player.getHand().addAll(tablePile);
+            tablePile.clear();
         }
     }
 

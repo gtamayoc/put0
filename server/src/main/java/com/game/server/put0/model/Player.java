@@ -80,8 +80,18 @@ public class Player {
      * Logic: Must play from Hand if not empty. Then Visible. Then Hidden.
      */
     public List<Card> getPlayableCards(Card tableCard) {
-        // Phase 1: Hand
+        // Phase 1: Hand (includes Phase 4 blind plays)
         if (!hand.isEmpty()) {
+            // Check if we are in Phase 4 (hand contains hidden cards)
+            boolean isPhase4 = hand.stream().anyMatch(Card::isHidden);
+            
+            if (isPhase4) {
+                // In Phase 4, you can try ANY hidden card in your hand (blind play)
+                // You can also play any regular card if they exist (unusual but possible if regression happened)
+                return new ArrayList<>(hand);
+            }
+            
+            // Standard Phase 1
             return hand.stream()
                     .filter(card -> card.canPlayOn(tableCard))
                     .toList();

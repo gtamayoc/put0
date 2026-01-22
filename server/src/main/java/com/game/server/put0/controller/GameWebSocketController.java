@@ -38,7 +38,7 @@ public class GameWebSocketController {
             GameState game = gameEngine.getGame(request.getGameId());
             
             // Check if table was cleared
-            boolean tableCleared = game.getTable().isEmpty();
+            boolean tableCleared = game.getTablePile().isEmpty();
             
             GameStateUpdate update = new GameStateUpdate(
                     game,
@@ -91,6 +91,44 @@ public class GameWebSocketController {
             
         } catch (Exception e) {
             log.error("Error drawing card: {}", e.getMessage());
+            GameStateUpdate errorUpdate = new GameStateUpdate(
+                    null,
+                    e.getMessage(),
+                    GameStateUpdate.UpdateType.ERROR
+            );
+            messagingTemplate.convertAndSendToUser(
+                    request.getPlayerId(),
+                    "/queue/errors",
+                    errorUpdate
+            );
+        }
+    }
+
+
+    /**
+     * Handles collect table action from client.
+     * Client sends to: /app/game/collect
+     */
+    @MessageMapping("/game/collect")
+    public void collectTable(DrawCardRequest request) {
+        try {
+            gameEngine.collectTable(request.getGameId(), request.getPlayerId());
+            
+            GameState game = gameEngine.getGame(request.getGameId());
+            GameStateUpdate update = new GameStateUpdate(
+                    game,
+                    "Table collected",
+                    GameStateUpdate.UpdateType.TABLE_COLLECTED
+            );
+            
+            // Broadcast to all clients in this game
+            messagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), update);
+            
+            // Check if it's a bot's turn next
+            aiBotService.checkAndMakeBotMove(request.getGameId());
+            
+        } catch (Exception e) {
+            log.error("Error collecting table: {}", e.getMessage());
             GameStateUpdate errorUpdate = new GameStateUpdate(
                     null,
                     e.getMessage(),
