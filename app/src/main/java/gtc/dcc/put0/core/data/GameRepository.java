@@ -11,6 +11,7 @@ import gtc.dcc.put0.core.data.remote.ApiClient;
 import gtc.dcc.put0.core.data.remote.GameWebSocketManager;
 import gtc.dcc.put0.core.data.remote.Put0ApiService;
 import gtc.dcc.put0.core.model.Card;
+import gtc.dcc.put0.core.utils.CoreLogger;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -124,22 +125,34 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void leaveGame() {
         String gameId = _currentGameId.getValue();
         String playerId = _currentPlayerId.getValue();
-        if (gameId == null || playerId == null)
-            return;
 
-        JoinRoomRequest request = new JoinRoomRequest(gameId, playerId);
-        apiService.leaveRoom(gameId, request).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                webSocketManager.disconnect();
-                // Clear state?
-            }
+        // Execute API call to leave
+        if (gameId != null && playerId != null) {
+            JoinRoomRequest request = new JoinRoomRequest(gameId, playerId);
+            apiService.leaveRoom(gameId, request).enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    CoreLogger.i("Left game room successfully");
+                }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                webSocketManager.disconnect();
-            }
-        });
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    CoreLogger.e("Error leaving room: " + t.getMessage());
+                }
+            });
+        }
+
+        // Always disconnect and clear local state
+        webSocketManager.disconnect();
+        resetGameState();
+    }
+
+    public void resetGameState() {
+        _gameState.postValue(null);
+        _currentGameId.postValue(null);
+        _currentPlayerId.postValue(null);
+        _error.postValue(null);
+        CoreLogger.i("Local game state cleared");
     }
 
     private void updateGameInfo(RoomResponse room) {
@@ -154,6 +167,7 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void playCard(String playerId, Card card) {
         if (_currentGameId.getValue() == null)
             return;
+        CoreLogger.i("[GAME-ACTION] Playing card: " + card + " for player: " + playerId);
         GameAction action = new GameAction(_currentGameId.getValue(), playerId, card);
         webSocketManager.send("/app/game/play", action);
     }
@@ -161,8 +175,17 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void drawCard(String playerId) {
         if (_currentGameId.getValue() == null)
             return;
+        CoreLogger.i("[GAME-ACTION] Drawing card for player: " + playerId);
         GameAction action = new GameAction(_currentGameId.getValue(), playerId, null);
         webSocketManager.send("/app/game/draw", action);
+    }
+
+    public void collectTable(String playerId) {
+        if (_currentGameId.getValue() == null)
+            return;
+        CoreLogger.i("[GAME-ACTION] Collecting table for player: " + playerId);
+        GameAction action = new GameAction(_currentGameId.getValue(), playerId, null);
+        webSocketManager.send("/app/game/collect", action);
     }
 
     @Override

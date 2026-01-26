@@ -18,6 +18,9 @@ public class Card {
     private boolean faceUp;
     private boolean isSelected;
 
+    @SerializedName("hidden")
+    private boolean hidden;
+
     public Card(Suit suit, Rank rank, int resourceId) {
         this.suit = suit;
         this.rank = rank;
@@ -94,6 +97,14 @@ public class Card {
 
     public void setSelected(boolean selected) {
         isSelected = selected;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     @Override

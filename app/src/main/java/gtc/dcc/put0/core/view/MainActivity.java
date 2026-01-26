@@ -1,7 +1,6 @@
 package gtc.dcc.put0.core.view;
 
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet;
 import gtc.dcc.put0.core.utils.CoreLogger;
+import gtc.dcc.put0.core.utils.GameMessageHelper;
 
 import gtc.dcc.put0.R;
 import gtc.dcc.put0.core.model.ResponseDetails;
@@ -52,23 +52,29 @@ public class MainActivity extends AppCompatActivity {
 
         if (account != null) {
             String email = account.getEmail();
+            String displayName = account.getDisplayName();
             android.net.Uri photoUri = account.getPhotoUrl();
             String photoUrl = photoUri != null ? photoUri.toString() : null;
+
+            if (displayName != null && !displayName.isEmpty()) {
+                SharedPreferenceManager.saveString("user_name", displayName);
+            }
+
             updateUserInfo(email, photoUrl);
         }
     }
 
     private void loadCompatibility() {
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        // Inflate the layout using ViewBinding first
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        // Inflate the layout using ViewBinding
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
     }
 
     private void initializeViewModels() {
@@ -95,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
 
         gameViewModel.getError().observe(this, error -> {
             if (error != null) {
-                Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+                GameMessageHelper.showMessage(binding.getRoot(), error, GameMessageHelper.MessageType.NEUTRAL);
             }
         });
     }
@@ -105,13 +111,14 @@ public class MainActivity extends AppCompatActivity {
             DialogUtils.showServerIpDialog(this, ipAddress -> {
                 SharedPreferenceManager.saveString("server_ip", ipAddress);
                 gtc.dcc.put0.core.data.remote.ApiClient.resetApiClient();
-                Toast.makeText(this, "IP Updated. Reconnecting...", Toast.LENGTH_SHORT).show();
+                GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_reconnecting,
+                        GameMessageHelper.MessageType.INFO);
             });
         });
 
         binding.btnCreateGame.setOnClickListener(v -> {
             DialogUtils.showModeSelectionDialog(this, mode -> {
-                String userName = SharedPreferenceManager.getData("user_name", String.class, "Player");
+                String userName = SharedPreferenceManager.getString("user_name", "Player");
                 // Logic based on mode
                 int botCount = 0;
                 if (mode == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT) {
@@ -121,7 +128,8 @@ public class MainActivity extends AppCompatActivity {
                 // Show form only if needed (e.g., custom names or settings), else direct create
                 // For simplicity, direct create for now and verify
                 gameViewModel.createGame(userName, botCount, mode);
-                Toast.makeText(this, "Creating " + mode + "...", Toast.LENGTH_SHORT).show();
+                GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_preparing_game,
+                        GameMessageHelper.MessageType.INFO);
             });
         });
 
@@ -145,24 +153,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void handleUserResponse(ResponseDetails response) {
         if (response == null) {
-            handleSignOutError();
+            // Do not treat null response as error immediately on load.
+            // Only log it.
+            CoreLogger.d("MainActivity: handleUserResponse received null.");
             return;
         }
 
         if (response.getData() instanceof User) {
             User user = (User) response.getData();
             saveUserData(user);
+        } else if (response.getMessage() != null && !response.getMessage().isEmpty()) {
+            // Only show error if server explicitly sent a message
+            GameMessageHelper.showMessage(binding.getRoot(), response.getMessage(),
+                    GameMessageHelper.MessageType.NEUTRAL);
         }
     }
 
     private void handleSignOutError() {
-        Toast.makeText(this, "General error RegisterGoogle.", Toast.LENGTH_LONG).show();
+        // Deprecated/Unused in new flow
     }
 
     private void saveUserData(User user) {
-        SharedPreferenceManager.saveData("user_id", user.getId());
-        SharedPreferenceManager.saveData("user_rol", user.getRol());
-        SharedPreferenceManager.saveData("user_name", user.getNames());
+        SharedPreferenceManager.saveString("user_id", user.getId());
+        SharedPreferenceManager.saveString("user_rol", user.getRol() != null ? user.getRol().name() : null);
+
+        // Only update name if it's not "Player" and the server has a real one
+        if (user.getNames() != null && !user.getNames().isEmpty() && !user.getNames().equalsIgnoreCase("Player")) {
+            SharedPreferenceManager.saveString("user_name", user.getNames());
+        }
     }
 
     private void showExitDialog() {

@@ -13,11 +13,14 @@ public class GameState implements Serializable {
     @SerializedName("players")
     private List<Player> players = new ArrayList<>();
 
-    @SerializedName("deck")
-    private List<Card> deck = new ArrayList<>();
+    @SerializedName("mainDeck")
+    private List<Card> mainDeck = new ArrayList<>();
 
-    @SerializedName("table")
-    private List<Card> table = new ArrayList<>();
+    @SerializedName("tablePile")
+    private List<Card> tablePile = new ArrayList<>();
+
+    @SerializedName("discardPile")
+    private List<Card> discardPile = new ArrayList<>();
 
     @SerializedName("currentPlayerIndex")
     private int currentPlayerIndex;
@@ -37,12 +40,16 @@ public class GameState implements Serializable {
         return players;
     }
 
-    public List<Card> getDeck() {
-        return deck;
+    public List<Card> getMainDeck() {
+        return mainDeck;
     }
 
-    public List<Card> getTable() {
-        return table;
+    public List<Card> getTablePile() {
+        return tablePile;
+    }
+
+    public List<Card> getDiscardPile() {
+        return discardPile;
     }
 
     public int getCurrentPlayerIndex() {
@@ -69,8 +76,8 @@ public class GameState implements Serializable {
     }
 
     public Card getTopCard() {
-        if (table == null || table.isEmpty())
+        if (tablePile == null || tablePile.isEmpty())
             return null;
-        return table.get(table.size() - 1);
+        return tablePile.get(tablePile.size() - 1);
     }
 }

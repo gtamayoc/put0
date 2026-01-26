@@ -53,4 +53,10 @@
     <color name="md_tertiary_container">#7D5260</color>
     <color name="md_on_tertiary_container">#FFD8E4</color>
     <color name="md_background_overlay">#66000000</color>
+
+    <!-- Message Colors (Vibrant, High Contrast, Readable) -->
+    <color name="msg_success">#43A047</color>      <!-- Material Green 600 - Better contrast -->
+    <color name="msg_info">#1E88E5</color>         <!-- Material Blue 600 - More vibrant -->
+    <color name="msg_phase">#FB8C00</color>        <!-- Material Orange 600 - Warmer -->
+    <color name="msg_neutral">#616161</color>      <!-- Material Grey 700 - Better readability -->
 </resources>

@@ -3,12 +3,16 @@ package gtc.dcc.put0.core.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import gtc.dcc.put0.core.utils.GameMessageHelper;
 
 import gtc.dcc.put0.core.data.model.GameStatus;
 import gtc.dcc.put0.core.data.model.MatchMode;
@@ -29,10 +33,28 @@ public class LobbyActivity extends AppCompatActivity {
         binding = ActivityLobbyBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        applyWindowInsets();
         initializeViewModel();
         handleIntentData();
         setupUI();
         setupObservers();
+        startLoadingProcess();
+    }
+
+    private void applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+    }
+
+    private void startLoadingProcess() {
+        // Show loading screen for 4 seconds to simulate prep and ensure server sync
+        binding.clLoadingOverlay.setVisibility(View.VISIBLE);
+        binding.clLoadingOverlay.postDelayed(() -> {
+            binding.clLoadingOverlay.setVisibility(View.GONE);
+        }, 4000);
     }
 
     private void initializeViewModel() {
@@ -66,6 +88,21 @@ public class LobbyActivity extends AppCompatActivity {
                 binding.btnStartGame.setVisibility(View.VISIBLE);
                 binding.btnShareCode.setVisibility(View.GONE);
                 binding.tvPlayerCount.setVisibility(View.GONE);
+                binding.rvLobbyPlayers.setVisibility(View.GONE); // Hide player list in solo
+
+                // Adjust constraints or weight if needed, but for now just hiding is enough
+                // to simplify the view as requested.
+                binding.llInfoContainer
+                        .setLayoutParams(new androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
+                                0, 0));
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) binding.llInfoContainer
+                        .getLayoutParams();
+                lp.matchConstraintPercentWidth = 1.0f; // Full width for info
+                lp.startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+                lp.endToEnd = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+                lp.topToBottom = binding.tvLobbyTitle.getId();
+                lp.bottomToTop = binding.llActionButtons.getId();
+                binding.llInfoContainer.setLayoutParams(lp);
                 break;
             case SOLO_VS_AMIGO:
                 binding.btnStartGame.setEnabled(false); // Enable only when 2 players
@@ -121,7 +158,7 @@ public class LobbyActivity extends AppCompatActivity {
 
         viewModel.getError().observe(this, error -> {
             if (error != null) {
-                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+                GameMessageHelper.showMessage(binding.getRoot(), error, GameMessageHelper.MessageType.NEUTRAL);
             }
         });
     }

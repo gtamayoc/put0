@@ -87,6 +87,10 @@ public class GameViewModel extends ViewModel {
         repository.drawCard(playerId);
     }
 
+    public void collectTable(String playerId) {
+        repository.collectTable(playerId);
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
