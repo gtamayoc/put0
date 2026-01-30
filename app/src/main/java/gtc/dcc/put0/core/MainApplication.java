@@ -7,10 +7,10 @@ import com.orhanobut.logger.FormatStrategy;
 import com.orhanobut.logger.Logger;
 import com.orhanobut.logger.PrettyFormatStrategy;
 
+import gtc.dcc.put0.core.utils.CoreLogger;
 import gtc.dcc.put0.core.utils.SharedPreferenceManager;
 
 public class MainApplication extends Application {
-
 
     private static String TAG = "PPUT0";
 
@@ -19,22 +19,29 @@ public class MainApplication extends Application {
         super.onCreate();
 
         SharedPreferenceManager.initialize(this);
-        Logger.d("MainApplication");
+        CoreLogger.d("MainApplication Initializing...");
         configLogger();
-        Logger.d("MainApplication");
+        configLeakCanary();
+        CoreLogger.d("MainApplication Initialized");
     }
 
     private void configLogger() {
         FormatStrategy formatStrategy = PrettyFormatStrategy.newBuilder()
-                .showThreadInfo(false)  // (Optional) Whether to show thread info or not. Default true
-                .methodCount(0)         // (Optional) How many method line to show. Default 2
-                .methodOffset(7)        // (Optional) Hides internal method calls up to offset. Default 5
-                .tag(TAG)   // (Optional) Global tag for every log. Default PRETTY_LOGGER
+                .showThreadInfo(false) // (Optional) Whether to show thread info or not. Default true
+                .methodCount(0) // (Optional) How many method line to show. Default 2
+                .methodOffset(7) // (Optional) Hides internal method calls up to offset. Default 5
+                .tag(TAG) // (Optional) Global tag for every log. Default PRETTY_LOGGER
                 .build();
 
         Logger.addLogAdapter(new AndroidLogAdapter(formatStrategy));
-
-
     }
 
+    private void configLeakCanary() {
+        try {
+            gtc.dcc.put0.core.utils.LeakEventListener.setup();
+            CoreLogger.d("LeakCanary tracking and custom logging enabled");
+        } catch (Throwable e) {
+            CoreLogger.e(e, "LeakCanary custom config failed (likely version mismatch)");
+        }
+    }
 }

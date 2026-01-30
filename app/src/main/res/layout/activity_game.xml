@@ -4,411 +4,659 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/fondo_main">
-    <!-- Panel izquierdo -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/leftPanel"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="8dp"
-        app:cardBackgroundColor="#770000"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+    android:background="@drawable/poker_table_background"
+    android:fitsSystemWindows="true">
+
+    <!-- Vignette Effect -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/vignette_gradient"
+        android:alpha="0.8" />
+
+    <!-- TOP SECTION: Opponents -->
+
+
+    <!-- LEFT SECTION: Decks -->
+    <LinearLayout
+        android:id="@+id/decksSidebar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="4dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintVertical_bias="0.1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.2">
+        app:layout_constraintBottom_toBottomOf="parent">
 
+        <!-- Main Deck -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MAIN DECK"
+            android:textColor="#66FFFFFF"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2" />
+        
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="84dp"
+            android:layout_marginTop="8dp">
+            <!-- Simulated Stack Effect -->
+            <View
+                android:layout_width="60dp"
+                android:layout_height="80dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/base" />
+            <View
+                android:layout_width="60dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:background="@drawable/base" />
+            <FrameLayout
+                android:layout_width="60dp"
+                android:layout_height="80dp"
+                android:padding="2dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/base"
+                    android:background="#1A237E" />
+                <TextView
+                    android:id="@+id/tvInitialDeck"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="48"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+        </FrameLayout>
+
+        <!-- Discard Pile -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="DISCARD"
+            android:textColor="#66FFFFFF"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2" />
+
+        <FrameLayout
+            android:id="@+id/discardPileContainer"
+            android:layout_width="70dp"
+            android:layout_height="90dp"
+            android:layout_marginTop="8dp">
+            <!-- Mock discard pile with rotation -->
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center"
+                android:src="@drawable/base"
+                android:rotation="-12"
+                android:alpha="0.5"
+                android:translationX="-5dp" />
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center"
+                android:src="@drawable/base"
+                android:rotation="8"
+                android:alpha="0.7"
+                android:translationX="3dp" />
+                android:id="@+id/descartedCards"
+                android:layout_width="55dp"
+                android:layout_height="75dp"
+                android:layout_gravity="center"
+                android:rotation="3"
+                tools:listitem="@layout/item_card"
+                android:visibility="gone"/>
+            
+            <TextView
+                android:id="@+id/tvDiscardCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/card_count_background"
+                android:paddingHorizontal="4dp"
+                android:text="0"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:elevation="10dp" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- CENTER SECTION: Play Area -->
+    <FrameLayout
+        android:id="@+id/playArea"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/playerHandSection"
+        app:layout_constraintStart_toEndOf="@id/decksSidebar"
+        app:layout_constraintEnd_toStartOf="@+id/controlsSidebar">
+
+        <!-- Spotlight Effect -->
+        <View
+            android:layout_width="300dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:background="@drawable/vignette_gradient"
+            android:alpha="0.2"
+            android:scaleX="1.5"
+            android:scaleY="1.5" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/tableCards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clipToPadding="false"
+            tools:layout_width="120dp"
+            tools:layout_height="50dp"
+            tools:listitem="@layout/item_card" />
+        
+        <!-- Turn Indicator -->
+        <TextView
+            android:id="@+id/tvTurnIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/rounded_edittext"
+            android:backgroundTint="#CC1C1B1F"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp"
+            android:text="Turn: DeepBot"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+    </FrameLayout>
+
+    <!-- RIGHT SECTION: Opponents & Controls -->
+    <LinearLayout
+        android:id="@+id/controlsSidebar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:orientation="vertical"
+        android:gravity="end"
+        app:layout_constraintVertical_bias="0.5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Opponents Container (Moved here) -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/opponentsContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:orientation="vertical"
-            android:padding="8dp">
+            android:gravity="end">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+            <!-- Opponent 1 -->
+            <LinearLayout
+                android:id="@+id/opponent1"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                app:cardBackgroundColor="#AA0000"
-                app:cardCornerRadius="4dp"
-                app:cardElevation="2dp">
-
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.7">
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="8dp">
-
+                    android:gravity="end"
+                    android:layout_marginEnd="8dp">
                     <TextView
-                        android:id="@+id/tvRound"
-                        android:layout_width="match_parent"
+                        android:id="@+id/tvOpponentName1"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Ronda (1):(23)"
+                        android:text="Alpha-One"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <Chronometer
-                        android:id="@+id/gameTimer"
-                        android:layout_width="match_parent"
+                        android:textSize="10sp"/>
+                    <TextView
+                        android:id="@+id/tvOpponentCards1"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:gravity="center"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp" />
+                        android:text="12 cards"
+                        android:textColor="#99FFFFFF"
+                        android:textSize="8sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivOpponent1"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/base"
+                        app:civ_border_color="@android:color/white"
+                        app:civ_border_width="1dp" />
+                </FrameLayout>
+            </LinearLayout>
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:fadeScrollbars="false">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <!-- Current Opponent 2 -->
+            <LinearLayout
+                android:id="@+id/opponent2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                 <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
+                    android:orientation="vertical"
+                    android:gravity="end"
+                    android:layout_marginEnd="8dp">
                     <TextView
-                        android:id="@+id/tvGameState"
-                        android:layout_width="match_parent"
+                        android:id="@+id/tvOpponentName2"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/userRecyclerView"
-                        android:layout_width="match_parent"
+                        android:text="DeepBot"
+                        android:textColor="@color/md_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/tvOpponentStatus2"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:clipToPadding="false"
-                        android:paddingVertical="4dp"
-                        android:scrollbars="vertical"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        tools:itemCount="3"
-                        tools:listitem="@layout/user_list_item" />
+                        android:text="Thinking..."
+                        android:textColor="@color/md_primary"
+                        android:textSize="8sp" />
                 </LinearLayout>
-            </ScrollView>
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivOpponent2"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/base"
+                        app:civ_border_color="@color/md_primary"
+                        app:civ_border_width="3dp" />
+                </FrameLayout>
+            </LinearLayout>
 
-            <Button
-                android:id="@+id/btnGameInfo"
-                style="@style/Widget.Material3.Button.ElevatedButton"
+            <!-- Opponent 3 -->
+            <LinearLayout
+                android:id="@+id/opponent3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.7">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="end"
+                    android:layout_marginEnd="8dp">
+                    <TextView
+                        android:id="@+id/tvOpponentName3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nexus-X"
+                        android:textColor="@android:color/white"
+                        android:textSize="10sp"/>
+                    <TextView
+                        android:id="@+id/tvOpponentCards3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="8 cards"
+                        android:textColor="#99FFFFFF"
+                        android:textSize="8sp" />
+                </LinearLayout>
+                 <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivOpponent3"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/base"
+                        app:civ_border_color="@android:color/white"
+                        app:civ_border_width="1dp" />
+                </FrameLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Buttons Panel -->
+        <LinearLayout
+            android:layout_width="145dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_edittext"
+            android:backgroundTint="#33000000"
+            android:padding="12dp"
+            android:orientation="vertical">
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPlaySelected"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="JUGAR"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:backgroundTint="#4CAF50"
+                app:icon="@drawable/ic_play_modern"
+                app:iconGravity="textStart"
+                app:iconSize="16dp"
+                android:textColor="@android:color/white" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSkipTurn"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginTop="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="PASAR"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:backgroundTint="#FF9800"
+                app:icon="@drawable/ic_skip_modern"
+                app:iconGravity="textStart"
+                app:iconSize="16dp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <!-- Match Phase Panel -->
+        <LinearLayout
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/rounded_edittext"
+            android:backgroundTint="@color/md_surface"
+            android:padding="8dp"
+            android:orientation="vertical">
+            
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Match Phase"
+                    android:textColor="#E6E1E5"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@android:color/holo_green_light" />
+            </RelativeLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="#FF0000"
-                android:text="Info Partida"
-                android:textColor="@android:color/white" />
-
-            <Button
-                android:id="@+id/btnOptions"
-                style="@style/Widget.Material3.Button.ElevatedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:backgroundTint="#FFA500"
-                android:text="Opciones"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Área de juego principal -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:padding="10dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/leftPanel"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <!-- Área superior de cartas -->
-        <LinearLayout
-            android:id="@+id/topCardsArea"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <!-- Cartas de la mesa -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#33000000"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="2dp">
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/tableCards"
-                        android:layout_width="match_parent"
-                        android:layout_height="120dp"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="4dp"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        tools:itemCount="3"
-                        tools:listitem="@layout/item_card" />
-
-                    <TextView
-                        android:id="@+id/tvTableCards"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:gravity="center"
-                        android:text="Cartas en mesa: 0/0"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Cartas descartadas -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#33000000"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="2dp">
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/descartedCards"
-                        android:layout_width="match_parent"
-                        android:layout_height="120dp"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="4dp"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        tools:itemCount="3"
-                        tools:listitem="@layout/item_card" />
-
-                    <TextView
-                        android:id="@+id/tvDescartedCards"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:gravity="center"
-                        android:text="Cartas descartadas: 0/0"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </LinearLayout>
-
-        <!-- Área de juego inferior -->
-        <LinearLayout
-            android:id="@+id/bottomArea"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <!-- Área de cartas y fases -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="horizontal">
-
-                <!-- Cartas de la mesa -->
-                <androidx.cardview.widget.CardView
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#33000000"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="1dp"
-                        android:orientation="vertical">
-
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/playerHiddenCardsFixed"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:clipToPadding="false"
-                            android:orientation="horizontal"
-                            android:paddingEnd="30dp"
-                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                            tools:itemCount="8"
-                            tools:listitem="@layout/item_card" />
-
-                        <TextView
-                            android:id="@+id/tvTableCardsHand"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginVertical="2dp"
-                            android:gravity="center"
-                            android:text="Cartas en mesa: 0/0"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Contenedor de fases -->
-                <LinearLayout
+                    android:text="Status"
+                    android:textColor="#CAC4D0"
+                    android:textSize="8sp" />
+                <TextView
+                    android:id="@+id/tvGameState"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="end|bottom"
-                    android:orientation="horizontal">
-
-                    <!-- Baraja -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/baraja"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="BARAJA"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:id="@+id/phase1Cards"
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
-                            android:layout_marginVertical="4dp"
-                            android:contentDescription="Baraja principal fase 1"
-                            android:src="@drawable/base" />
-
-                        <TextView
-                            android:id="@+id/tvInitialDeck"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0/0"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <!-- Fase 1 -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/baraja3"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="FASE 2"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:id="@+id/deckBase"
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
-                            android:layout_marginVertical="4dp"
-                            android:contentDescription="Cartas fase 2"
-                            android:src="@drawable/base" />
-
-                        <TextView
-                            android:id="@+id/tvInitialDeck2"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="3/3"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <!-- Fase 2 -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/baraja4"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="FASE 3"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:id="@+id/deckBase2"
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
-                            android:layout_marginVertical="4dp"
-                            android:contentDescription="Cartas fase 3"
-                            android:src="@drawable/base" />
-
-                        <TextView
-                            android:id="@+id/tvInitialDeck3"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="3/3"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-                </LinearLayout>
+                    android:background="@drawable/card_count_background"
+                    android:paddingHorizontal="4dp"
+                    android:text="Phase 2"
+                    android:textColor="@color/md_on_secondary_container"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Botones de control -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
+                android:layout_marginTop="4dp"
                 android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnSortHand"
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Time"
+                    android:textColor="#CAC4D0"
+                    android:textSize="8sp" />
+                <Chronometer
+                    android:id="@+id/gameTimer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="8dp"
-                    android:backgroundTint="#FFAA00"
-                    android:text="Ordenar" />
-
-                <Button
-                    android:id="@+id/btnPlaySelected"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="8dp"
-                    android:backgroundTint="#FF5500"
-                    android:enabled="false"
-                    android:text="Jugar Selección" />
-
-                <Button
-                    android:id="@+id/btnSkipTurn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="8dp"
-                    android:backgroundTint="#FF0000"
-                    android:text="Pasar" />
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- BOTTOM SECTION: Player Hand Area -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/playerHandSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Hidden Cards Pile (Left of Hand) -->
+        <LinearLayout
+            android:id="@+id/containerHiddenCards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintEnd_toStartOf="@+id/rvPlayerHand">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HIDDEN"
+                android:textSize="8sp"
+                android:textColor="#88FFFFFF"
+                android:layout_marginBottom="4dp"/>
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/ivHidden1"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="-5"/>
+                <ImageView
+                    android:id="@+id/ivHidden2"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="2"/>
+                <ImageView
+                    android:id="@+id/ivHidden3"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="8"/>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Main Hand -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPlayerHand"
+            android:layout_width="wrap_content"
+            android:layout_height="120dp"
+            android:clipToPadding="true"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintWidth_max="430dp"
+            app:layout_constraintStart_toEndOf="@+id/containerHiddenCards"
+            app:layout_constraintEnd_toStartOf="@+id/containerVisibleCards"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:layout_width="300dp"
+            tools:listitem="@layout/item_card" />
+
+        <!-- Visible Cards Pile (Right of Hand) -->
+        <LinearLayout
+            android:id="@+id/containerVisibleCards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/rvPlayerHand">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VISIBLE"
+                android:textSize="8sp"
+                android:textColor="#88FFFFFF"
+                android:layout_marginBottom="4dp"/>
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/ivVisible1"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="-8"/>
+                <ImageView
+                    android:id="@+id/ivVisible2"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="3"/>
+                <ImageView
+                    android:id="@+id/ivVisible3"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/base"
+                    android:visibility="invisible"
+                    android:rotation="10"/>
+            </FrameLayout>
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- BOTTOM LEFT: Player Info Card -->
+    <LinearLayout
+        android:id="@+id/player_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/rounded_edittext"
+        android:backgroundTint="#CC1C1B1F"
+        android:padding="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/base"
+            app:civ_border_color="@color/md_primary"
+            app:civ_border_width="1dp" />
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PLAYER ONE"
+                android:textColor="#CAC4D0"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvPlayerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alex Gonzalez"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="24dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="#33FFFFFF" />
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@android:color/transparent"
+            app:rippleColor="#40FFFFFF"
+            app:iconTint="@android:color/white"
+            app:iconSize="24dp"
+            app:icon="@drawable/ic_settings" />
+        
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHistory"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="0dp"
+            android:backgroundTint="@android:color/transparent"
+            app:rippleColor="#40FFFFFF"
+            app:iconTint="@android:color/white"
+            app:iconSize="24dp"
+            app:icon="@drawable/ic_history" />
+    </LinearLayout>
+
+
+
+    <!-- Overlay Lottie Animation -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottieAnimationView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="10dp"
+        android:scaleType="centerInside"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

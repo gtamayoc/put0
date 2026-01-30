@@ -16,6 +16,14 @@
 
     </style>
 
+    <style name="BottomSheetDialogTheme" parent="Theme.Material3.DayNight.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+    </style>
+
+    <style name="CustomBottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
 
 
 </resources>

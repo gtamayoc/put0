@@ -7,10 +7,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
-import com.orhanobut.logger.Logger;
+import gtc.dcc.put0.core.utils.CoreLogger;
 
 public final class AuthUtils {
-    private AuthUtils() {}
+    private AuthUtils() {
+    }
 
     private static GoogleSignInClient googleSignInClient;
     private static FirebaseAuth firebaseAuth;
@@ -24,7 +25,7 @@ public final class AuthUtils {
             googleSignInClient = GoogleSignIn.getClient(context, gso);
             firebaseAuth = FirebaseAuth.getInstance();
         } catch (Exception e) {
-            Logger.d("Google Sign-In initialization failed: " + e.getMessage());
+            CoreLogger.d("Google Sign-In initialization failed: " + e.getMessage());
         }
     }
 
@@ -32,8 +33,7 @@ public final class AuthUtils {
         firebaseAuth.signOut();
         SharedPreferenceManager.clearToken();
         googleSignInClient.signOut()
-                .addOnCompleteListener(activity, task ->
-                        Logger.d("User signed out successfully"));
+                .addOnCompleteListener(activity, task -> CoreLogger.d("User signed out successfully"));
         NavigationUtils.navigateToNext(activity, nextActivity);
     }
 }
