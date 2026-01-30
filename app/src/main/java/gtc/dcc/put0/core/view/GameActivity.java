@@ -1,6 +1,7 @@
 package gtc.dcc.put0.core.view;
 
 import android.app.AlertDialog;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.View;
@@ -251,7 +252,10 @@ public class GameActivity extends AppCompatActivity {
                         // Active Hand (RecyclerView)
                         if (p.getHand() != null) {
                             CoreLogger.d("GAME_STATE", "Active Hand Cards: " + p.getHand().size());
-                            boolean isPhase4 = p.getHand().stream().anyMatch(Card::isHidden);
+                            boolean isPhase4 = false;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                isPhase4 = p.getHand().stream().anyMatch(Card::isHidden);
+                            }
                             playerHandAdapter.updateData(p.getHand(), !isPhase4); // Only sort if NOT in Phase 4
                         }
 
@@ -508,8 +512,11 @@ public class GameActivity extends AppCompatActivity {
         boolean isInPhase4 = deckEmpty && currentVisibleSize == 0 && currentHiddenSize > 0 && currentHandSize > 0;
 
         // Check if any cards in hand are marked as hidden (blind play)
-        boolean hasHiddenCardsInHand = currentPlayer.getHand() != null &&
-                currentPlayer.getHand().stream().anyMatch(Card::isHidden);
+        boolean hasHiddenCardsInHand = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            hasHiddenCardsInHand = currentPlayer.getHand() != null &&
+                    currentPlayer.getHand().stream().anyMatch(Card::isHidden);
+        }
 
         // Detect transition INTO Phase 4
         if (!wasInPhase4 && isInPhase4 && hasHiddenCardsInHand) {
