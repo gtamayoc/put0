@@ -1,0 +1,14 @@
+    private void updateGamePhaseDisplay(GameState state) {
+        // Derive Global Phase
+        boolean deckEmpty = state.getMainDeck() == null || state.getMainDeck().isEmpty();
+        String phaseText = "Phase 1: Drawing";
+        if (deckEmpty) {
+            phaseText = "Phase 2: Hand Only";
+        }
+        
+        // Refine with per-player status if needed, but for global header we use Deck status
+        binding.tvGameState.setText(phaseText);
+        
+        // We could also show specific sub-phase for current player in a different text view
+        // e.g. "Drafting from Table" or "Hidden Cards"
+    }

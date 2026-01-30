@@ -22,4 +22,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "PUT0"
 include(":app")
+include(":game-core")
  

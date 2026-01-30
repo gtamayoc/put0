@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("org.sonarqube") version "7.2.2.6593"
 }
 
 android {
@@ -25,7 +26,7 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -33,13 +34,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
 dependencies {
 
+    implementation(project(":game-core"))
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

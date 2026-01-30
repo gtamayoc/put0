@@ -18,11 +18,24 @@ public class Card {
     private boolean faceUp;
     private boolean isSelected;
 
+    @SerializedName("hidden")
+    private boolean hidden;
+
     public Card(Suit suit, Rank rank, int resourceId) {
         this.suit = suit;
         this.rank = rank;
         this.rankValue = rank != null ? rank.getValue() : 0;
         this.resourceId = resourceId;
+        this.faceUp = false;
+        this.isSelected = false;
+    }
+
+    public Card(Suit suit, int rankValue, boolean hidden) {
+        this.suit = suit;
+        this.rankValue = rankValue;
+        this.rank = mapValueToRank(rankValue);
+        this.hidden = hidden;
+        this.resourceId = 0;
         this.faceUp = false;
         this.isSelected = false;
     }
@@ -94,6 +107,14 @@ public class Card {
 
     public void setSelected(boolean selected) {
         isSelected = selected;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     @Override

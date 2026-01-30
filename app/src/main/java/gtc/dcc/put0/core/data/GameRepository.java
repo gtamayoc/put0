@@ -11,6 +11,9 @@ import gtc.dcc.put0.core.data.remote.ApiClient;
 import gtc.dcc.put0.core.data.remote.GameWebSocketManager;
 import gtc.dcc.put0.core.data.remote.Put0ApiService;
 import gtc.dcc.put0.core.model.Card;
+import gtc.dcc.put0.core.utils.CoreLogger;
+import gtc.dcc.put0.core.local.LocalGameController;
+import gtc.dcc.put0.core.local.GameMapper;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -20,6 +23,10 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
 
     private final GameWebSocketManager webSocketManager;
     private final Put0ApiService apiService;
+
+    // Local Mode
+    private boolean isLocalMode = false;
+    private final LocalGameController localGameController;
 
     // Game State LiveData
     private final MutableLiveData<GameState> _gameState = new MutableLiveData<>();
@@ -31,6 +38,10 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
         webSocketManager = new GameWebSocketManager();
         webSocketManager.addListener(this);
         apiService = ApiClient.getService();
+
+        localGameController = new LocalGameController(newState -> {
+            _gameState.postValue(newState);
+        });
     }
 
     public static synchronized GameRepository getInstance() {
@@ -59,6 +70,16 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     // --- REST Actions ---
 
     public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode) {
+        if (mode == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT) {
+            CoreLogger.i("Starting local game (Solo vs Bot)");
+            isLocalMode = true;
+            _currentGameId.setValue("local-session");
+            _currentPlayerId.setValue("local-human");
+            localGameController.startSoloGame(playerName, botCount);
+            return;
+        }
+
+        isLocalMode = false;
         CreateRoomRequest request = new CreateRoomRequest(playerName, botCount, mode, false, 4);
         apiService.createRoom(request).enqueue(new Callback<RoomResponse>() {
             @Override
@@ -124,22 +145,35 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void leaveGame() {
         String gameId = _currentGameId.getValue();
         String playerId = _currentPlayerId.getValue();
-        if (gameId == null || playerId == null)
-            return;
 
-        JoinRoomRequest request = new JoinRoomRequest(gameId, playerId);
-        apiService.leaveRoom(gameId, request).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                webSocketManager.disconnect();
-                // Clear state?
-            }
+        // Execute API call to leave
+        if (gameId != null && playerId != null) {
+            JoinRoomRequest request = new JoinRoomRequest(gameId, playerId);
+            apiService.leaveRoom(gameId, request).enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    CoreLogger.i("Left game room successfully");
+                }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                webSocketManager.disconnect();
-            }
-        });
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    CoreLogger.e("Error leaving room: " + t.getMessage());
+                }
+            });
+        }
+
+        // Always disconnect and clear local state
+        webSocketManager.disconnect();
+        isLocalMode = false;
+        resetGameState();
+    }
+
+    public void resetGameState() {
+        _gameState.postValue(null);
+        _currentGameId.postValue(null);
+        _currentPlayerId.postValue(null);
+        _error.postValue(null);
+        CoreLogger.i("Local game state cleared");
     }
 
     private void updateGameInfo(RoomResponse room) {
@@ -154,6 +188,13 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void playCard(String playerId, Card card) {
         if (_currentGameId.getValue() == null)
             return;
+        CoreLogger.i("[GAME-ACTION] Playing card: " + card + " for player: " + playerId);
+
+        if (isLocalMode) {
+            localGameController.playCard(playerId, card);
+            return;
+        }
+
         GameAction action = new GameAction(_currentGameId.getValue(), playerId, card);
         webSocketManager.send("/app/game/play", action);
     }
@@ -161,8 +202,29 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
     public void drawCard(String playerId) {
         if (_currentGameId.getValue() == null)
             return;
+        CoreLogger.i("[GAME-ACTION] Drawing card for player: " + playerId);
+
+        if (isLocalMode) {
+            localGameController.drawCard(playerId);
+            return;
+        }
+
         GameAction action = new GameAction(_currentGameId.getValue(), playerId, null);
         webSocketManager.send("/app/game/draw", action);
+    }
+
+    public void collectTable(String playerId) {
+        if (_currentGameId.getValue() == null)
+            return;
+        CoreLogger.i("[GAME-ACTION] Collecting table for player: " + playerId);
+
+        if (isLocalMode) {
+            localGameController.collectTable(playerId);
+            return;
+        }
+
+        GameAction action = new GameAction(_currentGameId.getValue(), playerId, null);
+        webSocketManager.send("/app/game/collect", action);
     }
 
     @Override

@@ -11,4 +11,63 @@
         <item>5</item>
         <item>6</item>
     </string-array>
+
+    <!-- Game Messages: Player Actions -->
+    <string name="msg_card_played">Carta jugada</string>
+    <string name="msg_table_cleared">Mesa limpia. Juegas de nuevo</string>
+    <string name="msg_table_cleared_short">¡Mesa despejada!</string>
+    <string name="msg_cards_collected">Cartas recogidas</string>
+    <string name="msg_cards_to_hand">Las cartas van a tu mano</string>
+    <string name="msg_hand_sorted">Mano ordenada</string>
+
+    <!-- Game Messages: Phase Transitions -->
+    <string name="msg_phase_deck_empty">Ya no hay cartas para robar</string>
+    <string name="msg_phase_deck_empty_short">El mazo se agotó</string>
+    <string name="msg_phase_visible">Jugando cartas visibles</string>
+    <string name="msg_phase_visible_alt">Ahora juegas las cartas de abajo</string>
+    <string name="msg_phase_hidden">Jugando a ciegas</string>
+    <string name="msg_phase_hidden_alt">Última fase: cartas ocultas</string>
+    <string name="msg_phase_regression">Las cartas vuelven a la pila</string>
+    <string name="msg_phase_regression_alt">Regresando a la fase anterior</string>
+
+    <!-- Game Messages: Invalid Plays / Penalties -->
+    <string name="msg_cannot_play">No se pudo jugar</string>
+    <string name="msg_card_no_match">La carta no encaja</string>
+    <string name="msg_collect_table">Recoges la mesa</string>
+    <string name="msg_blind_failed">No fue posible</string>
+    <string name="msg_blind_failed_alt">La suerte no acompañó</string>
+    <string name="msg_still_playing">Sigues en juego</string>
+    <string name="msg_wait_turn">Espera tu turno</string>
+    <string name="msg_wait_turn_alt">Otro jugador está jugando</string>
+    <string name="msg_card_not_available">Esa carta aún no está disponible</string>
+    <string name="msg_card_not_available_alt">Juega primero las cartas de tu mano</string>
+    <string name="msg_table_empty">No hay cartas en la mesa</string>
+    <string name="msg_table_empty_alt">La mesa está vacía</string>
+
+    <!-- Game Messages: Game States -->
+    <string name="msg_connecting">Conectando…</string>
+    <string name="msg_preparing_game">Preparando partida…</string>
+    <string name="msg_waiting_players">Esperando jugadores…</string>
+    <string name="msg_room_open">Sala abierta</string>
+    <string name="msg_game_started">¡Comienza la partida!</string>
+    <string name="msg_game_started_alt">¡A jugar!</string>
+    <string name="msg_your_turn">Tu turno</string>
+    <string name="msg_your_turn_alt">Es tu momento</string>
+    <string name="msg_turn_of">Turno de %s</string>
+    <string name="msg_player_playing">%s está jugando</string>
+
+    <!-- Game Messages: Victory & End Game -->
+    <string name="msg_you_won">¡Ganaste!</string>
+    <string name="msg_you_won_alt">¡Victoria!</string>
+    <string name="msg_game_completed">Partida completada</string>
+    <string name="msg_player_won">%s ganó la partida</string>
+    <string name="msg_game_over">Fin de la partida</string>
+    <string name="msg_leave_game">¿Salir de la partida?</string>
+    <string name="msg_game_in_progress">Partida en curso</string>
+
+    <!-- Game Messages: System Errors -->
+    <string name="msg_reconnecting">Reconectando…</string>
+    <string name="msg_connection_lost">Conexión interrumpida</string>
+    <string name="msg_temporary_issue">Problema temporal</string>
+    <string name="msg_retrying">Reintentando…</string>
 </resources>

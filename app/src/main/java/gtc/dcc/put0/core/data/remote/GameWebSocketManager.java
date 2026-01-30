@@ -82,6 +82,7 @@ public class GameWebSocketManager {
                         // Assuming simple parsing for now, user might need DTO for update
                         GameStateUpdate update = gson.fromJson(topicMessage.getPayload(), GameStateUpdate.class);
                         if (update != null && update.gameState != null) {
+                            CoreLogger.i("[WS-UPDATE] Type: " + update.type + " | Message: " + update.message);
                             notifyListeners(update.gameState);
                         }
                     } catch (Exception e) {
@@ -99,7 +100,7 @@ public class GameWebSocketManager {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(() -> {
-                        CoreLogger.d("Sent message to " + endpoint);
+                        CoreLogger.i("[WS-SENT] Endpoint: " + endpoint);
                     }, throwable -> {
                         CoreLogger.e(throwable, "Error sending message");
                     }));

@@ -99,4 +99,10 @@ public class Player implements Serializable {
     public void setCardCount(int cardCount) {
         this.cardCount = cardCount;
     }
+
+    public boolean hasWon() {
+        return (hand == null || hand.isEmpty()) &&
+                (visibleCards == null || visibleCards.isEmpty()) &&
+                (hiddenCards == null || hiddenCards.isEmpty());
+    }
 }

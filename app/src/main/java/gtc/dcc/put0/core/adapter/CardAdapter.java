@@ -77,17 +77,27 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         List<Card> cardsToUpdate = new ArrayList<>(newCards);
 
         if (shouldSort) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                // Use a proper comparator if available, for now sort by value
+            // Do NOT sort if there are hidden cards (Phase 4), as sorting reveals their
+            // values by position
+            boolean hasHiddenCards = false;
+            for (Card c : cardsToUpdate) {
+                if (c.isHidden()) {
+                    hasHiddenCards = true;
+                    break;
+                }
+            }
+
+            if (!hasHiddenCards && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 Collections.sort(cardsToUpdate, Comparator.comparingInt(Card::getRankValue));
             }
         }
 
-        // DiffUtil can be tricky with mutable/immutable mixed checking.
-        // For stability in this verification phase, we use notifyDataSetChanged.
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new CardDiffCallback(this.cards, cardsToUpdate));
+
         this.cards.clear();
         this.cards.addAll(cardsToUpdate);
 
+        // Re-sync selection with new list objects (since they might be new instances)
         List<Card> currentlySelected = new ArrayList<>(selectedCards);
         selectedCards.clear();
         for (Card card : currentlySelected) {
@@ -96,16 +106,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
         }
 
-        notifyDataSetChanged();
-
-        /*
-         * DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new
-         * CardDiffCallback(this.cards, cardsToUpdate));
-         * this.cards.clear();
-         * this.cards.addAll(cardsToUpdate);
-         * ...
-         * diffResult.dispatchUpdatesTo(this);
-         */
+        diffResult.dispatchUpdatesTo(this);
 
         if (onCardClickListener != null) {
             onCardClickListener.onSelectionChanged(selectedCards);
@@ -166,7 +167,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         }
 
         void bind(Card card) {
-            if (isHidden) {
+            if (isHidden || card.isHidden()) {
                 cardImage.setImageResource(R.drawable.base);
             } else {
                 int resourceId = DeckUtils.getCardResourceId(itemView.getContext(), card);

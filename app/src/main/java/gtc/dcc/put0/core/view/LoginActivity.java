@@ -46,15 +46,34 @@ public class LoginActivity extends AppCompatActivity {
     UserViewModel userViewModel;
 
     private GoogleSignInClient mainActivity;
-
-    private static final int RC_SIGN_IN = 9001;
     private FirebaseAuth mAuth;
     private User user = new User();
+    private androidx.activity.result.ActivityResultLauncher<Intent> googleSignInLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         loadCompatibility();
+        // Initialize launcher before creation is complete
+        googleSignInLauncher = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        Intent data = result.getData();
+                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+                        try {
+                            // Google Sign In was successful, authenticate with Firebase
+                            GoogleSignInAccount account = task.getResult(ApiException.class);
+                            CoreLogger.d("LoginActivity firebaseAuthWithGoogle:" + account.getId());
+                            firebaseAuthWithGoogle(account.getIdToken());
+                        } catch (ApiException e) {
+                            // Google Sign In failed, update UI appropriately
+                            CoreLogger.d("LoginActivity Google sign in failed: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
         loadComponents();
         loadViewModel();
     }
@@ -81,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void signIn() {
         Intent signInIntent = mainActivity.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+        googleSignInLauncher.launch(signInIntent);
     }
 
     private void signOut() {
@@ -182,35 +201,6 @@ public class LoginActivity extends AppCompatActivity {
         NavigationUtils.navigateToNext(this, MainActivity.class);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        /*
-         * if (binding.facebookButton.isEnabled()) {
-         * CoreLogger.d("ffacebookButton:");
-         * // Pasar el resultado a CallbackManager de Facebook
-         * callbackManager.onActivityResult(requestCode, resultCode, data);
-         * }
-         */
-
-        // Manejo de resultados de Google Sign-In
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                // Google Sign In was successful, authenticate with Firebase
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                CoreLogger.d("LoginActivity firebaseAuthWithGoogle:" + account.getId());
-                firebaseAuthWithGoogle(account.getIdToken());
-            } catch (ApiException e) {
-                // Google Sign In failed, update UI appropriately
-                CoreLogger.d("LoginActivity Google sign in failed: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-
-    }
-
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -236,11 +226,22 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "FirebaseUser is null, cannot proceed.", Toast.LENGTH_LONG).show();
             return;
         }
+
+        // Save name and email to SharedPrefs immediately
+        String displayName = firebaseUser.getDisplayName();
+        if (displayName != null && !displayName.isEmpty()) {
+            SharedPreferenceManager.saveString("user_name", displayName);
+            CoreLogger.d("Saved user name from Google: " + displayName);
+        }
+
+        String email = firebaseUser.getEmail();
+        if (email != null) {
+            SharedPreferenceManager.saveString("user_email", email);
+        }
+
         Toast.makeText(this, "Login con Google Valid.", Toast.LENGTH_LONG).show();
 
         NavigationUtils.navigateToNext(this, MainActivity.class);
-        // Guardar el usuario usando el ViewModel
-        // userViewModel.loginGoogle(userData(firebaseUser));
     }
 
     // Métodos auxiliares para mejorar la organización y legibilidad
@@ -312,7 +313,7 @@ public class LoginActivity extends AppCompatActivity {
         User user = new User();
         user.setEmailAddress(this.user.getEmailAddress());
         user.setUserPassword(this.user.getUserPassword());
-        SharedPreferenceManager.saveData("user_email", user.getEmailAddress());
+        SharedPreferenceManager.saveString("user_email", user.getEmailAddress());
         return user;
     }
 

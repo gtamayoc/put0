@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/fondo_main"
+    android:fitsSystemWindows="true"
     tools:context=".core.view.MainActivity">
 
     <!-- Profile Photo - Top Left Corner -->

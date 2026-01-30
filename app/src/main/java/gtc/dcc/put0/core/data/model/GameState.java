@@ -13,11 +13,14 @@ public class GameState implements Serializable {
     @SerializedName("players")
     private List<Player> players = new ArrayList<>();
 
-    @SerializedName("deck")
-    private List<Card> deck = new ArrayList<>();
+    @SerializedName("mainDeck")
+    private List<Card> mainDeck = new ArrayList<>();
 
-    @SerializedName("table")
-    private List<Card> table = new ArrayList<>();
+    @SerializedName("tablePile")
+    private List<Card> tablePile = new ArrayList<>();
+
+    @SerializedName("discardPile")
+    private List<Card> discardPile = new ArrayList<>();
 
     @SerializedName("currentPlayerIndex")
     private int currentPlayerIndex;
@@ -28,6 +31,46 @@ public class GameState implements Serializable {
     @SerializedName("winnerId")
     private String winnerId;
 
+    @SerializedName("lastAction")
+    private String lastAction;
+
+    // Setters
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
+    }
+
+    public void setMainDeck(List<Card> mainDeck) {
+        this.mainDeck = mainDeck;
+    }
+
+    public void setTablePile(List<Card> tablePile) {
+        this.tablePile = tablePile;
+    }
+
+    public void setDiscardPile(List<Card> discardPile) {
+        this.discardPile = discardPile;
+    }
+
+    public void setCurrentPlayerIndex(int index) {
+        this.currentPlayerIndex = index;
+    }
+
+    public void setStatus(GameStatus status) {
+        this.status = status;
+    }
+
+    public void setWinnerId(String winnerId) {
+        this.winnerId = winnerId;
+    }
+
+    public void setLastAction(String lastAction) {
+        this.lastAction = lastAction;
+    }
+
     // Getters
     public String getGameId() {
         return gameId;
@@ -37,12 +80,16 @@ public class GameState implements Serializable {
         return players;
     }
 
-    public List<Card> getDeck() {
-        return deck;
+    public List<Card> getMainDeck() {
+        return mainDeck;
     }
 
-    public List<Card> getTable() {
-        return table;
+    public List<Card> getTablePile() {
+        return tablePile;
+    }
+
+    public List<Card> getDiscardPile() {
+        return discardPile;
     }
 
     public int getCurrentPlayerIndex() {
@@ -57,6 +104,10 @@ public class GameState implements Serializable {
         return winnerId;
     }
 
+    public String getLastAction() {
+        return lastAction;
+    }
+
     public Player getCurrentPlayer() {
         if (players == null || players.isEmpty() || currentPlayerIndex < 0 || currentPlayerIndex >= players.size())
             return null;
@@ -69,8 +120,8 @@ public class GameState implements Serializable {
     }
 
     public Card getTopCard() {
-        if (table == null || table.isEmpty())
+        if (tablePile == null || tablePile.isEmpty())
             return null;
-        return table.get(table.size() - 1);
+        return tablePile.get(tablePile.size() - 1);
     }
 }
