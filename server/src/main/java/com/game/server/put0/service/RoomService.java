@@ -1,8 +1,9 @@
 package com.game.server.put0.service;
 
-import com.game.server.put0.model.Player;
+import com.game.core.model.Player;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -11,9 +12,10 @@ import java.util.UUID;
  * Service for managing rooms and lobbies.
  */
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class RoomService {
+
+    private static final Logger log = LoggerFactory.getLogger(RoomService.class);
     
     private final GameEngine gameEngine;
     
@@ -24,7 +26,7 @@ public class RoomService {
      * @param botCount Number of AI bots to add
      * @return The game ID and player ID
      */
-    public RoomCreationResult createRoom(String playerName, int botCount, com.game.server.put0.model.MatchMode mode) {
+    public RoomCreationResult createRoom(String playerName, int botCount, com.game.core.model.MatchMode mode) {
         if (playerName == null || playerName.trim().isEmpty()) {
             throw new IllegalArgumentException("Player name cannot be empty");
         }
@@ -38,7 +40,7 @@ public class RoomService {
         String playerId = UUID.randomUUID().toString();
         
         // Create game
-        com.game.server.put0.model.GameState game = gameEngine.createGame(gameId);
+        com.game.core.model.GameState game = gameEngine.createGame(gameId);
         game.setMode(mode);
         
         // Add human player
