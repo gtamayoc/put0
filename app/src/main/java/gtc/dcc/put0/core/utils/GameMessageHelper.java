@@ -115,11 +115,18 @@ public class GameMessageHelper {
             return;
         }
 
+        // Adjust duration based on message length (Amigable: give time to read)
+        int finalDuration = durationMs;
+        if (message.length() > 60) {
+            finalDuration = Math.max(durationMs, DURATION_LONG);
+        }
+        if (message.length() > 120) {
+            finalDuration = 6000; // 6 seconds for very long text
+        }
+
         // Create Snackbar
         Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
-
-        // Set custom duration
-        snackbar.setDuration(durationMs);
+        snackbar.setDuration(finalDuration);
 
         // Apply styling based on message type
         applyMessageStyle(snackbar, type, context);
@@ -152,18 +159,16 @@ public class GameMessageHelper {
     /**
      * Applies visual styling to Snackbar based on message type.
      * Uses custom layout for better typography and visual design.
-     * 
-     * @param snackbar Snackbar to style
-     * @param type     Message type
-     * @param context  Context for resolving colors
      */
     private static void applyMessageStyle(@NonNull Snackbar snackbar, @NonNull MessageType type,
             @NonNull Context context) {
         // Get Snackbar's layout
         Snackbar.SnackbarLayout snackbarLayout = (Snackbar.SnackbarLayout) snackbar.getView();
 
-        // Remove default padding to use custom layout
+        // Ensure transparent background for the container
+        snackbarLayout.setBackgroundColor(Color.TRANSPARENT);
         snackbarLayout.setPadding(0, 0, 0, 0);
+        snackbarLayout.setElevation(dpToPx(context, 8));
 
         // Inflate custom layout
         View customView = LayoutInflater.from(context)
@@ -175,10 +180,17 @@ public class GameMessageHelper {
 
         // Get the original Snackbar TextView to extract the message
         TextView originalTextView = snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text);
-        CharSequence messageText = originalTextView != null ? originalTextView.getText() : "";
+        String messageText = originalTextView != null ? originalTextView.getText().toString() : "";
 
         // Set message text to custom view
         textView.setText(messageText);
+
+        // Adapt text alignment for long vs short text
+        if (messageText.length() > 40) {
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+        } else {
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        }
 
         // Configure background color and icon based on type
         int backgroundColor;
@@ -187,7 +199,7 @@ public class GameMessageHelper {
         switch (type) {
             case SUCCESS:
                 backgroundColor = ContextCompat.getColor(context, R.color.msg_success);
-                iconResId = android.R.drawable.ic_menu_info_details; // Checkmark icon
+                iconResId = android.R.drawable.ic_menu_info_details;
                 break;
             case INFO:
                 backgroundColor = ContextCompat.getColor(context, R.color.msg_info);
@@ -200,16 +212,21 @@ public class GameMessageHelper {
             case NEUTRAL:
             default:
                 backgroundColor = ContextCompat.getColor(context, R.color.msg_neutral);
-                iconResId = 0; // No icon for neutral
+                iconResId = 0;
                 break;
         }
 
-        // Apply background color to custom view
-        GradientDrawable background = (GradientDrawable) customView.getBackground();
-        if (background != null) {
-            background.setColor(backgroundColor);
+        // Apply background color to custom view's background drawable
+        // We use setTint to preserve any shape/gradient properties if using a
+        // RippleDrawable or similar
+        View container = customView;
+        android.graphics.drawable.Drawable background = container.getBackground();
+        if (background instanceof GradientDrawable) {
+            ((GradientDrawable) background).setColor(backgroundColor);
+        } else if (background != null) {
+            background.setTint(backgroundColor);
         } else {
-            customView.setBackgroundColor(backgroundColor);
+            container.setBackgroundColor(backgroundColor);
         }
 
         // Show/hide icon
@@ -220,56 +237,46 @@ public class GameMessageHelper {
             iconView.setVisibility(View.GONE);
         }
 
-        // Remove default TextView
+        // Remove default views and add custom view
         ((ViewGroup) snackbarLayout.getChildAt(0)).removeAllViews();
-
-        // Add custom view
         snackbarLayout.addView(customView, 0);
 
-        // Configure Snackbar positioning (Notification Style - TOP, Centered, Wrap
-        // Content)
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) snackbarLayout.getLayoutParams();
-        params.width = ViewGroup.LayoutParams.WRAP_CONTENT; // Allow it to shrink to fit content
+        // Configure Snackbar positioning (Top Floating Card Style)
+        ViewGroup.LayoutParams layoutParams = snackbarLayout.getLayoutParams();
+        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) layoutParams;
 
-        // Calculate top margin (adjust for status bar if needed, usually handled by
-        // fitSystemWindows)
-        // We want it to "float" a bit from the top edge
-        int topMargin = dpToPx(context, 48); // Lower it below status bar/toolbar area
+            // Adjust width logic: use WRAP_CONTENT but ensure it doesn't look weird on wide
+            // screens
+            params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
 
-        // Add margins for floating card effect
-        params.setMargins(
-                dpToPx(context, 16), // left
-                topMargin, // top (Start from top)
-                dpToPx(context, 16), // right
-                0 // bottom
-        );
+            // Positioning at the top with enough margin to clear status bar
+            int topMargin = dpToPx(context, 48);
+            int sideMargin = dpToPx(context, 16);
 
-        // Force Gravity to TOP
-        if (params instanceof android.widget.FrameLayout.LayoutParams) {
-            ((android.widget.FrameLayout.LayoutParams) params).gravity = android.view.Gravity.TOP
-                    | android.view.Gravity.CENTER_HORIZONTAL;
-        } else if (params instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
-            ((androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) params).gravity = android.view.Gravity.TOP
-                    | android.view.Gravity.CENTER_HORIZONTAL;
+            params.setMargins(sideMargin, topMargin, sideMargin, 0);
+
+            // Set gravity to TOP and CENTER
+            if (params instanceof android.widget.FrameLayout.LayoutParams) {
+                ((android.widget.FrameLayout.LayoutParams) params).gravity = android.view.Gravity.TOP
+                        | android.view.Gravity.CENTER_HORIZONTAL;
+            } else if (params instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+                ((androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) params).gravity = android.view.Gravity.TOP
+                        | android.view.Gravity.CENTER_HORIZONTAL;
+            }
+
+            snackbarLayout.setLayoutParams(params);
         }
 
-        // Make corners rounded and ensure elevation
-        snackbarLayout.setLayoutParams(params);
-
-        // Actually default animation slides from bottom. For top, we might need a
-        // custom animation or just accept the fade.
-        // For simplicity and efficiency, we rely on the layout jumping to top.
-        // Snackbar doesn't natively support slide-down.
-        // We can add a simple translation animation on the view itself.
-
-        snackbarLayout.setTranslationY(-dpToPx(context, 100)); // Start off-screen top
-        snackbarLayout.animate().translationY(0).setDuration(300)
-                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
-
-        snackbarLayout.setElevation(dpToPx(context, 8));
-
-        // Ensure background is transparent (custom view handles background)
-        snackbarLayout.setBackgroundColor(Color.TRANSPARENT);
+        // Smooth Entrance Animation (Slide down from top)
+        snackbarLayout.setAlpha(0f);
+        snackbarLayout.setTranslationY(-dpToPx(context, 48));
+        snackbarLayout.animate()
+                .translationY(0)
+                .alpha(1f)
+                .setDuration(400)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
     }
 
     /**

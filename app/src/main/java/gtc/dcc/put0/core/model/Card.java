@@ -30,6 +30,16 @@ public class Card {
         this.isSelected = false;
     }
 
+    public Card(Suit suit, int rankValue, boolean hidden) {
+        this.suit = suit;
+        this.rankValue = rankValue;
+        this.rank = mapValueToRank(rankValue);
+        this.hidden = hidden;
+        this.resourceId = 0;
+        this.faceUp = false;
+        this.isSelected = false;
+    }
+
     public Card(Suit suit, Rank rank) {
         this(suit, rank, 0);
     }

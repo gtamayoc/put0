@@ -162,11 +162,6 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        binding.btnSortHand.setOnClickListener(v -> {
-            playerHandAdapter.shuffleCards(); // Or sort
-            GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_hand_sorted,
-                    GameMessageHelper.MessageType.INFO);
-        });
 
         binding.btnPlaySelected.setOnClickListener(v -> {
             List<Card> selectedCards = playerHandAdapter.getSelectedCards();
@@ -243,6 +238,11 @@ public class GameActivity extends AppCompatActivity {
             checkGameOver(state);
 
             if (myId != null) {
+                // Show last action if available (Local or Server)
+//                if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
+//                    //GameMessageHelper.showMessage(binding.getRoot(), state.getLastAction(), GameMessageHelper.MessageType.INFO);
+//                }
+
                 for (Player p : state.getPlayers()) {
                     if (p.getId().equals(myId)) {
                         // Detect Phase 4 transitions and failures
@@ -423,16 +423,22 @@ public class GameActivity extends AppCompatActivity {
 
         binding.tvGameState.setText(phaseText);
 
-        // Update Turn Indicator
+        // Update Turn Indicator & Buttons State
         if (state.getCurrentPlayer() != null) {
             String turnText = "Turn: " + state.getCurrentPlayer().getName();
             binding.tvTurnIndicator.setText(turnText);
 
             // Optional: Highlight if it's my turn
-            boolean isMyTurn = state.getCurrentPlayer().getId().equals(viewModel.getCurrentPlayerId().getValue());
+            String myId = viewModel.getCurrentPlayerId().getValue();
+            boolean isMyTurn = state.getCurrentPlayer().getId().equals(myId);
             binding.tvTurnIndicator.setAlpha(isMyTurn ? 1.0f : 0.7f);
-            binding.tvTurnIndicator.setBackgroundResource(isMyTurn ? R.drawable.rounded_edittext : 0); // Example
-                                                                                                       // highlight
+            binding.tvTurnIndicator.setBackgroundResource(isMyTurn ? R.drawable.rounded_edittext : 0);
+
+            // Update Skip/Collect button state
+            // Rules: Can only collect if it's my turn AND table is not empty
+            boolean canCollect = isMyTurn && state.getTablePile() != null && !state.getTablePile().isEmpty();
+            binding.btnSkipTurn.setEnabled(canCollect);
+            binding.btnSkipTurn.setAlpha(canCollect ? 1.0f : 0.5f);
         }
     }
 
@@ -684,6 +690,18 @@ public class GameActivity extends AppCompatActivity {
             // For now, assume strict follow suit.
             return false;
         }
+    }
+
+    private String mapErrorToFriendlyMessage(String error) {
+        if (error == null)
+            return "Unknown error";
+        if (error.contains("Network"))
+            return "Error de red. Intenta de nuevo.";
+        if (error.contains("not your turn"))
+            return "No es tu turno aún.";
+        if (error.contains("Invalid card"))
+            return "Esta carta no se puede jugar ahora.";
+        return error;
     }
 
     @Override

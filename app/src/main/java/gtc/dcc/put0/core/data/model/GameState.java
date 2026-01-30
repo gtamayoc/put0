@@ -31,6 +31,46 @@ public class GameState implements Serializable {
     @SerializedName("winnerId")
     private String winnerId;
 
+    @SerializedName("lastAction")
+    private String lastAction;
+
+    // Setters
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
+    }
+
+    public void setMainDeck(List<Card> mainDeck) {
+        this.mainDeck = mainDeck;
+    }
+
+    public void setTablePile(List<Card> tablePile) {
+        this.tablePile = tablePile;
+    }
+
+    public void setDiscardPile(List<Card> discardPile) {
+        this.discardPile = discardPile;
+    }
+
+    public void setCurrentPlayerIndex(int index) {
+        this.currentPlayerIndex = index;
+    }
+
+    public void setStatus(GameStatus status) {
+        this.status = status;
+    }
+
+    public void setWinnerId(String winnerId) {
+        this.winnerId = winnerId;
+    }
+
+    public void setLastAction(String lastAction) {
+        this.lastAction = lastAction;
+    }
+
     // Getters
     public String getGameId() {
         return gameId;
@@ -62,6 +102,10 @@ public class GameState implements Serializable {
 
     public String getWinnerId() {
         return winnerId;
+    }
+
+    public String getLastAction() {
+        return lastAction;
     }
 
     public Player getCurrentPlayer() {
