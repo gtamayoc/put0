@@ -3,11 +3,12 @@ package com.game.server.put0.controller;
 import com.game.server.put0.dto.DrawCardRequest;
 import com.game.server.put0.dto.GameStateUpdate;
 import com.game.server.put0.dto.PlayCardRequest;
-import com.game.server.put0.model.GameState;
+import com.game.core.model.GameState;
 import com.game.server.put0.service.AIBotService;
 import com.game.server.put0.service.GameEngine;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -18,9 +19,10 @@ import org.springframework.stereotype.Controller;
  * Server broadcasts updates to /topic/game/{gameId}.
  */
 @Controller
-@Slf4j
 @RequiredArgsConstructor
 public class GameWebSocketController {
+
+    private static final Logger log = LoggerFactory.getLogger(GameWebSocketController.class);
     
     private final GameEngine gameEngine;
     private final AIBotService aiBotService;

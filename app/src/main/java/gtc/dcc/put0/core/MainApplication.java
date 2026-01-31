@@ -21,7 +21,6 @@ public class MainApplication extends Application {
         SharedPreferenceManager.initialize(this);
         CoreLogger.d("MainApplication Initializing...");
         configLogger();
-        configLeakCanary();
         CoreLogger.d("MainApplication Initialized");
     }
 
@@ -36,12 +35,4 @@ public class MainApplication extends Application {
         Logger.addLogAdapter(new AndroidLogAdapter(formatStrategy));
     }
 
-    private void configLeakCanary() {
-        try {
-            gtc.dcc.put0.core.utils.LeakEventListener.setup();
-            CoreLogger.d("LeakCanary tracking and custom logging enabled");
-        } catch (Throwable e) {
-            CoreLogger.e(e, "LeakCanary custom config failed (likely version mismatch)");
-        }
-    }
 }
