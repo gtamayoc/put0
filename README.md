@@ -11,7 +11,7 @@ PUT0 es un emocionante juego de cartas multijugador desarrollado para Android, q
 
 **Cronograma de Lanzamiento:**
 - Alpha 1.0: Disponible Actualmente
-- Lanzamiento Completo: Previsto para finales de 2025
+- Lanzamiento Completo: Previsto para finales de 2026
 
 ## 🎮 Descripción General
 
@@ -141,10 +141,10 @@ Este proyecto estará disponible bajo una licencia que permitirá:
 ---
 
 ### 🚀 Roadmap 2025
-- Q1 2025: Beta cerrada
-- Q2 2025: Beta abierta
-- Q3 2025: Release Candidate
-- Q4 2025: ¡Lanzamiento oficial! 🎉
+- Q1 2026: Beta cerrada
+- Q2 2026: Beta abierta
+- Q3 2026: Release Candidate
+- Q4 2026: ¡Lanzamiento oficial! 🎉
 
 > *PUT0 está actualmente en fase Alpha 1.0.0. Estamos trabajando arduamente para pulir cada aspecto del juego. ¡Prepárate para una experiencia única que revolucionará tus partidas con amigos!*
 
@@ -210,3 +210,7 @@ Este proyecto estará disponible bajo una licencia que permitirá:
 Todas las bibliotecas mencionadas se utilizan bajo sus respectivas licencias de código abierto. Agradecemos especialmente a la comunidad de código abierto por hacer posible este proyecto.
 
 >*Este proyecto no sería posible sin estas herramientas y sus dedicados desarrolladores.*
+
+El nombre "PUT0", su identidad visual y mecánicas oficiales
+no están cubiertos por la licencia y no pueden usarse
+para confundir o suplantar el proyecto original.
