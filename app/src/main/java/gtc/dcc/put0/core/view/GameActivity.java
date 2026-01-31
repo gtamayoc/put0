@@ -240,9 +240,10 @@ public class GameActivity extends AppCompatActivity {
 
             if (myId != null) {
                 // Show last action if available (Local or Server)
-//                if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
-//                    //GameMessageHelper.showMessage(binding.getRoot(), state.getLastAction(), GameMessageHelper.MessageType.INFO);
-//                }
+                // if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
+                // //GameMessageHelper.showMessage(binding.getRoot(), state.getLastAction(),
+                // GameMessageHelper.MessageType.INFO);
+                // }
 
                 for (Player p : state.getPlayers()) {
                     if (p.getId().equals(myId)) {
@@ -406,43 +407,78 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void updateGamePhaseDisplay(GameState state) {
-        // Derive Global Phase based on Main Deck
+        // 1. Determine Phase
         boolean deckEmpty = state.getMainDeck() == null || state.getMainDeck().isEmpty();
-        String phaseText = "F1: Drawing";
+        String phaseName = "F1: Robando";
+        int phaseIndex = 1;
 
         if (deckEmpty) {
-            phaseText = "F2: No Draw";
+            phaseName = "F2: Mano";
+            phaseIndex = 2;
         }
 
-        // If current player has no cards in hand, they might be in F3/F4
         Player currentPlayer = state.getCurrentPlayer();
         if (currentPlayer != null && deckEmpty) {
             if (currentPlayer.getHand().isEmpty() && !currentPlayer.getVisibleCards().isEmpty()) {
-                phaseText = "F3: Visible Cards";
+                phaseName = "F3: Visibles";
+                phaseIndex = 3;
             } else if (currentPlayer.getHand().isEmpty() && currentPlayer.getVisibleCards().isEmpty()
                     && !currentPlayer.getHiddenCards().isEmpty()) {
-                phaseText = "F4: Hidden Cards";
+                phaseName = "F4: Ocultas";
+                phaseIndex = 4;
             }
         }
 
-        binding.tvGameState.setText(phaseText);
+        // 2. Update Status Panel
+        binding.tvGameState.setText(phaseName);
 
-        // Update Turn Indicator & Buttons State
+        // Update Dots
+        int activeColor = ContextCompat.getColor(this, R.color.md_primary);
+        int inactiveColor = 0x33FFFFFF;
+        binding.phaseDot1.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(phaseIndex >= 1 ? activeColor : inactiveColor));
+        binding.phaseDot2.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(phaseIndex >= 2 ? activeColor : inactiveColor));
+        binding.phaseDot3.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(phaseIndex >= 3 ? activeColor : inactiveColor));
+        binding.phaseDot4.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(phaseIndex >= 4 ? activeColor : inactiveColor));
+
+        // Update Last Action
+        if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
+            binding.tvLastAction.setText(state.getLastAction());
+        }
+
+        // Update Table Target
+        Card topCard = state.getTopCard();
+        if (topCard != null) {
+            String target = "Superar " + gtc.dcc.put0.core.utils.DeckUtils.getCardShortDescription(topCard);
+            binding.tvTableTarget.setText(target);
+            // Color based on suit (red for hearts/diamonds, else white)
+            boolean isRed = topCard.getSuit() == gtc.dcc.put0.core.model.Suit.HEARTS
+                    || topCard.getSuit() == gtc.dcc.put0.core.model.Suit.DIAMONDS;
+            binding.tvTableTarget.setTextColor(isRed ? 0xFFFF5252 : 0xFFFFFFFF);
+        } else {
+            binding.tvTableTarget.setText("Cualquier carta");
+            binding.tvTableTarget.setTextColor(0xFFFFFFFF);
+        }
+
+        // 3. Update Turn Indicator & Buttons State
         if (state.getCurrentPlayer() != null) {
-            String turnText = "Turn: " + state.getCurrentPlayer().getName();
+            String turnText = "Turno: " + state.getCurrentPlayer().getName();
             binding.tvTurnIndicator.setText(turnText);
 
-            // Optional: Highlight if it's my turn
             String myId = viewModel.getCurrentPlayerId().getValue();
             boolean isMyTurn = state.getCurrentPlayer().getId().equals(myId);
             binding.tvTurnIndicator.setAlpha(isMyTurn ? 1.0f : 0.7f);
             binding.tvTurnIndicator.setBackgroundResource(isMyTurn ? R.drawable.rounded_edittext : 0);
 
-            // Update Skip/Collect button state
-            // Rules: Can only collect if it's my turn AND table is not empty
             boolean canCollect = isMyTurn && state.getTablePile() != null && !state.getTablePile().isEmpty();
             binding.btnSkipTurn.setEnabled(canCollect);
             binding.btnSkipTurn.setAlpha(canCollect ? 1.0f : 0.5f);
+
+            // Highlight panel if it's my turn
+            binding.panelGameStatus.setAlpha(isMyTurn ? 1.0f : 0.85f);
         }
     }
 

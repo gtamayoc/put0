@@ -17,7 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.animation.DecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import androidx.core.content.ContextCompat;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -169,8 +169,7 @@ public class GameMessageHelper {
     private static void applyMessageStyle(
             @NonNull Snackbar snackbar,
             @NonNull MessageType type,
-            @NonNull Context context
-    ) {
+            @NonNull Context context) {
         // Get Snackbar root view (NO SnackbarLayout)
         View snackbarView = snackbar.getView();
         ViewGroup snackbarContainer = (ViewGroup) snackbarView;
@@ -189,10 +188,8 @@ public class GameMessageHelper {
         ImageView iconView = customView.findViewById(R.id.snackbar_icon);
 
         // Extract original Snackbar message
-        TextView originalTextView =
-                snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
-        String messageText =
-                originalTextView != null ? originalTextView.getText().toString() : "";
+        TextView originalTextView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
+        String messageText = originalTextView != null ? originalTextView.getText().toString() : "";
 
         textView.setText(messageText);
 
@@ -200,8 +197,7 @@ public class GameMessageHelper {
         textView.setTextAlignment(
                 messageText.length() > 40
                         ? View.TEXT_ALIGNMENT_TEXT_START
-                        : View.TEXT_ALIGNMENT_CENTER
-        );
+                        : View.TEXT_ALIGNMENT_CENTER);
 
         // Style by type
         int backgroundColor;
@@ -260,11 +256,9 @@ public class GameMessageHelper {
             params.setMargins(sideMargin, topMargin, sideMargin, 0);
 
             if (params instanceof FrameLayout.LayoutParams) {
-                ((FrameLayout.LayoutParams) params).gravity =
-                        Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                ((FrameLayout.LayoutParams) params).gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
             } else if (params instanceof CoordinatorLayout.LayoutParams) {
-                ((CoordinatorLayout.LayoutParams) params).gravity =
-                        Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                ((CoordinatorLayout.LayoutParams) params).gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
             }
 
             snackbarView.setLayoutParams(params);
@@ -277,7 +271,7 @@ public class GameMessageHelper {
                 .translationY(0)
                 .alpha(1f)
                 .setDuration(400)
-                .setInterpolator((TimeInterpolator) new DecelerateInterpolator())
+                .setInterpolator(new DecelerateInterpolator())
                 .start();
     }
 
