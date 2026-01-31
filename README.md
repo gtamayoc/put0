@@ -210,3 +210,7 @@ Este proyecto estará disponible bajo una licencia que permitirá:
 Todas las bibliotecas mencionadas se utilizan bajo sus respectivas licencias de código abierto. Agradecemos especialmente a la comunidad de código abierto por hacer posible este proyecto.
 
 >*Este proyecto no sería posible sin estas herramientas y sus dedicados desarrolladores.*
+
+El nombre "PUT0", su identidad visual y mecánicas oficiales
+no están cubiertos por la licencia y no pueden usarse
+para confundir o suplantar el proyecto original.
