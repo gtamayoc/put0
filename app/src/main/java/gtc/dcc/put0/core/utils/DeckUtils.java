@@ -81,4 +81,50 @@ public class DeckUtils {
                 }
         }
     }
+
+    public static String getCardShortDescription(Card card) {
+        if (card == null)
+            return "Vacio";
+
+        String rankStr;
+        switch (card.getRankValue()) {
+            case 1:
+                rankStr = "A";
+                break;
+            case 11:
+                rankStr = "J";
+                break;
+            case 12:
+                rankStr = "Q";
+                break;
+            case 13:
+                rankStr = "K";
+                break;
+            case 14:
+                rankStr = "A";
+                break;
+            default:
+                rankStr = String.valueOf(card.getRankValue());
+        }
+
+        String suitChar;
+        switch (card.getSuit()) {
+            case HEARTS:
+                suitChar = "♥";
+                break;
+            case DIAMONDS:
+                suitChar = "♦";
+                break;
+            case CLUBS:
+                suitChar = "♣";
+                break;
+            case SPADES:
+                suitChar = "♠";
+                break;
+            default:
+                suitChar = "?";
+        }
+
+        return rankStr + suitChar;
+    }
 }

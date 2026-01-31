@@ -14,7 +14,7 @@ android {
         minSdk = 23
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "Alpha-1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.core.ktx)
     implementation(libs.recyclerview)
+    implementation(libs.core.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -113,11 +114,11 @@ dependencies {
     implementation(libs.rxandroid3)
 
     // Pure Java Logic & Utils
-    implementation("com.google.guava:guava:33.0.0-android")
-    implementation("org.squirrelframework:squirrel-foundation:0.3.9")
+    implementation(libs.guava)
+    implementation(libs.squirrel.foundation)
 
     // UI Animations
-    implementation("com.airbnb.android:lottie:6.4.0")
+    implementation(libs.lottie)
     
     // LeakCanary
     debugImplementation(libs.leakcanary)

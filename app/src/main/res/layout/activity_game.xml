@@ -60,11 +60,11 @@
                 android:layout_width="60dp"
                 android:layout_height="80dp"
                 android:padding="2dp">
-                <View
+                <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/base"
-                    android:background="#1A237E" />
+                    android:scaleType="centerInside" />
                 <TextView
                     android:id="@+id/tvInitialDeck"
                     android:layout_width="wrap_content"
@@ -110,13 +110,6 @@
                 android:rotation="8"
                 android:alpha="0.7"
                 android:translationX="3dp" />
-                android:id="@+id/descartedCards"
-                android:layout_width="55dp"
-                android:layout_height="75dp"
-                android:layout_gravity="center"
-                android:rotation="3"
-                tools:listitem="@layout/item_card"
-                android:visibility="gone"/>
             
             <TextView
                 android:id="@+id/tvDiscardCount"
@@ -374,69 +367,134 @@
                 android:textColor="@android:color/white" />
         </LinearLayout>
 
-        <!-- Match Phase Panel -->
+        <!-- Match Status Panel (Refactored) -->
         <LinearLayout
-            android:layout_width="110dp"
+            android:id="@+id/panelGameStatus"
+            android:layout_width="145dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:background="@drawable/rounded_edittext"
-            android:backgroundTint="@color/md_surface"
-            android:padding="8dp"
-            android:orientation="vertical">
+            android:backgroundTint="#CC1C1B1F"
+            android:padding="12dp"
+            android:orientation="vertical"
+            android:elevation="4dp">
             
-            <RelativeLayout
+            <TextView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:text="ESTADO DE JUEGO"
+                android:textColor="@color/md_primary"
+                android:textSize="9sp"
+                android:letterSpacing="0.1"
+                android:textStyle="bold" />
+
+            <!-- Phase Tracker -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <View android:id="@+id/phaseDot1" android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/card_count_background" android:backgroundTint="#4CAF50" android:layout_marginEnd="4dp"/>
+                <View android:id="@+id/phaseDot2" android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/card_count_background" android:backgroundTint="#33FFFFFF" android:layout_marginEnd="4dp"/>
+                <View android:id="@+id/phaseDot3" android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/card_count_background" android:backgroundTint="#33FFFFFF" android:layout_marginEnd="4dp"/>
+                <View android:id="@+id/phaseDot4" android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/card_count_background" android:backgroundTint="#33FFFFFF" />
+                <TextView
+                    android:id="@+id/tvGameState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="F1: Robando"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="#33FFFFFF" />
+
+            <!-- Table Context -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_play_modern"
+                    app:tint="#99FFFFFF" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Match Phase"
-                    android:textColor="#E6E1E5"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-                <View
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="@android:color/holo_green_light" />
-            </RelativeLayout>
+                    android:layout_marginStart="4dp"
+                    android:text="OBJETIVO MESA"
+                    android:textColor="#99FFFFFF"
+                    android:textSize="8sp" />
+            </LinearLayout>
+            
+            <TextView
+                android:id="@+id/tvTableTarget"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Cualquier carta"
+                android:textColor="#E6E1E5"
+                android:textSize="10sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_history"
+                    app:tint="#99FFFFFF" />
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Status"
-                    android:textColor="#CAC4D0"
-                    android:textSize="8sp" />
-                <TextView
-                    android:id="@+id/tvGameState"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/card_count_background"
-                    android:paddingHorizontal="4dp"
-                    android:text="Phase 2"
-                    android:textColor="@color/md_on_secondary_container"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="4dp"
+                    android:text="RECIENTE"
+                    android:textColor="#99FFFFFF"
+                    android:textSize="8sp" />
             </LinearLayout>
+            
+            <TextView
+                android:id="@+id/tvLastAction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Iniciando..."
+                android:textColor="#E6E1E5"
+                android:textSize="9sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="#33FFFFFF" />
+
+            <!-- Match Timer -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Time"
-                    android:textColor="#CAC4D0"
+                    android:text="TIEMPO"
+                    android:textColor="#99FFFFFF"
                     android:textSize="8sp" />
                 <Chronometer
                     android:id="@+id/gameTimer"

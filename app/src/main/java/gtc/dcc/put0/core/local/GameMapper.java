@@ -1,5 +1,7 @@
 package gtc.dcc.put0.core.local;
 
+import android.os.Build;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,21 +30,24 @@ public class GameMapper {
         androidState.setWinnerId(coreState.getWinnerId());
         androidState.setLastAction(coreState.getLastAction());
 
-        androidState.setPlayers(coreState.getPlayers().stream()
-                .map(GameMapper::toAndroidPlayer)
-                .collect(Collectors.toList()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            androidState.setPlayers(coreState.getPlayers().stream()
+                    .map(GameMapper::toAndroidPlayer)
+                    .collect(Collectors.toList()));
 
-        androidState.setTablePile(coreState.getTablePile().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
+            androidState.setTablePile(coreState.getTablePile().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
 
-        androidState.setMainDeck(coreState.getMainDeck().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
 
-        androidState.setDiscardPile(coreState.getDiscardPile().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
+            androidState.setMainDeck(coreState.getMainDeck().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
+
+            androidState.setDiscardPile(coreState.getDiscardPile().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
+        }
 
         return androidState;
     }
@@ -56,17 +61,19 @@ public class GameMapper {
         androidPlayer.setBot(corePlayer.isBot());
         androidPlayer.setActive(corePlayer.isActive());
 
-        androidPlayer.setHand(corePlayer.getHand().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            androidPlayer.setHand(corePlayer.getHand().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
 
-        androidPlayer.setVisibleCards(corePlayer.getVisibleCards().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
+            androidPlayer.setVisibleCards(corePlayer.getVisibleCards().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
 
-        androidPlayer.setHiddenCards(corePlayer.getHiddenCards().stream()
-                .map(GameMapper::toAndroidCard)
-                .collect(Collectors.toList()));
+            androidPlayer.setHiddenCards(corePlayer.getHiddenCards().stream()
+                    .map(GameMapper::toAndroidCard)
+                    .collect(Collectors.toList()));
+        }
 
         androidPlayer.setCardCount(corePlayer.getCardCount());
 

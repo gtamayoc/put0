@@ -1,16 +1,22 @@
 package com.game.server.put0.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
  * DTO for draw card requests from clients.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class DrawCardRequest {
     private String gameId;
     private String playerId;
+
+    public DrawCardRequest() {}
+
+    public DrawCardRequest(String gameId, String playerId) {
+        this.gameId = gameId;
+        this.playerId = playerId;
+    }
+
+    public String getGameId() { return gameId; }
+    public void setGameId(String gameId) { this.gameId = gameId; }
+
+    public String getPlayerId() { return playerId; }
+    public void setPlayerId(String playerId) { this.playerId = playerId; }
 }

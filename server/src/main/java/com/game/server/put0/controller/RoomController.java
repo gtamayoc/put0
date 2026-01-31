@@ -1,12 +1,13 @@
 package com.game.server.put0.controller;
 
 import com.game.server.put0.dto.*;
-import com.game.server.put0.model.GameState;
+import com.game.core.model.GameState;
 import com.game.server.put0.service.AIBotService;
 import com.game.server.put0.service.GameEngine;
 import com.game.server.put0.service.RoomService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,11 @@ import java.util.Collection;
  */
 @RestController
 @RequestMapping("/api/rooms")
-@Slf4j
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*") // Allow all origins for development
 public class RoomController {
+
+    private static final Logger log = LoggerFactory.getLogger(RoomController.class);
     
     private final RoomService roomService;
     private final GameEngine gameEngine;
