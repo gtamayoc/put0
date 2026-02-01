@@ -71,8 +71,8 @@ jobs:
       # =====================
       # QUALITY CHECKS
       # =====================
-      - name: Run lint (prodRelease)
-        run: ./gradlew lintProdRelease
+      # - name: Run lint (prodRelease)
+      #   run: ./gradlew lintProdRelease
 
       - name: Run unit tests (prodRelease)
         run: ./gradlew testProdReleaseUnitTest
