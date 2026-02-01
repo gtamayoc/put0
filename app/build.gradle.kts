@@ -1,4 +1,4 @@
-import java.util.Properties
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 plugins {
     alias(libs.plugins.android.application)
@@ -14,6 +14,7 @@ fun versionCodeFrom(semantic: String): Int {
 
 val semanticVersion = "1.0.0"
 val baseVersionCode = versionCodeFrom(semanticVersion)
+val nameVersion = "$semanticVersion-Alpha"
 
 android {
     namespace = "gtc.dcc.put0"
@@ -23,7 +24,7 @@ android {
         applicationId = "gtc.dcc.put0"
         minSdk = 23
         targetSdk = 34
-        versionName = semanticVersion
+        versionName = nameVersion
         versionCode = baseVersionCode
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -48,8 +49,6 @@ android {
        SIGNING (CI / LOCAL)
        ===================== */
 
-    val keystorePropertiesFile = rootProject.file("keystore.properties")
-    val keystoreProperties = Properties()
 
     android {
 
@@ -57,7 +56,7 @@ android {
             create("release") {
                 val keystorePath = System.getenv("KEYSTORE_FILE")
 
-                if (!keystorePath.isNullOrBlank()) {
+                if (!keystorePath.isNullOrBlank() && rootProject.file(keystorePath).exists()) {
                     storeFile = rootProject.file(keystorePath)
                     storePassword = System.getenv("SIGNING_STORE_PASSWORD")
                     keyAlias = System.getenv("SIGNING_KEY_ALIAS")
@@ -68,7 +67,18 @@ android {
 
         buildTypes {
             getByName("release") {
-                signingConfig = signingConfigs.getByName("release")
+                val keystorePath = System.getenv("KEYSTORE_FILE")
+                if (!keystorePath.isNullOrBlank() && rootProject.file(keystorePath).exists()) {
+                    signingConfig = signingConfigs.getByName("release")
+                } else {
+                    signingConfig = null
+                }
+            }
+        }
+
+        applicationVariants.all {
+            outputs.all {
+                (this as BaseVariantOutputImpl).outputFileName = "PUT0-${versionName}.apk"
             }
         }
     }
