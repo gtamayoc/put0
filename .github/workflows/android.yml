@@ -38,6 +38,10 @@ jobs:
 
       - name: Grant execute permission
         run: chmod +x gradlew
+        
+      - name: Setup Firebase (CI)
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
 
       # (Opcional pero útil para acelerar builds siguientes)
       - name: Pre-download dependencies
