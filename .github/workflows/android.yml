@@ -39,15 +39,24 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
         
-      - name: Decode Firebase NO BOM
+      - name: Decode Firebase FIXED
+        shell: bash
         run: |
           echo '${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}' | \
-          tr -d '\r\n' | \
-          base64 -d | \
-          sed '1s/^\xEF\xBB\xBF//' | \
-          python3 -m json.tool /dev/stdin > app/google-services.json 2>/dev/null
+            tr -d '\r\n' | \
+            base64 -d | \
+            sed '1s/^\xEF\xBB\xBF//' | \
+            python3 -m json.tool /dev/stdin > app/google-services.json
+          
           ls -lh app/google-services.json
-          python3 -m json.tool app/google-services.json > /dev/null && echo "✅ OK" || echo "❌ Fail"
+          
+          if python3 -m json.tool app/google-services.json > /dev/null 2>&1; then
+            echo "✅ JSON válido"
+          else
+            echo "❌ JSON inválido"
+            cat app/google-services.json | head -c 100
+            exit 1
+          fi
 
       - name: Validate JSON
         run: |
