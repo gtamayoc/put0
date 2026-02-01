@@ -1,9 +1,20 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
     alias(libs.plugins.jetbrains.kotlin.android)
     id("org.sonarqube") version "7.2.2.6593"
 }
+
+fun versionCodeFrom(semantic: String): Int {
+    val (major, minor, patch) = semantic.split(".").map { it.toInt() }
+    return major * 10000 + minor * 100 + patch
+}
+
+val semanticVersion = "1.0.0"
+val baseVersionCode = versionCodeFrom(semanticVersion)
+val nameVersion = "$semanticVersion-Alpha"
 
 android {
     namespace = "gtc.dcc.put0"
@@ -13,8 +24,8 @@ android {
         applicationId = "gtc.dcc.put0"
         minSdk = 23
         targetSdk = 34
-        versionCode = 1
-        versionName = "Alpha-1.0.0"
+        versionName = nameVersion
+        versionCode = baseVersionCode
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +44,46 @@ android {
             )
         }
     }
+
+    /* =====================
+       SIGNING (CI / LOCAL)
+       ===================== */
+
+
+    android {
+
+        signingConfigs {
+            create("release") {
+                val keystorePath = System.getenv("KEYSTORE_FILE")
+
+                if (!keystorePath.isNullOrBlank() && rootProject.file(keystorePath).exists()) {
+                    storeFile = rootProject.file(keystorePath)
+                    storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                    keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                    keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                }
+            }
+        }
+
+        buildTypes {
+            getByName("release") {
+                val keystorePath = System.getenv("KEYSTORE_FILE")
+                if (!keystorePath.isNullOrBlank() && rootProject.file(keystorePath).exists()) {
+                    signingConfig = signingConfigs.getByName("release")
+                } else {
+                    signingConfig = null
+                }
+            }
+        }
+
+        applicationVariants.all {
+            outputs.all {
+                (this as BaseVariantOutputImpl).outputFileName = "PUT0-${versionName}.apk"
+            }
+        }
+    }
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

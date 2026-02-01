@@ -1,0 +1,110 @@
+name: Android Release CI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: prueba
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        
+      - name: Decode Firebase FIXED
+        shell: bash
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}' | \
+            tr -d '\r\n' | \
+            base64 -d | \
+            sed '1s/^\xEF\xBB\xBF//' | \
+            python3 -m json.tool /dev/stdin > app/google-services.json
+          
+          ls -lh app/google-services.json
+          
+          if python3 -m json.tool app/google-services.json > /dev/null 2>&1; then
+            echo "✅ JSON válido"
+          else
+            echo "❌ JSON inválido"
+            cat app/google-services.json | head -c 100
+            exit 1
+          fi
+
+      - name: Validate JSON
+        run: |
+          python3 -m json.tool app/google-services.json > /dev/null || echo "JSON inválido"
+      
+      - name: Decode keystore (app/)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '\n\r' | base64 --decode > app/keystore.jks
+          ls -la app
+          test -s app/keystore.jks
+
+      # =====================
+      # QUALITY CHECKS
+      # =====================
+      # - name: Run lint (prodRelease)
+      #   run: ./gradlew lintProdRelease
+
+      # - name: Run unit tests (prodRelease)
+      #   run: ./gradlew testProdReleaseUnitTest
+
+      # =====================
+      # BUILD
+      # =====================
+      - name: Build signed Prod Release APK
+        run: ./gradlew assembleRelease --parallel --build-cache
+        env:
+          KEYSTORE_FILE: app/keystore.jks
+          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+
+      - name: Test apk (app/)
+        shell: bash
+        run: |
+          ls -la app
+          ls -la
+
+      # =====================
+      # GITHUB RELEASE
+      # =====================
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 🚀 App ${{ github.ref_name }}
+          body: |
+            📦 Flavor: prod
+            🏗️ BuildType: release
+            🏷️ Tag: ${{ github.ref_name }}
+            🔗 Commit: ${{ github.sha }}
+          files: app/build/outputs/apk/release/*.apk
