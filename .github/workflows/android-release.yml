@@ -88,6 +88,12 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
+      - name: Test apk (app/)
+        shell: bash
+        run: |
+          ls -la app
+          ls -la
+
       # =====================
       # GITHUB RELEASE
       # =====================
