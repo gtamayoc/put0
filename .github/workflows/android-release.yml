@@ -107,4 +107,4 @@ jobs:
             🏗️ BuildType: release
             🏷️ Tag: ${{ github.ref_name }}
             🔗 Commit: ${{ github.sha }}
-          files: app/build/outputs/apk/prod/release/*.apk
+          files: app/build/outputs/apk/release/*.apk
