@@ -81,7 +81,7 @@ jobs:
       # BUILD
       # =====================
       - name: Build signed Prod Release APK
-        run: ./gradlew assembleProdRelease --parallel --build-cache
+        run: ./gradlew assembleRelease --parallel --build-cache
         env:
           KEYSTORE_FILE: app/keystore.jks
           SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
