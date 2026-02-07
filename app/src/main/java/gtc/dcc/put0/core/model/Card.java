@@ -21,6 +21,15 @@ public class Card {
     @SerializedName("hidden")
     private boolean hidden;
 
+    private boolean isPlaceholder = false;
+
+    public Card() {
+        this.suit = Suit.CLUBS; // Default for placeholder
+        this.rankValue = 0;
+        this.rank = Rank.TWO; // Using Rank.TWO as a low-power default
+        this.isPlaceholder = true;
+    }
+
     public Card(Suit suit, Rank rank, int resourceId) {
         this.suit = suit;
         this.rank = rank;
@@ -115,6 +124,14 @@ public class Card {
 
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
+    }
+
+    public boolean isPlaceholder() {
+        return isPlaceholder;
+    }
+
+    public void setPlaceholder(boolean placeholder) {
+        isPlaceholder = placeholder;
     }
 
     @Override

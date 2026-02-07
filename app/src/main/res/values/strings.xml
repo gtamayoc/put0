@@ -70,4 +70,16 @@
     <string name="msg_connection_lost">Conexión interrumpida</string>
     <string name="msg_temporary_issue">Problema temporal</string>
     <string name="msg_retrying">Reintentando…</string>
+
+    <string name="title_new_game">NUEVA PARTIDA</string>
+    <string name="label_deck_style">ESTILO DE MAZO</string>
+    <string name="label_game_mode">MODO DE JUEGO</string>
+    <string name="deck_simple">SIMPLE</string>
+    <string name="deck_simple_desc">52 Cartas</string>
+    <string name="deck_double">DOBLE</string>
+    <string name="deck_double_desc">104 Cartas</string>
+    <string name="mode_practice">Práctica (vs Bot)</string>
+    <string name="mode_practice_desc">Entrena tus habilidades contra la IA</string>
+    <string name="mode_pvp">1 vs 1 (Amigo)</string>
+    <string name="mode_pvp_desc">Desafía a un amigo directamente</string>
 </resources>

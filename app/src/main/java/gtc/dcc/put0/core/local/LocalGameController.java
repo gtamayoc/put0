@@ -37,9 +37,10 @@ public class LocalGameController {
         this.listener = listener;
     }
 
-    public void startSoloGame(String playerName, int botCount) {
+    public void startSoloGame(String playerName, int botCount, int deckSize) {
         String gameId = "local-" + UUID.randomUUID().toString();
         coreState = coreEngine.createGame(gameId);
+        coreState.setDeckSize(deckSize);
 
         // Add human player
         com.game.core.model.Player human = new com.game.core.model.Player(

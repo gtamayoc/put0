@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Card {
-    
+
     /**
      * Card value: 1 (Ace) to 13 (King)
      */
     private int value;
-    
+
     /**
      * Card suit: HEARTS, DIAMONDS, CLUBS, SPADES
      */
@@ -30,12 +30,17 @@ public class Card {
      */
     private boolean hidden = false;
 
+    /**
+     * Internal flag to indicate if this is a visual placeholder.
+     */
+    private boolean isPlaceholder = false;
+
     public Card(int value, Suit suit) {
         this.value = value;
         this.suit = suit;
         this.hidden = false;
     }
-    
+
     /**
      * Checks if this card can be played on top of the given card.
      * Rule: Can only play a card with equal or higher power.
@@ -50,25 +55,25 @@ public class Card {
         if (tableCard == null) {
             return true; // Can play any card on empty table
         }
-        
+
         // Special cards: 2 and 10 can always be played
         if (this.value == 2 || this.value == 10) {
             return true;
         }
 
         // If table card is 2 (and wasn't cleared yet), it acts as "reset" (low value),
-        // so any card can be played on it? 
-        // Rule Interpretation: "2 < 3 ...". 
-        // If 2 is on table, effectively the required value starts from bottom? 
+        // so any card can be played on it?
+        // Rule Interpretation: "2 < 3 ...".
+        // If 2 is on table, effectively the required value starts from bottom?
         // Usually 2 resets the count to 0. So yes, any card can follow a 2.
         if (tableCard.getValue() == 2) {
             return true;
         }
-        
+
         // Normal rule: must be equal or higher POWER
         return this.getPower() >= tableCard.getPower();
     }
-    
+
     /**
      * Checks if this card has the special "clear table" effect.
      * 
@@ -82,19 +87,21 @@ public class Card {
      * Gets the power of the card for comparison.
      * Ace (1) -> 14
      * Others -> value
-     * Note: 2 and 10 are handled specially in canPlayOn, 
+     * Note: 2 and 10 are handled specially in canPlayOn,
      * but if compared strictly default logic applies.
      */
     public int getPower() {
-        if (this.value == 1) return 14; // Ace is high
+        if (this.value == 1)
+            return 14; // Ace is high
         return this.value;
     }
-    
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Card card = (Card) o;
         // Only compare value and suit, NOT hidden flag
         return value == card.value && suit == card.suit;
@@ -110,7 +117,7 @@ public class Card {
     public String toString() {
         return valueToString() + " of " + suit;
     }
-    
+
     private String valueToString() {
         return switch (value) {
             case 1 -> "Ace";

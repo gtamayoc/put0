@@ -12,14 +12,18 @@ public class CreateRoomRequest {
     @SerializedName("botCount")
     private int botCount;
 
-    public CreateRoomRequest(String playerName, int botCount, MatchMode mode, boolean isPrivate, int maxPlayers) {
+    @SerializedName("mode")
+    private MatchMode mode;
+    @SerializedName("deckSize")
+    private int deckSize;
+
+    public CreateRoomRequest(String playerName, int botCount, MatchMode mode, boolean isPrivate, int maxPlayers,
+            int deckSize) {
         this.playerName = playerName;
         this.botCount = botCount;
         this.mode = mode;
         this.isPrivate = isPrivate;
         this.maxPlayers = maxPlayers;
+        this.deckSize = deckSize;
     }
-
-    @SerializedName("mode")
-    private MatchMode mode;
 }

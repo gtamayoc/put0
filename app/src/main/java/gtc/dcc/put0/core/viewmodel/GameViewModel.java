@@ -61,8 +61,8 @@ public class GameViewModel extends ViewModel {
 
     // --- REST Actions ---
 
-    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode) {
-        repository.createGame(playerName, botCount, mode);
+    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode, int deckSize) {
+        repository.createGame(playerName, botCount, mode, deckSize);
     }
 
     public void joinGame(String gameId, String playerName) {

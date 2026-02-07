@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import gtc.dcc.put0.R;
 import gtc.dcc.put0.core.model.Card;
@@ -38,8 +39,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.cards = new ArrayList<>(cards);
         this.isPlayerHand = isPlayerHand;
         this.isHidden = isHidden;
-        // setHasStableIds(true); // Disable to avoid potential collisions if duplicates
-        // exist
     }
 
     public void setOnCardClickListener(OnCardClickListener listener) {
@@ -73,23 +72,47 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         return new ArrayList<>(cards);
     }
 
+    /**
+     * Replaces a card at the specified position with a placeholder.
+     * Used for swipe-to-play to maintain the layout space while waiting for a
+     * server update.
+     */
+    public void replaceWithPlaceholder(int position) {
+        if (position >= 0 && position < cards.size()) {
+            Card placeholder = new Card();
+            placeholder.setPlaceholder(true);
+            cards.set(position, placeholder);
+            notifyItemChanged(position);
+        }
+    }
+
     public void updateData(List<Card> newCards, boolean shouldSort) {
+        updateData(newCards, shouldSort, false);
+    }
+
+    /**
+     * Updates the adapter data with a new list of cards, using DiffUtil for smooth
+     * animations.
+     * 
+     * @param newCards     The new list of cards.
+     * @param shouldSort   Whether to sort the cards (Phase 1, 2, 3 only).
+     * @param deckNotEmpty Whether the main deck still has cards.
+     */
+    public void updateData(List<Card> newCards, boolean shouldSort, boolean deckNotEmpty) {
         List<Card> cardsToUpdate = new ArrayList<>(newCards);
 
-        if (shouldSort) {
-            // Do NOT sort if there are hidden cards (Phase 4), as sorting reveals their
-            // values by position
-            boolean hasHiddenCards = false;
-            for (Card c : cardsToUpdate) {
-                if (c.isHidden()) {
-                    hasHiddenCards = true;
-                    break;
-                }
+        // UI UX IMPROVEMENT: If the deck is not empty and we have fewer than 3 cards,
+        // add placeholders to avoid layout jumps during replenishment.
+        if (deckNotEmpty && cardsToUpdate.size() < 3 && !isPhase4(cardsToUpdate)) {
+            while (cardsToUpdate.size() < 3) {
+                Card placeholder = new Card();
+                placeholder.setPlaceholder(true);
+                cardsToUpdate.add(placeholder);
             }
+        }
 
-            if (!hasHiddenCards && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Collections.sort(cardsToUpdate, Comparator.comparingInt(Card::getRankValue));
-            }
+        if (shouldSort) {
+            sortCards(cardsToUpdate);
         }
 
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new CardDiffCallback(this.cards, cardsToUpdate));
@@ -97,7 +120,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.cards.clear();
         this.cards.addAll(cardsToUpdate);
 
-        // Re-sync selection with new list objects (since they might be new instances)
+        // Re-sync selection
         List<Card> currentlySelected = new ArrayList<>(selectedCards);
         selectedCards.clear();
         for (Card card : currentlySelected) {
@@ -113,10 +136,38 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         }
     }
 
+    private boolean isPhase4(List<Card> list) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return list.stream().anyMatch(Card::isHidden);
+        }
+        for (Card c : list)
+            if (c.isHidden())
+                return true;
+        return false;
+    }
+
+    private void sortCards(List<Card> list) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // Sort only non-placeholder cards
+            List<Card> sorted = list.stream()
+                    .filter(c -> !c.isPlaceholder())
+                    .sorted(Comparator.comparingInt(Card::getRankValue))
+                    .collect(Collectors.toList());
+
+            List<Card> placeholders = list.stream()
+                    .filter(Card::isPlaceholder)
+                    .collect(Collectors.toList());
+
+            list.clear();
+            list.addAll(sorted);
+            list.addAll(placeholders);
+        }
+    }
+
     public void shuffleCards() {
         List<Card> shuffledCards = new ArrayList<>(cards);
         Collections.shuffle(shuffledCards);
-        updateData(shuffledCards, false);
+        updateData(shuffledCards, false, false);
     }
 
     @NonNull
@@ -130,17 +181,12 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         Card card = cards.get(position);
-        gtc.dcc.put0.core.utils.CoreLogger.d("CardAdapter: Binding card at " + position + ": " + card);
         holder.bind(card);
     }
 
     @Override
     public int getItemCount() {
-        if (cards == null)
-            return 0;
-        // gtc.dcc.put0.core.utils.CoreLogger.d("CardAdapter: Item count: " +
-        // cards.size()); // Too spammy?
-        return cards.size();
+        return cards == null ? 0 : cards.size();
     }
 
     @Override
@@ -150,13 +196,13 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     class CardViewHolder extends RecyclerView.ViewHolder {
         private final ImageView cardImage;
-        private final View selectionOverlay; // New field
+        private final View selectionOverlay;
 
         @SuppressLint("WrongViewCast")
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             cardImage = itemView.findViewById(R.id.cardImage);
-            selectionOverlay = itemView.findViewById(R.id.selectionOverlay); // Initialize
+            selectionOverlay = itemView.findViewById(R.id.selectionOverlay);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -167,19 +213,37 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         }
 
         void bind(Card card) {
-            if (isHidden || card.isHidden()) {
+            itemView.setAlpha(1.0f);
+            itemView.setTranslationX(0f);
+            itemView.setTranslationY(0f);
+
+            if (card.isPlaceholder()) {
                 cardImage.setImageResource(R.drawable.base);
+                cardImage.setAlpha(0.4f); // Subtly transparent back
+            } else if (isHidden || card.isHidden()) {
+                cardImage.setImageResource(R.drawable.base);
+                cardImage.setAlpha(1.0f);
             } else {
                 int resourceId = DeckUtils.getCardResourceId(itemView.getContext(), card);
                 cardImage.setImageResource(resourceId);
+                cardImage.setAlpha(1.0f);
             }
-            // Update visibility of the overlay based on selection
+
             if (selectionOverlay != null) {
                 selectionOverlay.setVisibility(selectedCards.contains(card) ? View.VISIBLE : View.GONE);
             }
         }
 
         private void handleCardClick(Card card) {
+            if (card.isPlaceholder())
+                return; // Do nothing for placeholders
+
+            if (isPlayerHand && card.isHidden()) {
+                card.setHidden(false);
+                notifyItemChanged(getAdapterPosition());
+                return;
+            }
+
             if (multipleSelectionEnabled && isPlayerHand) {
                 if (selectedCards.contains(card)) {
                     selectedCards.remove(card);

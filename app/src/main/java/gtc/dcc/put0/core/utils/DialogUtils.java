@@ -96,7 +96,7 @@ public final class DialogUtils {
     }
 
     public interface OnModeSelectedListener {
-        void onModeSelected(gtc.dcc.put0.core.data.model.MatchMode mode);
+        void onModeSelected(gtc.dcc.put0.core.data.model.MatchMode mode, int deckSize);
     }
 
     public static void showModeSelectionDialog(Activity activity, OnModeSelectedListener listener) {
@@ -104,22 +104,42 @@ public final class DialogUtils {
         View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_mode_selection, null);
         bottomSheetDialog.setContentView(view);
 
+        MaterialCardView cardDeck52 = view.findViewById(R.id.cardDeck52);
+        MaterialCardView cardDeck104 = view.findViewById(R.id.cardDeck104);
         MaterialCardView cardSoloBot = view.findViewById(R.id.cardSoloBot);
-        // MaterialCardView cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo); //
-        // Assuming ID exists or removing if not in layout
+        MaterialCardView cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo);
+
+        final int[] selectedDeckSize = { 52 }; // Default to 52
+
+        if (cardDeck52 != null && cardDeck104 != null) {
+            cardDeck52.setOnClickListener(v -> {
+                selectedDeckSize[0] = 52;
+                cardDeck52.setStrokeWidth(activity.getResources().getDimensionPixelSize(R.dimen.selected_stroke_width));
+                cardDeck52.setCardBackgroundColor(0x33FFFFFF); // Brighter when selected
+                cardDeck104.setStrokeWidth(0);
+                cardDeck104.setCardBackgroundColor(0x1AFFFFFF);
+            });
+
+            cardDeck104.setOnClickListener(v -> {
+                selectedDeckSize[0] = 104;
+                cardDeck104
+                        .setStrokeWidth(activity.getResources().getDimensionPixelSize(R.dimen.selected_stroke_width));
+                cardDeck104.setCardBackgroundColor(0x33FFFFFF);
+                cardDeck52.setStrokeWidth(0);
+                cardDeck52.setCardBackgroundColor(0x1AFFFFFF);
+            });
+        }
 
         if (cardSoloBot != null) {
             cardSoloBot.setOnClickListener(v -> {
-                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT);
+                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT, selectedDeckSize[0]);
                 bottomSheetDialog.dismiss();
             });
         }
 
-        // Logic for other cards...
-        View cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo);
         if (cardSoloAmigo != null) {
             cardSoloAmigo.setOnClickListener(v -> {
-                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO);
+                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO, selectedDeckSize[0]);
                 bottomSheetDialog.dismiss();
             });
         }
