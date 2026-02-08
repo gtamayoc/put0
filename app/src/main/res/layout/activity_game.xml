@@ -595,20 +595,21 @@
         </LinearLayout>
 
         <!-- Main Hand -->
+
+        <!-- Visible Cards Pile (Right of Hand) -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvPlayerHand"
             android:layout_width="wrap_content"
             android:layout_height="120dp"
             android:clipToPadding="true"
             app:layout_constrainedWidth="true"
-            app:layout_constraintWidth_max="430dp"
-            app:layout_constraintStart_toEndOf="@+id/containerHiddenCards"
-            app:layout_constraintEnd_toStartOf="@+id/containerVisibleCards"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/containerVisibleCards"
+            app:layout_constraintStart_toEndOf="@+id/containerHiddenCards"
+            app:layout_constraintWidth_max="430dp"
             tools:layout_width="300dp"
             tools:listitem="@layout/item_card" />
 
-        <!-- Visible Cards Pile (Right of Hand) -->
         <LinearLayout
             android:id="@+id/containerVisibleCards"
             android:layout_width="wrap_content"

@@ -73,16 +73,22 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     }
 
     /**
-     * Replaces a card at the specified position with a placeholder.
-     * Used for swipe-to-play to maintain the layout space while waiting for a
-     * server update.
+     * Replaces the played card with an invisible placeholder.
+     * This keeps the layout stable (no shrinking) until the new card arrives.
      */
-    public void replaceWithPlaceholder(int position) {
+    public void markCardAsPlayed(int position) {
         if (position >= 0 && position < cards.size()) {
             Card placeholder = new Card();
             placeholder.setPlaceholder(true);
             cards.set(position, placeholder);
             notifyItemChanged(position);
+        }
+    }
+
+    public void removeCardAt(int position) {
+        if (position >= 0 && position < cards.size()) {
+            cards.remove(position);
+            notifyItemRemoved(position);
         }
     }
 
@@ -101,15 +107,9 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     public void updateData(List<Card> newCards, boolean shouldSort, boolean deckNotEmpty) {
         List<Card> cardsToUpdate = new ArrayList<>(newCards);
 
-        // UI UX IMPROVEMENT: If the deck is not empty and we have fewer than 3 cards,
-        // add placeholders to avoid layout jumps during replenishment.
-        if (deckNotEmpty && cardsToUpdate.size() < 3 && !isPhase4(cardsToUpdate)) {
-            while (cardsToUpdate.size() < 3) {
-                Card placeholder = new Card();
-                placeholder.setPlaceholder(true);
-                cardsToUpdate.add(placeholder);
-            }
-        }
+        // UI UX IMPROVEMENT: Placeholder logic removed as per user request to avoid
+        // "ghost" base cards.
+        // The RecyclerView will simply shrink or show the actual number of cards.
 
         if (shouldSort) {
             sortCards(cardsToUpdate);
@@ -218,15 +218,24 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             itemView.setTranslationY(0f);
 
             if (card.isPlaceholder()) {
-                cardImage.setImageResource(R.drawable.base);
-                cardImage.setAlpha(0.4f); // Subtly transparent back
-            } else if (isHidden || card.isHidden()) {
+                // INVISIBLE PLACEHOLDER: Keep separation but don't show anything
+                cardImage.setImageDrawable(null);
+                itemView.setAlpha(0f); // Make the whole container invisible but taking space
+            } else if (isHidden || (card.isHidden() && !isPlayerHand)) {
                 cardImage.setImageResource(R.drawable.base);
                 cardImage.setAlpha(1.0f);
+                itemView.setAlpha(1.0f);
             } else {
+                // Sanity check: If card has invalid rank, don't show base, show nothing
+                if (card.getRankValue() <= 0) {
+                    cardImage.setImageDrawable(null);
+                    return;
+                }
+
                 int resourceId = DeckUtils.getCardResourceId(itemView.getContext(), card);
                 cardImage.setImageResource(resourceId);
                 cardImage.setAlpha(1.0f);
+                itemView.setAlpha(1.0f);
             }
 
             if (selectionOverlay != null) {

@@ -53,9 +53,8 @@ public class CardTouchHelper extends ItemTouchHelper.Callback {
                 // Get the card BEFORE removing it from the adapter
                 Card card = adapter.getCards().get(position);
 
-                // Replace the card in the adapter with a placeholder IMMEDIATELY
-                // This maintains the layout space while the play request is processed
-                adapter.replaceWithPlaceholder(position);
+                // Mark card as played (invisible placeholder) to maintain layout
+                adapter.markCardAsPlayed(position);
 
                 // Then trigger the actual play logic with the card we cached
                 listener.onSwipeUp(position, card);
