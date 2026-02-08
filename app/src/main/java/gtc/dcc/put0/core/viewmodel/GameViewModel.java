@@ -3,8 +3,8 @@ package gtc.dcc.put0.core.viewmodel;
 import gtc.dcc.put0.core.data.GameRepository;
 import gtc.dcc.put0.core.data.model.GameState;
 import gtc.dcc.put0.core.utils.CoreLogger;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
 import gtc.dcc.put0.core.engine.GameEvent;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -61,8 +61,8 @@ public class GameViewModel extends ViewModel {
 
     // --- REST Actions ---
 
-    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode) {
-        repository.createGame(playerName, botCount, mode);
+    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode, int deckSize) {
+        repository.createGame(playerName, botCount, mode, deckSize);
     }
 
     public void joinGame(String gameId, String playerName) {

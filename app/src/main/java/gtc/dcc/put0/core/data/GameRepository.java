@@ -69,18 +69,18 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
 
     // --- REST Actions ---
 
-    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode) {
+    public void createGame(String playerName, int botCount, gtc.dcc.put0.core.data.model.MatchMode mode, int deckSize) {
         if (mode == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT) {
-            CoreLogger.i("Starting local game (Solo vs Bot)");
+            CoreLogger.i("Starting local game (Solo vs Bot) with deck size: " + deckSize);
             isLocalMode = true;
             _currentGameId.setValue("local-session");
             _currentPlayerId.setValue("local-human");
-            localGameController.startSoloGame(playerName, botCount);
+            localGameController.startSoloGame(playerName, botCount, deckSize);
             return;
         }
 
         isLocalMode = false;
-        CreateRoomRequest request = new CreateRoomRequest(playerName, botCount, mode, false, 4);
+        CreateRoomRequest request = new CreateRoomRequest(playerName, botCount, mode, false, 4, deckSize);
         apiService.createRoom(request).enqueue(new Callback<RoomResponse>() {
             @Override
             public void onResponse(Call<RoomResponse> call, Response<RoomResponse> response) {

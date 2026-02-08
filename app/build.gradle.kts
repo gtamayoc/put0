@@ -38,6 +38,7 @@ android {
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -133,10 +134,6 @@ dependencies {
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation(libs.firebase.firestore)
 
-    //Gson
-    implementation(libs.gson)
-    implementation(libs.google.gson)
-
     //Security for SharedPreference
     implementation(libs.security.crypto)
 
@@ -146,23 +143,18 @@ dependencies {
     //Library to be able to implement circleimageview
     implementation (libs.circleimageview)
 
-    implementation (libs.cardview)
-    implementation (libs.constraintlayout.v214)
 
     implementation (libs.bottomsheets)
     implementation (libs.core)
 
-    // Networking - Retrofit & OkHttp
     implementation(libs.retrofit)
-    implementation(libs.converter.gson.v290)
+    implementation(libs.gson) // Use the newer Gson converter (2.11.0) matched with Retrofit
     implementation(libs.logging.interceptor)
 
     // WebSocket - Stomp
     implementation(libs.stompprotocolandroid)
     implementation(libs.rxjava)
     implementation(libs.rxandroid)
-    implementation(libs.rxjava3)
-    implementation(libs.rxandroid3)
 
     // Pure Java Logic & Utils
     implementation(libs.guava)
