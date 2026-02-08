@@ -104,45 +104,121 @@ public final class DialogUtils {
         View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_mode_selection, null);
         bottomSheetDialog.setContentView(view);
 
-        MaterialCardView cardDeck52 = view.findViewById(R.id.cardDeck52);
-        MaterialCardView cardDeck104 = view.findViewById(R.id.cardDeck104);
-        MaterialCardView cardSoloBot = view.findViewById(R.id.cardSoloBot);
-        MaterialCardView cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo);
+        // Force bottom sheet to be fully expanded
+        bottomSheetDialog.getBehavior()
+                .setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetDialog.getBehavior().setSkipCollapsed(true);
 
-        final int[] selectedDeckSize = { 52 }; // Default to 52
+        // Transparent background to show rounded corners
+        if (bottomSheetDialog.getWindow() != null) {
+            bottomSheetDialog.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet)
+                    .setBackgroundResource(android.R.color.transparent);
+        }
 
-        if (cardDeck52 != null && cardDeck104 != null) {
+        // Deck Options (LinearLayouts acting as cards)
+        View cardDeck52 = view.findViewById(R.id.cardDeck52);
+        View cardDeck104 = view.findViewById(R.id.cardDeck104);
+        android.widget.TextView tvDeck52Title = view.findViewById(R.id.tvDeck52Title);
+        android.widget.TextView tvDeck104Title = view.findViewById(R.id.tvDeck104Title);
+
+        // Mode Options
+        View cardSoloBot = view.findViewById(R.id.cardSoloBot);
+        View cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo);
+
+        MaterialButton btnStartGame = view.findViewById(R.id.btnStartGame);
+
+        // State holder
+        final int[] selectedDeckSize = { 52 }; // Default 52
+        final gtc.dcc.put0.core.data.model.MatchMode[] selectedMode = {
+                gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT }; // Default Bot
+
+        // -- Helpers to update UI --
+
+        Runnable updateDeckUI = () -> {
+            if (cardDeck52 == null || cardDeck104 == null)
+                return;
+            // Selected Deck gets Purple Border (bg_card_selected) and Title is Purple
+            // Unselected gets No Border (bg_card_unselected) and Title is White
+
+            if (selectedDeckSize[0] == 52) {
+                cardDeck52.setBackgroundResource(R.drawable.bg_card_selected);
+                if (tvDeck52Title != null)
+                    tvDeck52Title.setTextColor(activity.getResources().getColor(R.color.brand_green));
+
+                cardDeck104.setBackgroundResource(R.drawable.bg_card_unselected);
+                if (tvDeck104Title != null)
+                    tvDeck104Title.setTextColor(0xFFFFFFFF);
+            } else {
+                cardDeck104.setBackgroundResource(R.drawable.bg_card_selected);
+                if (tvDeck104Title != null)
+                    tvDeck104Title.setTextColor(activity.getResources().getColor(R.color.brand_green));
+
+                cardDeck52.setBackgroundResource(R.drawable.bg_card_unselected);
+                if (tvDeck52Title != null)
+                    tvDeck52Title.setTextColor(0xFFFFFFFF);
+            }
+        };
+
+        Runnable updateModeUI = () -> {
+            if (cardSoloBot == null || cardSoloAmigo == null)
+                return;
+            boolean isBot = selectedMode[0] == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT;
+
+            // Selected Mode gets Purple Border (bg_card_selected)
+            // Unselected gets (bg_card_unselected)
+            if (isBot) {
+                cardSoloBot.setBackgroundResource(R.drawable.bg_card_selected);
+                cardSoloAmigo.setBackgroundResource(R.drawable.bg_card_unselected);
+            } else {
+                cardSoloAmigo.setBackgroundResource(R.drawable.bg_card_selected);
+                cardSoloBot.setBackgroundResource(R.drawable.bg_card_unselected);
+            }
+        };
+
+        // -- Listeners --
+
+        if (cardDeck52 != null) {
             cardDeck52.setOnClickListener(v -> {
                 selectedDeckSize[0] = 52;
-                cardDeck52.setStrokeWidth(activity.getResources().getDimensionPixelSize(R.dimen.selected_stroke_width));
-                cardDeck52.setCardBackgroundColor(0x33FFFFFF); // Brighter when selected
-                cardDeck104.setStrokeWidth(0);
-                cardDeck104.setCardBackgroundColor(0x1AFFFFFF);
+                updateDeckUI.run();
             });
+        }
 
+        if (cardDeck104 != null) {
             cardDeck104.setOnClickListener(v -> {
                 selectedDeckSize[0] = 104;
-                cardDeck104
-                        .setStrokeWidth(activity.getResources().getDimensionPixelSize(R.dimen.selected_stroke_width));
-                cardDeck104.setCardBackgroundColor(0x33FFFFFF);
-                cardDeck52.setStrokeWidth(0);
-                cardDeck52.setCardBackgroundColor(0x1AFFFFFF);
+                updateDeckUI.run();
             });
         }
 
         if (cardSoloBot != null) {
             cardSoloBot.setOnClickListener(v -> {
-                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT, selectedDeckSize[0]);
-                bottomSheetDialog.dismiss();
+                selectedMode[0] = gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT;
+                updateModeUI.run();
             });
         }
 
         if (cardSoloAmigo != null) {
             cardSoloAmigo.setOnClickListener(v -> {
-                listener.onModeSelected(gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO, selectedDeckSize[0]);
-                bottomSheetDialog.dismiss();
+                selectedMode[0] = gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO;
+                updateModeUI.run();
             });
         }
+
+        if (btnStartGame != null) {
+            btnStartGame.setOnClickListener(v -> {
+                if (selectedMode[0] != null) {
+                    listener.onModeSelected(selectedMode[0], selectedDeckSize[0]);
+                    bottomSheetDialog.dismiss();
+                } else {
+                    Toast.makeText(activity, "Selecciona un modo de juego", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // Initialize UI
+        updateDeckUI.run();
+        updateModeUI.run();
 
         bottomSheetDialog.show();
     }

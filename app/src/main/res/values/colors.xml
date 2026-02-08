@@ -59,4 +59,6 @@
     <color name="msg_info">#1E88E5</color>         <!-- Material Blue 600 - More vibrant -->
     <color name="msg_phase">#FB8C00</color>        <!-- Material Orange 600 - Warmer -->
     <color name="msg_neutral">#616161</color>      <!-- Material Grey 700 - Better readability -->
+    
+    <color name="brand_green">#4CAF50</color>
 </resources>
