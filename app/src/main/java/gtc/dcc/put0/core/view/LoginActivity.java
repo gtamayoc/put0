@@ -53,6 +53,16 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Enforce Legal Acceptance Flow (Colombia Law 1581 & Google Play)
+        String currentAppVersion = gtc.dcc.put0.core.utils.AppUtils.getAppVersionName(this);
+        if (!SharedPreferenceManager.isLegalAccepted() ||
+                !SharedPreferenceManager.getLegalVersion().equals(currentAppVersion)) {
+            startActivity(new Intent(this, LegalAcceptanceActivity.class));
+            finish();
+            return;
+        }
+
         loadCompatibility();
         // Initialize launcher before creation is complete
         googleSignInLauncher = registerForActivityResult(

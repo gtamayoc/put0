@@ -59,6 +59,13 @@
         <activity
             android:name=".core.view.SettingsActivity"
             android:exported="false"></activity>
+        <activity
+            android:name=".core.view.LegalAcceptanceActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".core.view.LegalDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
