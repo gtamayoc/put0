@@ -55,9 +55,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Enforce Legal Acceptance Flow (Colombia Law 1581 & Google Play)
-        String currentAppVersion = gtc.dcc.put0.core.utils.AppUtils.getAppVersionName(this);
+        String legalVersion = gtc.dcc.put0.core.utils.AppUtils.CURRENT_LEGAL_VERSION;
         if (!SharedPreferenceManager.isLegalAccepted() ||
-                !SharedPreferenceManager.getLegalVersion().equals(currentAppVersion)) {
+                !SharedPreferenceManager.getLegalVersion().equals(legalVersion)) {
             startActivity(new Intent(this, LegalAcceptanceActivity.class));
             finish();
             return;

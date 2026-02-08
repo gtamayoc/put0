@@ -40,9 +40,9 @@ public class LegalAcceptanceActivity extends AppCompatActivity {
 
         // Handle continuation and persistence
         binding.btnContinue.setOnClickListener(v -> {
-            String currentAppVersion = gtc.dcc.put0.core.utils.AppUtils.getAppVersionName(this);
+            String legalVersion = gtc.dcc.put0.core.utils.AppUtils.CURRENT_LEGAL_VERSION;
             SharedPreferenceManager.setLegalAccepted(true);
-            SharedPreferenceManager.setLegalVersion(currentAppVersion);
+            SharedPreferenceManager.setLegalVersion(legalVersion);
             SharedPreferenceManager.setLegalTimestamp(System.currentTimeMillis());
 
             // Proceed to standard onboarding/login flow
