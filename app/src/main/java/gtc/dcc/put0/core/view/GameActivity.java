@@ -31,7 +31,7 @@ import gtc.dcc.put0.core.data.model.Player;
 import gtc.dcc.put0.core.utils.SharedPreferenceManager;
 import gtc.dcc.put0.core.viewmodel.GameViewModel;
 import gtc.dcc.put0.databinding.ActivityGameBinding;
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import gtc.dcc.put0.core.utils.CoreLogger;
 import gtc.dcc.put0.core.utils.GameMessageHelper;
 

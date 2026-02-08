@@ -214,3 +214,36 @@ Todas las bibliotecas mencionadas se utilizan bajo sus respectivas licencias de 
 El nombre "PUT0", su identidad visual y mecánicas oficiales
 no están cubiertos por la licencia y no pueden usarse
 para confundir o suplantar el proyecto original.
+
+---
+
+## 🏗️ Arquitectura y Optimización
+
+### Arquitectura
+El proyecto sigue una arquitectura **MVVM (Model-View-ViewModel)** para separar la lógica de negocio de la interfaz de usuario, facilitando la mantenibilidad y el testeo.
+- **View**: Activities y XMLs (Layouts). Observan al ViewModel.
+- **ViewModel**: `GameViewModel`, `MainViewModel`. Gestionan el estado de la UI y se comunican con el repositorio.
+- **Model/Repository**: `GameRepository`. Gestiona la lógica de datos y comunicación con el servidor (WebSocket/REST).
+- **Engine**: `GameEngine` (Core). Contiene la lógica pura de las reglas del juego.
+
+### 🚀 Optimizaciones Realizadas (Feb 2026)
+Se realizó una auditoría completa para reducir el peso de la aplicación y mejorar la eficiencia.
+
+#### 1. Reducción de Peso (>90% en recursos gráficos)
+- **Conversión a WebP**: Se migraron todos los assets gráficos (imágenes de cartas, fondos) de PNG/JPG a WebP.
+  - **Ahorro**: ~7.4 MB de espacio liberado.
+  - **Impacto**: Reducción drástica del tamaño del APK final sin pérdida perceptible de calidad visual.
+
+#### 2. Limpieza de Dependencias
+- **Consolidación de RxJava**: Se eliminó la duplicidad de librerías RxJava (v2 y v3), estandarizando todo el proyecto a RxJava 2.
+  - Eliminado: `RxJava 3`, `RxAndroid 3`.
+- **Eliminación de Redundancias**:
+  - Se eliminaron versiones duplicadas de `ConstraintLayout`.
+  - Se unificaron las dependencias de `Gson`.
+- **Build Optimization**:
+  - Activado `shrinkResources = true` y `minifyEnabled = true` para builds de release.
+  - Configuración de ProGuard para eliminar código muerto.
+
+#### 3. Mejoras de Lógica
+- Revisión del `GameEngine` para asegurar eficiencia en la gestión de estados.
+- Refactorización de `GameViewModel` y `GameActivity` para alinearse con la arquitectura reactiva unificada.
