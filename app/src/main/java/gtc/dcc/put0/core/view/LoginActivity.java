@@ -58,7 +58,9 @@ public class LoginActivity extends AppCompatActivity {
         String legalVersion = gtc.dcc.put0.core.utils.AppUtils.CURRENT_LEGAL_VERSION;
         if (!SharedPreferenceManager.isLegalAccepted() ||
                 !SharedPreferenceManager.getLegalVersion().equals(legalVersion)) {
-            startActivity(new Intent(this, LegalAcceptanceActivity.class));
+            Intent intent = new Intent(this, LegalAcceptanceActivity.class);
+            intent.putExtra("is_update", SharedPreferenceManager.isLegalAccepted());
+            startActivity(intent);
             finish();
             return;
         }

@@ -22,6 +22,17 @@ public class LegalAcceptanceActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setupListeners();
+        handleUpdateUI();
+    }
+
+    private void handleUpdateUI() {
+        boolean isUpdate = getIntent().getBooleanExtra("is_update", false);
+        if (isUpdate) {
+            binding.tvTitle.setText(R.string.legal_update_title);
+            binding.tvDescription.setText(R.string.legal_update_desc);
+            // Mostrar un rayo o algo que indique cambio/novedad
+            binding.ivLegalIcon.setImageResource(R.drawable.ic_lightning);
+        }
     }
 
     private void setupListeners() {
