@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Slf4j
 public class GameEngine {
-    
+
     /**
      * Initializes a new game state.
      */
@@ -23,54 +23,58 @@ public class GameEngine {
         log.info("Created new game: {}", gameId);
         return game;
     }
-    
+
     /**
      * Adds a player to the game.
      */
     public void addPlayer(GameState game, Player player) {
-        synchronized(game) {
+        synchronized (game) {
             if (game.getStatus() != GameStatus.WAITING) {
                 throw new IllegalStateException("Cannot add player to game in progress");
             }
-            
+
             game.addPlayer(player);
             log.info("Added player {} to game {}", player.getName(), game.getGameId());
         }
     }
-    
+
     /**
      * Starts a game by creating and dealing the deck.
      */
     public void startGame(GameState game) {
-        synchronized(game) {
+        synchronized (game) {
             if (game.getStatus() == GameStatus.PLAYING) {
                 log.info("Game {} already started, ignoring start request", game.getGameId());
                 return;
             }
-            
+
             if (!game.canStart()) {
                 throw new IllegalStateException("Game cannot start - need at least 2 players");
             }
-            
-            // Create and shuffle deck (2 Decks = 104 Cards)
-            game.setMainDeck(createDeck());
+
+            // Create and shuffle deck (Configurable size: 52 or 104)
+            game.setMainDeck(createDeck(game.getDeckSize()));
             Collections.shuffle(game.getMainDeck());
-            
+
             // Deal cards according to rules: 3 Hidden, 3 Visible, 3 Hand
             dealCards(game);
-            
+
             game.setStatus(GameStatus.PLAYING);
             log.info("Started game {} with {} players", game.getGameId(), game.getPlayers().size());
         }
     }
-    
+
     /**
-     * Creates a double deck (104 cards).
+     * Creates a deck of cards.
+     * 
+     * @param size total number of cards (52 or 104).
      */
-    private List<Card> createDeck() {
+    private List<Card> createDeck(int size) {
         List<Card> deck = new ArrayList<>();
-        // 2 Decks
-        for (int i = 0; i < 2; i++) {
+        // number of decks: 52 -> 1 deck, 104 -> 2 decks
+        int deckCount = (size <= 52) ? 1 : 2;
+
+        for (int i = 0; i < deckCount; i++) {
             for (Suit suit : Suit.values()) {
                 for (int value = 1; value <= 13; value++) {
                     deck.add(new Card(value, suit));
@@ -79,38 +83,44 @@ public class GameEngine {
         }
         return deck;
     }
-    
+
     /**
      * Deals 3 cards Hidden, 3 Visible, 3 to Hand for each player.
      */
     private void dealCards(GameState game) {
         List<Card> deck = game.getMainDeck();
         List<Player> players = game.getPlayers();
-        
+
         // 1. Deal 3 Hidden Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getHiddenCards().add(deck.remove(deck.size() - 1));
+                if (!deck.isEmpty()) {
+                    Card hiddenCard = deck.remove(deck.size() - 1);
+                    hiddenCard.setHidden(true); // VERY IMPORTANT: Mark as hidden
+                    player.getHiddenCards().add(hiddenCard);
+                }
             }
         }
 
         // 2. Deal 3 Visible Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getVisibleCards().add(deck.remove(deck.size() - 1));
+                if (!deck.isEmpty())
+                    player.getVisibleCards().add(deck.remove(deck.size() - 1));
             }
         }
 
         // 3. Deal 3 Hand Cards
         for (int i = 0; i < 3; i++) {
             for (Player player : players) {
-                if (!deck.isEmpty()) player.getHand().add(deck.remove(deck.size() - 1));
+                if (!deck.isEmpty())
+                    player.getHand().add(deck.remove(deck.size() - 1));
             }
         }
-        
+
         log.info("Dealt initial hands (3+3+3) to {} players", players.size());
     }
-    
+
     /**
      * Plays a card from the current player's hand.
      */
@@ -118,63 +128,89 @@ public class GameEngine {
         if (game.getStatus() != GameStatus.PLAYING) {
             throw new IllegalStateException("Game is not in progress");
         }
-        
-        synchronized(game) {
+
+        synchronized (game) {
             Player currentPlayer = game.getCurrentPlayer();
             if (!currentPlayer.getId().equals(playerId)) {
                 throw new IllegalStateException("Not this player's turn");
             }
-            
+
             // Validate card can be played AND is reachable in current phase
             Card topCard = game.getTopCard();
-            
+
             // Strict Phase Validation: Player can only play what getPlayableCards returns
             List<Card> validMoves = currentPlayer.getPlayableCards(topCard);
-            
+
             // Note: contains() checks equality. With 2 decks, identical cards exist.
             if (!validMoves.contains(card)) {
-                log.warn("[GAME-INVALID] Player {} tried to play {} but it's not in valid moves. Valid: {}", currentPlayer.getName(), card, validMoves);
+                log.warn("[GAME-INVALID] Player {} tried to play {} but it's not in valid moves. Valid: {}",
+                        currentPlayer.getName(), card, validMoves);
                 throw new IllegalArgumentException("Invalid move: Card not available or not playable in current phase");
             }
-            
+
+            // Track if the card was hidden BEFORE we potentially reveal it
+            boolean wasHiddenAtStart = card.isHidden();
+
             // Reveal hidden card if played
-            if (card.isHidden()) {
+            if (wasHiddenAtStart) {
                 card.setHidden(false);
+                // Ensure instance in hand is also revealed
+                currentPlayer.getHand().stream()
+                        .filter(c -> c.equals(card))
+                        .findFirst()
+                        .ifPresent(c -> c.setHidden(false));
             }
 
             // Check if card is actually playable on top card
             if (!card.canPlayOn(topCard)) {
-                // FAILED PLAY (Phase 3 or 4 failure)
-                log.info("[GAME-ACTION] Player {} FAILED to play {} on top card {}. Penalty: Eat Table.", currentPlayer.getName(), card, topCard);
-                
-                // If this was Phase 4 (hand had other hidden cards), move them back to hiddenCards pile (Regression)
-                List<Card> remainingHidden = currentPlayer.getHand().stream()
-                        .filter(Card::isHidden)
-                        .toList();
-                
-                if (!remainingHidden.isEmpty()) {
-                    log.info("[GAME-REGRESSION] Player {} failed blind play. Suspending Phase 4. Moving {} cards back to hidden pile.", 
-                            currentPlayer.getName(), remainingHidden.size());
-                    currentPlayer.getHiddenCards().addAll(remainingHidden);
-                    currentPlayer.getHand().removeIf(Card::isHidden);
-                }
+                // FAILED PLAY
+                if (wasHiddenAtStart) {
+                    // Phase 4: Blind discovery failure - Penalize with Eat Table
+                    log.info("[GAME-ACTION] Player {} FAILED blind play of {} on {}. Penalty: Eat Table.",
+                            currentPlayer.getName(), card, topCard);
 
-                // Remove the failed card from player's hand/hidden pile
-                currentPlayer.removeCard(card);
-                
-                // Add the failed card to the table before collecting
-                game.getTablePile().add(card);
-                
-                int tableSizeBefore = game.getTablePile().size();
-                // Rules: Player collects all table cards
-                game.collectTable(currentPlayer);
-                String msg = String.format("Player %s collected %d cards from table (Penalty).", currentPlayer.getName(), tableSizeBefore);
-                log.info("[GAME-PENALTY] " + msg);
-                game.setLastAction(msg);
-                
-                game.nextTurn();
-                log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
-                return;
+                    // Regression logic for Phase 4:
+                    // If player picks up the table, ALL hidden cards must remain hidden.
+                    // If they were somehow in the hand, they should go back to the hidden pile.
+                    List<Card> hiddenInHand = currentPlayer.getHand().stream()
+                            .filter(Card::isHidden)
+                            .filter(c -> !c.equals(card))
+                            .toList();
+
+                    if (!hiddenInHand.isEmpty()) {
+                        currentPlayer.getHiddenCards().addAll(hiddenInHand);
+                        currentPlayer.getHand().removeAll(hiddenInHand);
+                    }
+
+                    // Double check all cards in hiddenCards are definitely marked as hidden
+                    for (Card c : currentPlayer.getHiddenCards()) {
+                        c.setHidden(true);
+                    }
+
+                    currentPlayer.removeCard(card);
+                    card.setHidden(false); // Ensure it is definitely revealed
+                    game.getTablePile().add(card);
+
+                    game.collectTable(currentPlayer);
+
+                    // Safety: After collecting, find THIS specific card in hand and ensure it's not
+                    // hidden
+                    // This covers the case where duplicates might exist in the hand
+                    currentPlayer.getHand().stream()
+                            .filter(c -> c.equals(card))
+                            .forEach(c -> c.setHidden(false));
+
+                    String msg = String.format("Has descubierto un %s. Al no superar la mesa, recoges las cartas.",
+                            card.toString());
+                    game.setLastAction(msg);
+                    game.nextTurn();
+                    return;
+                } else {
+                    // For hand or visible cards (ALREADY REVEALED), just block the invalid move
+                    // This prevents player from "eating table" accidentally on a misplay.
+                    throw new IllegalArgumentException("Esta carta no se puede jugar sobre un "
+                            + (topCard != null ? topCard.getPower() : "mesa vacía"));
+                }
             }
 
             // Remove card from player's hand (managed by Player logic)
@@ -182,26 +218,26 @@ public class GameEngine {
                 log.error("[GAME-ERROR] Could not remove card {} from player {}", card, currentPlayer.getName());
                 throw new IllegalArgumentException("Player does not have this card");
             }
-            
+
             // Add card to table
             game.getTablePile().add(card);
             String msg = String.format("Player %s PLAYED %s on top of %s.", currentPlayer.getName(), card, topCard);
             log.info("[GAME-ACTION] " + msg);
             game.setLastAction(msg);
-            
+
             // Check for table clear conditions
             if (card.clearsTable() || game.shouldClearTable()) {
                 game.clearTable();
                 String clearMsg = String.format("Table CLEARED by %s.", currentPlayer.getName());
                 log.info("[GAME-EVENT] " + clearMsg);
                 game.setLastAction(clearMsg);
-                
+
                 // Replenish hand before playing again (Phase 1)
                 replenishHand(game, currentPlayer);
                 // Player goes again (no nextTurn())
                 return;
             }
-            
+
             // Replenish hand from mainDeck if needed (Phase 1)
             replenishHand(game, currentPlayer);
 
@@ -212,13 +248,13 @@ public class GameEngine {
                 log.info("[GAME-OVER] Player {} WON the game!", currentPlayer.getName());
                 return;
             }
-            
+
             // Move to next player
             game.nextTurn();
             log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
         }
     }
-    
+
     /**
      * Replenishes player's hand to 3 cards if deck is available (Phase 1).
      */
@@ -227,7 +263,7 @@ public class GameEngine {
         while (player.getHand().size() < 3 && !game.getMainDeck().isEmpty()) {
             player.getHand().add(game.getMainDeck().remove(game.getMainDeck().size() - 1));
         }
-        
+
         // Transition to Phase 3 (Visible Cards to hand)
         if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() && !player.getVisibleCards().isEmpty()) {
             log.info("[GAME-PHASE] Transitioning player {} to Visible Cards phase (F3).", player.getName());
@@ -235,19 +271,15 @@ public class GameEngine {
             player.getVisibleCards().clear();
         }
 
-        // Transition to Phase 4 (Hidden Cards to hand)
-        // Happens only when hand, deck, AND visible cards are exhausted
-        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() && 
-            player.getVisibleCards().isEmpty() && !player.getHiddenCards().isEmpty()) {
-            log.info("[GAME-PHASE] Transitioning player {} to Hidden Cards phase (F4). Moving {} cards.", 
-                    player.getName(), player.getHiddenCards().size());
-            
-            // Move ALL hidden cards to hand and mark them as hidden for blind play
-            for (Card card : player.getHiddenCards()) {
-                card.setHidden(true);
-                player.getHand().add(card);
+        // Transition to Phase 4 (Hidden Cards)
+        // Note: We no longer move them to hand automatically.
+        // They stay in the hidden pile and are played from there.
+        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() &&
+                player.getVisibleCards().isEmpty() && !player.getHiddenCards().isEmpty()) {
+            // Just ensure they are definitely marked as hidden
+            for (Card c : player.getHiddenCards()) {
+                c.setHidden(true);
             }
-            player.getHiddenCards().clear();
         }
     }
 
@@ -256,32 +288,34 @@ public class GameEngine {
      * Used when player has no valid moves or chooses to pick up.
      */
     public void drawCard(GameState game, String playerId) {
-        synchronized(game) {
+        synchronized (game) {
             Player currentPlayer = game.getCurrentPlayer();
             if (!currentPlayer.getId().equals(playerId)) {
                 throw new IllegalStateException("Not this player's turn");
             }
-            
+
             // If mainDeck is not empty -> Draw one card (Phase 1)
             if (!game.getMainDeck().isEmpty()) {
-                 Card drawnCard = game.getMainDeck().remove(game.getMainDeck().size() - 1);
-                 currentPlayer.addCard(drawnCard);
-                 String msg = String.format("Player %s DREW a card.", currentPlayer.getName());
-                 log.info("[GAME-ACTION] " + msg);
-                 game.setLastAction(msg);
-                 game.nextTurn();
-                 log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
-                 return;
+                Card drawnCard = game.getMainDeck().remove(game.getMainDeck().size() - 1);
+                currentPlayer.addCard(drawnCard);
+                String msg = String.format("Player %s DREW a card.", currentPlayer.getName());
+                log.info("[GAME-ACTION] " + msg);
+                game.setLastAction(msg);
+                game.nextTurn();
+                log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(),
+                        game.getCurrentPlayerIndex());
+                return;
             }
-            
+
             // If undefined play or Phase transition logic requires picking up table
             // When deck is empty and player cannot play, they must pick up the Table Pile
             int tableSize = game.getTablePile().size();
             game.collectTable(currentPlayer);
-            String msg = String.format("Player %s collected %d cards from table (Deck empty).", currentPlayer.getName(), tableSize);
+            String msg = String.format("Player %s collected %d cards from table (Deck empty).", currentPlayer.getName(),
+                    tableSize);
             log.info("[GAME-ACTION] " + msg);
             game.setLastAction(msg);
-            
+
             game.nextTurn();
             log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
         }
@@ -292,7 +326,7 @@ public class GameEngine {
      * Used when player chooses to pick up the table instead of playing.
      */
     public void collectTable(GameState game, String playerId) {
-        synchronized(game) {
+        synchronized (game) {
             Player currentPlayer = game.getCurrentPlayer();
             if (!currentPlayer.getId().equals(playerId)) {
                 throw new IllegalStateException("Not this player's turn to collect");

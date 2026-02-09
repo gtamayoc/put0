@@ -29,6 +29,7 @@ public class GameMapper {
         androidState.setStatus(toAndroidStatus(coreState.getStatus()));
         androidState.setWinnerId(coreState.getWinnerId());
         androidState.setLastAction(coreState.getLastAction());
+        androidState.setDeckSize(coreState.getDeckSize());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             androidState.setPlayers(coreState.getPlayers().stream()
@@ -38,7 +39,6 @@ public class GameMapper {
             androidState.setTablePile(coreState.getTablePile().stream()
                     .map(GameMapper::toAndroidCard)
                     .collect(Collectors.toList()));
-
 
             androidState.setMainDeck(coreState.getMainDeck().stream()
                     .map(GameMapper::toAndroidCard)

@@ -16,6 +16,9 @@ import java.security.GeneralSecurityException;
 public class SharedPreferenceManager {
     private static final String PREFS_NAME = "gtc.dcc.put0.PREFS";
     private static final String TOKEN_KEY = "auth_token";
+    private static final String LEGAL_ACCEPTED_KEY = "legal_accepted";
+    private static final String LEGAL_VERSION_KEY = "legal_version";
+    private static final String LEGAL_TIMESTAMP_KEY = "legal_timestamp";
     private static SharedPreferences sharedPreferences;
     private static Gson gson = new Gson(); // Declarado como estático para ser utilizado sin necesidad de instanciar
 
@@ -64,6 +67,37 @@ public class SharedPreferenceManager {
     public static void clearToken() {
         if (sharedPreferences != null) {
             sharedPreferences.edit().remove(TOKEN_KEY).apply();
+        }
+    }
+
+    // Legal Acceptance Methods
+    public static boolean isLegalAccepted() {
+        return sharedPreferences != null && sharedPreferences.getBoolean(LEGAL_ACCEPTED_KEY, false);
+    }
+
+    public static void setLegalAccepted(boolean accepted) {
+        if (sharedPreferences != null) {
+            sharedPreferences.edit().putBoolean(LEGAL_ACCEPTED_KEY, accepted).apply();
+        }
+    }
+
+    public static String getLegalVersion() {
+        return sharedPreferences != null ? sharedPreferences.getString(LEGAL_VERSION_KEY, "") : "";
+    }
+
+    public static void setLegalVersion(String version) {
+        if (sharedPreferences != null) {
+            sharedPreferences.edit().putString(LEGAL_VERSION_KEY, version).apply();
+        }
+    }
+
+    public static long getLegalTimestamp() {
+        return sharedPreferences != null ? sharedPreferences.getLong(LEGAL_TIMESTAMP_KEY, 0L) : 0L;
+    }
+
+    public static void setLegalTimestamp(long timestamp) {
+        if (sharedPreferences != null) {
+            sharedPreferences.edit().putLong(LEGAL_TIMESTAMP_KEY, timestamp).apply();
         }
     }
 

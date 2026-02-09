@@ -34,6 +34,9 @@ public class GameState implements Serializable {
     @SerializedName("lastAction")
     private String lastAction;
 
+    @SerializedName("deckSize")
+    private int deckSize = 104;
+
     // Setters
     public void setGameId(String gameId) {
         this.gameId = gameId;
@@ -71,6 +74,10 @@ public class GameState implements Serializable {
         this.lastAction = lastAction;
     }
 
+    public void setDeckSize(int deckSize) {
+        this.deckSize = deckSize;
+    }
+
     // Getters
     public String getGameId() {
         return gameId;
@@ -106,6 +113,10 @@ public class GameState implements Serializable {
 
     public String getLastAction() {
         return lastAction;
+    }
+
+    public int getDeckSize() {
+        return deckSize;
     }
 
     public Player getCurrentPlayer() {

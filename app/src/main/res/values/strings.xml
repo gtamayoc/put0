@@ -70,4 +70,35 @@
     <string name="msg_connection_lost">Conexión interrumpida</string>
     <string name="msg_temporary_issue">Problema temporal</string>
     <string name="msg_retrying">Reintentando…</string>
+
+    <string name="title_new_game">NUEVA PARTIDA</string>
+    <string name="label_deck_style">ESTILO DE MAZO</string>
+    <string name="label_game_mode">MODO DE JUEGO</string>
+    <string name="deck_simple">SIMPLE</string>
+    <string name="deck_simple_desc">52 Cartas</string>
+    <string name="deck_double">DOBLE</string>
+    <string name="deck_double_desc">104 Cartas</string>
+    <string name="mode_practice">Práctica (vs Bot)</string>
+    <string name="mode_practice_desc">Entrena tus habilidades contra la IA</string>
+    <string name="mode_pvp">1 vs 1 (Amigo)</string>
+    <string name="mode_pvp_desc">Desafía a un amigo directamente</string>
+    
+    <!-- Legal Acceptance Strings -->
+    <string name="legal_onboarding_title">Antes de comenzar</string>
+    <string name="legal_onboarding_desc">Para garantizar la seguridad de tus datos y el cumplimiento de las normativas de protección de datos (Ley 1581 de 2012), es necesario que aceptes nuestros términos.</string>
+    <string name="legal_update_title">Aviso de Actualización</string>
+    <string name="legal_update_desc">Hemos actualizado nuestros términos y política de privacidad para mejorar tu experiencia y seguridad. Por favor, revísalos y acéptalos para continuar.</string>
+    <string name="accept_terms">Acepto los Términos y Condiciones de Uso</string>
+    <string name="accept_privacy">Acepto la Política de Privacidad</string>
+    <string name="btn_continue">CONTINUAR</string>
+    <string name="legal_terms_url">https://gtamayoc.github.io/put0/terms</string> <!-- URLs de ejemplo -->
+    <string name="legal_privacy_url">https://gtamayoc.github.io/put0/privacy</string>
+
+    <!-- Settings Strings -->
+    <string name="title_settings">Ajustes</string>
+    <string name="section_legal">Legal y Privacidad</string>
+    <string name="section_account">Cuenta</string>
+    <string name="btn_delete_account">ELIMINAR MI CUENTA</string>
+    <string name="delete_account_confirm">¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible y borrará todos tus datos.</string>
+    <string name="legal_accepted_at">Aceptado el: %1$s\nVersión: %2$s</string>
 </resources>

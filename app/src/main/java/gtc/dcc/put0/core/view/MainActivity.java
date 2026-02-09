@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.btnCreateGame.setOnClickListener(v -> {
-            DialogUtils.showModeSelectionDialog(this, mode -> {
+            DialogUtils.showModeSelectionDialog(this, (mode, deckSize) -> {
                 String userName = SharedPreferenceManager.getString("user_name", "Player");
                 // Logic based on mode
                 int botCount = 0;
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Show form only if needed (e.g., custom names or settings), else direct create
                 // For simplicity, direct create for now and verify
-                gameViewModel.createGame(userName, botCount, mode);
+                gameViewModel.createGame(userName, botCount, mode, deckSize);
                 GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_preparing_game,
                         GameMessageHelper.MessageType.INFO);
             });

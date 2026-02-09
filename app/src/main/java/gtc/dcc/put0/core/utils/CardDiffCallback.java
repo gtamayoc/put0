@@ -31,7 +31,10 @@ public class CardDiffCallback extends DiffUtil.Callback {
 
     @Override
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-        return oldList.get(oldItemPosition).getRankValue() == newList.get(newItemPosition).getRankValue()
-                && oldList.get(oldItemPosition).getSuit() == newList.get(newItemPosition).getSuit();
+        Card oldCard = oldList.get(oldItemPosition);
+        Card newCard = newList.get(newItemPosition);
+        return oldCard.getRankValue() == newCard.getRankValue()
+                && oldCard.getSuit() == newCard.getSuit()
+                && oldCard.isHidden() == newCard.isHidden();
     }
 }
