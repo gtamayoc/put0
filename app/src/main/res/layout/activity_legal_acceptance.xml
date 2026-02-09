@@ -49,6 +49,7 @@
                     android:padding="28dp">
 
                     <ImageView
+                        android:id="@+id/ivLegalIcon"
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:layout_gravity="center"
@@ -56,6 +57,7 @@
                         app:tint="@color/md_primary" />
 
                     <TextView
+                        android:id="@+id/tvTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
@@ -66,6 +68,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"

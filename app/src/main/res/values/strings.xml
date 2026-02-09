@@ -86,6 +86,8 @@
     <!-- Legal Acceptance Strings -->
     <string name="legal_onboarding_title">Antes de comenzar</string>
     <string name="legal_onboarding_desc">Para garantizar la seguridad de tus datos y el cumplimiento de las normativas de protección de datos (Ley 1581 de 2012), es necesario que aceptes nuestros términos.</string>
+    <string name="legal_update_title">Aviso de Actualización</string>
+    <string name="legal_update_desc">Hemos actualizado nuestros términos y política de privacidad para mejorar tu experiencia y seguridad. Por favor, revísalos y acéptalos para continuar.</string>
     <string name="accept_terms">Acepto los Términos y Condiciones de Uso</string>
     <string name="accept_privacy">Acepto la Política de Privacidad</string>
     <string name="btn_continue">CONTINUAR</string>
