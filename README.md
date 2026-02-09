@@ -2,7 +2,7 @@
 
 [![Android](https://img.shields.io/badge/Plataforma-Android%206.0+-green.svg)](https://www.android.com)
 [![Java](https://img.shields.io/badge/Lenguaje-Java%208-orange.svg)](https://www.java.com)
-[![Estado](https://img.shields.io/badge/Estado-Alpha%201.0.0-blue.svg)](https://github.com/yourusername/puto-game)
+[![Estado](https://img.shields.io/badge/Estado-Alpha%201.0.1-blue.svg)](https://github.com/yourusername/puto-game)
 ![Release](https://img.shields.io/badge/Release-Q4_2025-important)
 
 ## 📱 Sobre el Proyecto
@@ -10,13 +10,13 @@
 PUT0 es un emocionante juego de cartas multijugador desarrollado para Android, que combina estrategia, suerte y mecánicas de juego dinámicas. El juego utiliza dos mazos de póker estándar y presenta múltiples fases de juego, haciendo que cada partida sea única y entretenida.
 
 **Cronograma de Lanzamiento:**
-- Alpha 1.0: Disponible Actualmente
+- Alpha 1.0.1: Disponible Actualmente
 - Lanzamiento Completo: Previsto para finales de 2026
 
 ## 🎮 Descripción General
 
 PUT0 se juega con:
-- 2 mazos de póker estándar (104 cartas en total)
+- 1 o 2 mazos de póker estándar (52 o 104 cartas en total)
 - Un mazo con reverso rojo y otro negro
 - Palos tradicionales: ♠ ♥ ♣ ♦
 - 2-6 jugadores
