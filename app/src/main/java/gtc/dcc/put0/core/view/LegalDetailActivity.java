@@ -1,5 +1,7 @@
 package gtc.dcc.put0.core.view;
 
+import android.view.View;
+
 import android.os.Bundle;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,11 +30,34 @@ public class LegalDetailActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
 
         // WebView configuration
         binding.webView.setWebViewClient(new WebViewClient());
-        binding.webView.getSettings().setJavaScriptEnabled(true); // Needed if the hosting requires it
+        binding.webView.getSettings().setJavaScriptEnabled(true);
         binding.webView.loadUrl(url);
+
+        // Scroll detection to enable button
+        binding.nestedScrollView
+                .setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, scrollX,
+                        scrollY, oldScrollX, oldScrollY) -> {
+                    // Check if scroll reached bottom (with a small buffer for better UX)
+                    View child = v.getChildAt(0);
+                    if (child != null) {
+                        int diff = (child.getMeasuredHeight() - v.getMeasuredHeight());
+                        if (scrollY >= diff - 50) { // 50px buffer to appear immediately
+                            if (binding.btnAcceptDetail.getVisibility() != View.VISIBLE) {
+                                binding.btnAcceptDetail.setVisibility(View.VISIBLE);
+                                // Hide the info message when reached bottom
+                                binding.cardInfo.setVisibility(View.GONE);
+                            }
+                        }
+                    }
+                });
+
+        binding.btnAcceptDetail.setOnClickListener(v -> {
+            setResult(RESULT_OK);
+            finish();
+        });
     }
 }

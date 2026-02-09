@@ -14,6 +14,8 @@ import gtc.dcc.put0.databinding.ActivityLegalAcceptanceBinding;
 public class LegalAcceptanceActivity extends AppCompatActivity {
 
     private ActivityLegalAcceptanceBinding binding;
+    private androidx.activity.result.ActivityResultLauncher<Intent> termsLauncher;
+    private androidx.activity.result.ActivityResultLauncher<Intent> privacyLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,8 +23,33 @@ public class LegalAcceptanceActivity extends AppCompatActivity {
         binding = ActivityLegalAcceptanceBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        setupLaunchers();
         setupListeners();
         handleUpdateUI();
+    }
+
+    private void setupLaunchers() {
+        termsLauncher = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        binding.cbTerms.setChecked(true);
+                        hideError();
+                    } else {
+                        showError();
+                    }
+                });
+
+        privacyLauncher = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        binding.cbPrivacy.setChecked(true);
+                        hideError();
+                    } else {
+                        showError();
+                    }
+                });
     }
 
     private void handleUpdateUI() {
@@ -43,11 +70,13 @@ public class LegalAcceptanceActivity extends AppCompatActivity {
         // View detail links
         binding.tvTermsLink.setOnClickListener(v -> showLegalDetail(
                 getString(R.string.legal_terms_url),
-                getString(R.string.accept_terms)));
+                getString(R.string.accept_terms),
+                termsLauncher));
 
         binding.tvPrivacyLink.setOnClickListener(v -> showLegalDetail(
                 getString(R.string.legal_privacy_url),
-                getString(R.string.accept_privacy)));
+                getString(R.string.accept_privacy),
+                privacyLauncher));
 
         // Handle continuation and persistence
         binding.btnContinue.setOnClickListener(v -> {
@@ -63,14 +92,26 @@ public class LegalAcceptanceActivity extends AppCompatActivity {
     }
 
     private void validateAcceptance() {
-        binding.btnContinue.setEnabled(binding.cbTerms.isChecked() && binding.cbPrivacy.isChecked());
+        boolean accepted = binding.cbTerms.isChecked() && binding.cbPrivacy.isChecked();
+        binding.btnContinue.setEnabled(accepted);
+        if (accepted)
+            hideError();
     }
 
-    private void showLegalDetail(String url, String title) {
+    private void showError() {
+        binding.cardLegal.setStrokeColor(getResources().getColor(R.color.errorDark));
+    }
+
+    private void hideError() {
+        binding.cardLegal.setStrokeColor(android.graphics.Color.parseColor("#33FFFFFF"));
+    }
+
+    private void showLegalDetail(String url, String title,
+            androidx.activity.result.ActivityResultLauncher<Intent> launcher) {
         Intent intent = new Intent(this, LegalDetailActivity.class);
         intent.putExtra("url", url);
         intent.putExtra("title", title);
-        startActivity(intent);
+        launcher.launch(intent);
     }
 
     @Override

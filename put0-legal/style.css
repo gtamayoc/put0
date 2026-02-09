@@ -2,21 +2,21 @@
 
 :root {
   --primary-green: #4CAF50;
-  --primary-dark: #2E7D32;
+  --primary-dark: #388E3C;
   --primary-light: #81C784;
   --accent-blue: #2196F3;
-  --bg-gradient-start: #0F2027;
-  --bg-gradient-mid: #203A43;
-  --bg-gradient-end: #2C5364;
-  --card-bg: #FFFFFF;
-  --text-primary: #1A1A1A;
-  --text-secondary: #666666;
-  --text-muted: #999999;
-  --border-color: #E0E0E0;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
-  --shadow-green: 0 4px 20px rgba(76, 175, 80, 0.3);
+  --bg-gradient-start: #000000;
+  --bg-gradient-mid: #0D0D0D;
+  --bg-gradient-end: #1A1A1A;
+  --card-bg: #121212;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #808080;
+  --border-color: #333333;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-green: 0 4px 20px rgba(76, 175, 80, 0.2);
 }
 
 * {
@@ -187,7 +187,7 @@ p {
 
 .update {
   display: inline-block;
-  background: linear-gradient(135deg, #F5F5F5, #E8F5E9);
+  background: linear-gradient(135deg, #1E1E1E, #2E2E2E);
   color: var(--text-secondary);
   font-size: 0.9em;
   padding: 8px 20px;
@@ -307,7 +307,7 @@ ul li:hover {
 
 /* Info Box */
 .info-box {
-  background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+  background: linear-gradient(135deg, #1B3320, #2E4533);
   border-left: 5px solid var(--primary-green);
   padding: 25px;
   border-radius: 12px;
@@ -326,7 +326,7 @@ ul li:hover {
 
 /* Contact Section */
 .contact-info {
-  background: linear-gradient(135deg, #F5F5F5, #FAFAFA);
+  background: linear-gradient(135deg, #1E1E1E, #2E2E2E);
   padding: 30px;
   border-radius: 16px;
   margin: 30px 0;
