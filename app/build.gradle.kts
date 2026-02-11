@@ -18,12 +18,12 @@ val nameVersion = "$semanticVersion-Alpha"
 
 android {
     namespace = "gtc.dcc.put0"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "gtc.dcc.put0"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 35
         versionName = nameVersion
         versionCode = baseVersionCode
 
@@ -104,13 +104,10 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.recyclerview)
     implementation(libs.core.animation)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
 
     // ViewModel y LiveData
-    implementation (libs.lifecycle.viewmodel.ktx)
-    implementation (libs.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.livedata.ktx)
 
     // Import the Firebase BoM
     implementation(platform(libs.firebase.bom))
@@ -119,7 +116,7 @@ dependencies {
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation(libs.firebase.analytics)
 
-    //LOGS
+    // LOGS
     implementation(libs.logger)
 
     // Import the BoM for the Firebase platform
@@ -134,18 +131,17 @@ dependencies {
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation(libs.firebase.firestore)
 
-    //Security for SharedPreference
+    // Security for SharedPreference
     implementation(libs.security.crypto)
 
-    //Library to be able to implement images
+    // Library to be able to implement images
     implementation(libs.glide)
 
-    //Library to be able to implement circleimageview
-    implementation (libs.circleimageview)
+    // Library to be able to implement circleimageview
+    implementation(libs.circleimageview)
 
-
-    implementation (libs.bottomsheets)
-    implementation (libs.core)
+    implementation(libs.bottomsheets)
+    implementation(libs.core)
 
     implementation(libs.retrofit)
     implementation(libs.gson) // Use the newer Gson converter (2.11.0) matched with Retrofit
@@ -162,7 +158,12 @@ dependencies {
 
     // UI Animations
     implementation(libs.lottie)
-    
+
+    testImplementation(libs.junit)
+
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
+
     // LeakCanary
     debugImplementation(libs.leakcanary)
 }

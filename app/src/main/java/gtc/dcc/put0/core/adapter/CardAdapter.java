@@ -57,8 +57,19 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     }
 
     public void clearSelection() {
+        if (selectedCards.isEmpty())
+            return;
+
+        List<Card> previouslySelected = new ArrayList<>(selectedCards);
         selectedCards.clear();
-        notifyDataSetChanged();
+
+        // Notify only the items that were previously selected
+        for (int i = 0; i < cards.size(); i++) {
+            if (previouslySelected.contains(cards.get(i))) {
+                notifyItemChanged(i);
+            }
+        }
+
         if (onCardClickListener != null) {
             onCardClickListener.onSelectionChanged(new ArrayList<>());
         }
@@ -254,12 +265,17 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
 
             if (multipleSelectionEnabled && isPlayerHand) {
+                int position = getAdapterPosition();
                 if (selectedCards.contains(card)) {
                     selectedCards.remove(card);
                 } else if (selectedCards.size() < maxSelectableCards) {
                     selectedCards.add(card);
                 }
-                notifyDataSetChanged();
+
+                if (position != RecyclerView.NO_POSITION) {
+                    notifyItemChanged(position);
+                }
+
                 if (onCardClickListener != null) {
                     onCardClickListener.onSelectionChanged(selectedCards);
                 }
