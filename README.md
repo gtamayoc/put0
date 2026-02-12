@@ -11,7 +11,7 @@ PUT0 es un emocionante juego de cartas multijugador desarrollado para Android, q
 
 **Cronograma de Lanzamiento:**
 - Alpha 1.0.1: Disponible Actualmente
-- Lanzamiento Completo: Previsto para finales de 2026
+- Lanzamiento Completo: Previsto para 2027
 
 ## 🎮 Descripción General
 
