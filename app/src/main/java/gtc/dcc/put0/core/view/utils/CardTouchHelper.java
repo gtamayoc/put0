@@ -66,11 +66,21 @@ public class CardTouchHelper extends ItemTouchHelper.Callback {
     public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
         super.clearView(recyclerView, viewHolder);
         // Reset view properties to ensure cards don't stay invisible/translated
-        // This is called when ItemTouchHelper releases the view (swipe completes or is
-        // cancelled)
-        viewHolder.itemView.setAlpha(1.0f);
+        // We only reset alpha if it's NOT a placeholder to respect the adapter's
+        // invisibility logic
+        int position = viewHolder.getAdapterPosition();
+        if (position != RecyclerView.NO_POSITION && position < adapter.getCards().size()) {
+            if (!adapter.getCards().get(position).isPlaceholder()) {
+                viewHolder.itemView.setAlpha(1.0f);
+            }
+        } else {
+            viewHolder.itemView.setAlpha(1.0f);
+        }
+
         viewHolder.itemView.setTranslationX(0f);
-        viewHolder.itemView.setTranslationY(0f);
+        // Note: translationY and Z are handled by ItemTouchHelper's default cleanup
+        // and our adapter's bind/selection logic. We avoid hard-resetting them to 0f
+        // here to prevent "snapping" a selected card back to the ground.
     }
 
     @Override

@@ -79,6 +79,10 @@ public class GameViewModel extends ViewModel {
 
     // --- WebSocket Actions ---
 
+    public void playCards(String playerId, List<Card> cards) {
+        repository.playCards(playerId, cards);
+    }
+
     public void playCard(String playerId, Card card) {
         repository.playCard(playerId, card);
     }

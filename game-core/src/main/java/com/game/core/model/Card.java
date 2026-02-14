@@ -16,6 +16,11 @@ import lombok.NoArgsConstructor;
 public class Card {
 
     /**
+     * Unique identifier for this specific card instance.
+     */
+    private String instanceId = java.util.UUID.randomUUID().toString();
+
+    /**
      * Card value: 1 (Ace) to 13 (King)
      */
     private int value;
@@ -36,6 +41,7 @@ public class Card {
     private boolean isPlaceholder = false;
 
     public Card(int value, Suit suit) {
+        this();
         this.value = value;
         this.suit = suit;
         this.hidden = false;
@@ -103,19 +109,17 @@ public class Card {
         if (o == null || getClass() != o.getClass())
             return false;
         Card card = (Card) o;
-        // Only compare value and suit, NOT hidden flag
-        return value == card.value && suit == card.suit;
+        return java.util.Objects.equals(instanceId, card.instanceId);
     }
 
     @Override
     public int hashCode() {
-        // Only hash value and suit, NOT hidden flag
-        return 31 * value + (suit != null ? suit.hashCode() : 0);
+        return java.util.Objects.hashCode(instanceId);
     }
 
     @Override
     public String toString() {
-        return valueToString() + " of " + suit;
+        return valueToString() + " of " + suit + " (" + instanceId + ")";
     }
 
     private String valueToString() {

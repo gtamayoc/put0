@@ -66,7 +66,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         // Notify only the items that were previously selected
         for (int i = 0; i < cards.size(); i++) {
             if (previouslySelected.contains(cards.get(i))) {
-                notifyItemChanged(i);
+                notifyItemChanged(i, "SELECTION");
             }
         }
 
@@ -126,7 +126,8 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             sortCards(cardsToUpdate);
         }
 
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new CardDiffCallback(this.cards, cardsToUpdate));
+        DiffUtil.DiffResult diffResult = DiffUtil
+                .calculateDiff(new CardDiffCallback(this.cards, cardsToUpdate, selectedCards));
 
         this.cards.clear();
         this.cards.addAll(cardsToUpdate);
@@ -191,8 +192,22 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        Card card = cards.get(position);
-        holder.bind(card);
+        holder.bind(cards.get(position));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull CardViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty()) {
+            for (Object payload : payloads) {
+                if (payload.equals("SELECTION")) {
+                    boolean isSelected = selectedCards.contains(cards.get(position));
+                    holder.updateSelection(isSelected, true);
+                    return; // Stop after handling selection
+                }
+            }
+        }
+        // If no payload or unrecognized, do full bind
+        super.onBindViewHolder(holder, position, payloads);
     }
 
     @Override
@@ -207,13 +222,15 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     class CardViewHolder extends RecyclerView.ViewHolder {
         private final ImageView cardImage;
+        private final View cardContent;
         private final View selectionOverlay;
 
         @SuppressLint("WrongViewCast")
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             cardImage = itemView.findViewById(R.id.cardImage);
-            selectionOverlay = itemView.findViewById(R.id.selectionOverlay);
+            cardContent = itemView.findViewById(R.id.cardContainer);
+            selectionOverlay = null; // No longer used
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -225,8 +242,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
         void bind(Card card) {
             itemView.setAlpha(1.0f);
-            itemView.setTranslationX(0f);
-            itemView.setTranslationY(0f);
+            // Translation/Scale/Elevation reset handled below based on selection
 
             if (card.isPlaceholder()) {
                 // INVISIBLE PLACEHOLDER: Keep separation but don't show anything
@@ -249,8 +265,37 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
                 itemView.setAlpha(1.0f);
             }
 
-            if (selectionOverlay != null) {
-                selectionOverlay.setVisibility(selectedCards.contains(card) ? View.VISIBLE : View.GONE);
+            // Handle Selection Visuals
+            updateSelection(!card.isPlaceholder() && selectedCards.contains(card), false);
+        }
+
+        void updateSelection(boolean isSelected, boolean animate) {
+            float density = itemView.getResources().getDisplayMetrics().density;
+            float targetY = isSelected ? -12f * density : 0f;
+            float targetScale = isSelected ? 1.08f : 1.0f;
+            float targetElevation = isSelected ? 16f * density : 0f;
+
+            if (cardContent instanceof com.google.android.material.card.MaterialCardView) {
+                com.google.android.material.card.MaterialCardView cardView = (com.google.android.material.card.MaterialCardView) cardContent;
+                cardView.setStrokeWidth(0); // Border removed as requested
+
+                if (animate) {
+                    cardContent.animate().cancel();
+                    cardContent.animate()
+                            .translationY(targetY)
+                            .scaleX(targetScale)
+                            .scaleY(targetScale)
+                            .translationZ(targetElevation)
+                            .setDuration(150)
+                            .start();
+                } else {
+                    cardContent.setTranslationY(targetY);
+                    cardContent.setScaleX(targetScale);
+                    cardContent.setScaleY(targetScale);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        cardContent.setTranslationZ(targetElevation);
+                    }
+                }
             }
         }
 
@@ -260,7 +305,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
             if (isPlayerHand && card.isHidden()) {
                 card.setHidden(false);
-                notifyItemChanged(getAdapterPosition());
+                notifyItemChanged(getAdapterPosition(), "SELECTION"); // Or full update if image changes
                 return;
             }
 
@@ -268,12 +313,24 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
                 int position = getAdapterPosition();
                 if (selectedCards.contains(card)) {
                     selectedCards.remove(card);
-                } else if (selectedCards.size() < maxSelectableCards) {
-                    selectedCards.add(card);
+                } else {
+                    // Check duplicate constraint
+                    if (!selectedCards.isEmpty()) {
+                        int currentRank = selectedCards.get(0).getRankValue();
+                        if (card.getRankValue() != currentRank) {
+                            // UX Decide: Switch to new rank group
+                            clearSelection(); // This notifies changes
+                            // selectedCards is now empty, add the new one
+                        }
+                    }
+
+                    if (selectedCards.size() < maxSelectableCards) {
+                        selectedCards.add(card);
+                    }
                 }
 
                 if (position != RecyclerView.NO_POSITION) {
-                    notifyItemChanged(position);
+                    notifyItemChanged(position, "SELECTION");
                 }
 
                 if (onCardClickListener != null) {

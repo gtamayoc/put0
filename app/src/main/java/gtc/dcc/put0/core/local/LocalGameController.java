@@ -79,6 +79,28 @@ public class LocalGameController {
         }
     }
 
+    public void playCards(String playerId, java.util.List<Card> androidCards) {
+        if (coreState == null || androidCards == null || androidCards.isEmpty())
+            return;
+
+        try {
+            java.util.List<com.game.core.model.Card> coreCards = new java.util.ArrayList<>();
+            for (Card c : androidCards) {
+                coreCards.add(GameMapper.toCoreCard(c));
+            }
+
+            coreEngine.playCards(coreState, playerId, coreCards);
+            notifyListener();
+
+            // Trigger bot turn after human move
+            checkBotTurn();
+        } catch (Exception e) {
+            // Log local error
+            CoreLogger.e("LOCAL_GAME", "Error playCards: " + e.getMessage());
+            listener.onGameStateChanged(GameMapper.toAndroidState(coreState)); // Refresh UI
+        }
+    }
+
     public void drawCard(String playerId) {
         if (coreState == null)
             return;

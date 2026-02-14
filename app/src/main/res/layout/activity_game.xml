@@ -606,7 +606,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/containerVisibleCards"
             app:layout_constraintStart_toEndOf="@+id/containerHiddenCards"
-            app:layout_constraintWidth_max="430dp"
+            app:layout_constraintWidth_max="335dp"
             tools:layout_width="300dp"
             tools:listitem="@layout/item_card" />
 

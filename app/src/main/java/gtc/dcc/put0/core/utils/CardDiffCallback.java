@@ -7,10 +7,12 @@ import gtc.dcc.put0.core.model.Card;
 public class CardDiffCallback extends DiffUtil.Callback {
     private final List<Card> oldList;
     private final List<Card> newList;
+    private final List<Card> selectedCards;
 
-    public CardDiffCallback(List<Card> oldList, List<Card> newList) {
+    public CardDiffCallback(List<Card> oldList, List<Card> newList, List<Card> selectedCards) {
         this.oldList = oldList;
         this.newList = newList;
+        this.selectedCards = selectedCards;
     }
 
     @Override
@@ -25,16 +27,33 @@ public class CardDiffCallback extends DiffUtil.Callback {
 
     @Override
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-        // Assuming value+suit is unique enough for this simple view
-        return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
+        Card oldCard = oldList.get(oldItemPosition);
+        Card newCard = newList.get(newItemPosition);
+
+        // Now that Card has a unique instanceId and equals uses it,
+        // we can simply use equals for item identity.
+        return oldCard.equals(newCard);
     }
 
     @Override
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
         Card oldCard = oldList.get(oldItemPosition);
         Card newCard = newList.get(newItemPosition);
-        return oldCard.getRankValue() == newCard.getRankValue()
-                && oldCard.getSuit() == newCard.getSuit()
-                && oldCard.isHidden() == newCard.isHidden();
+
+        // Check unique identity first (extra safe)
+        if (!oldCard.equals(newCard)) {
+            return false;
+        }
+
+        // Check other fields that might change but keep same instanceId
+        // Such as selection status, hidden status, etc.
+        boolean sameSelection = (selectedCards != null) &&
+                (selectedCards.contains(oldCard) == selectedCards.contains(newCard));
+
+        return oldCard.isHidden() == newCard.isHidden() &&
+                oldCard.isPlaceholder() == newCard.isPlaceholder() &&
+                oldCard.getRankValue() == newCard.getRankValue() &&
+                oldCard.getSuit() == newCard.getSuit() &&
+                sameSelection;
     }
 }
