@@ -256,6 +256,126 @@ public class GameEngine {
     }
 
     /**
+     * Plays multiple cards from the current player's hand.
+     * All cards must be of the SAME RANK.
+     * The first card must be playable on the table.
+     */
+    public void playCards(GameState game, String playerId, List<Card> cards) {
+        if (game.getStatus() != GameStatus.PLAYING) {
+            throw new IllegalStateException("Game is not in progress");
+        }
+        if (cards == null || cards.isEmpty()) {
+            return;
+        }
+
+        // Single card fallback
+        if (cards.size() == 1) {
+            playCard(game, playerId, cards.get(0));
+            return;
+        }
+
+        synchronized (game) {
+            Player currentPlayer = game.getCurrentPlayer();
+            if (!currentPlayer.getId().equals(playerId)) {
+                throw new IllegalStateException("Not this player's turn");
+            }
+
+            // 1. Validate "Same Rank" constraint
+            int firstRank = cards.get(0).getValue();
+            for (Card c : cards) {
+                if (c.getValue() != firstRank) {
+                    throw new IllegalArgumentException("All cards must check the same rank");
+                }
+            }
+
+            // 2. Validate first card against Top Card
+            Card topCard = game.getTopCard();
+            Card firstCard = cards.get(0);
+
+            // Phase/Availability validation
+            List<Card> validMoves = currentPlayer.getPlayableCards(topCard);
+
+            // Check if ALL cards are actually in hand/playable
+            for (Card c : cards) {
+                if (!validMoves.contains(c)) {
+                    log.warn("[GAME-INVALID] Player {} tried to play {} but it's not in valid moves.",
+                            currentPlayer.getName(), c);
+                    throw new IllegalArgumentException("One or more cards are not available to play");
+                }
+            }
+
+            // Check gameplay rule (Can play on top?)
+            if (!firstCard.canPlayOn(topCard)) {
+                // For multiple throw, we assume they are from hand (not blind).
+                // Blind play logic (Phase 4) usually involves single cards.
+                // If specific logic for blind is needed, it defaults to single play.
+                throw new IllegalArgumentException(
+                        "Cannot play " + firstCard + " on " + (topCard != null ? topCard : "empty table"));
+            }
+
+            // 3. Execution Loop
+            // We strip them from hand and add to table, but only switch turn at the end.
+            StringBuilder actionMsg = new StringBuilder();
+            actionMsg.append(String.format("Player %s PLAYED %d cards (", currentPlayer.getName(), cards.size()));
+
+            boolean clearedTable = false;
+
+            for (int i = 0; i < cards.size(); i++) {
+                Card c = cards.get(i);
+
+                // Remove from player
+                if (!currentPlayer.removeCard(c)) {
+                    log.error("[GAME-ERROR] Could not remove card {} during multi-play", c);
+                    continue;
+                }
+
+                // Add to table
+                game.getTablePile().add(c);
+                actionMsg.append(c.toString()).append(i < cards.size() - 1 ? ", " : "");
+
+                // Check Clear (Last card usually dictates, or any card that clears?)
+                // If a 2 or 10 is played, it clears. If multiple 3s are played, they stack.
+                if (c.clearsTable() || game.shouldClearTable()) {
+                    clearedTable = true;
+                    // Usually if table acts cleared, we stop adding?
+                    // But user wants to throw ALL. If I throw '2' and '2', first one clears...
+                    // Wait, '2' clears table. You wouldn't throw multiple '2's usually (waste).
+                    // But if you throw three '3's, and table has '1', it's fine.
+                }
+            }
+
+            actionMsg.append(") on top of ").append(topCard);
+            log.info("[GAME-ACTION] " + actionMsg.toString());
+            game.setLastAction(actionMsg.toString());
+
+            if (clearedTable) {
+                game.clearTable();
+                String clearMsg = String.format("Table CLEARED by %s (Multi-throw).", currentPlayer.getName());
+                log.info("[GAME-EVENT] " + clearMsg);
+                game.setLastAction(clearMsg);
+
+                replenishHand(game, currentPlayer);
+                return; // Keep turn
+            }
+
+            // Replenish hand
+            replenishHand(game, currentPlayer);
+
+            // Check Win
+            if (currentPlayer.hasWon()) {
+                game.setStatus(GameStatus.FINISHED);
+                game.setWinnerId(playerId);
+                log.info("[GAME-OVER] Player {} WON the game!", currentPlayer.getName());
+                return;
+            }
+
+            // Next Turn
+            game.nextTurn();
+            log.info("[GAME-TURN] Next turn: {} ({})", game.getCurrentPlayer().getName(), game.getCurrentPlayerIndex());
+        }
+    }
+
+    /**
      * Replenishes player's hand to 3 cards if deck is available (Phase 1).
      */
     private void replenishHand(GameState game, Player player) {

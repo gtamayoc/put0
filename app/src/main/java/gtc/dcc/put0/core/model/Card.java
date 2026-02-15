@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Objects;
 
 public class Card {
+    @SerializedName("instanceId")
+    private String instanceId;
+
     @SerializedName("suit")
     private final Suit suit;
 
@@ -23,7 +26,14 @@ public class Card {
 
     private boolean isPlaceholder = false;
 
+    private void ensureInstanceId() {
+        if (instanceId == null) {
+            instanceId = java.util.UUID.randomUUID().toString();
+        }
+    }
+
     public Card() {
+        this.instanceId = java.util.UUID.randomUUID().toString();
         this.suit = Suit.CLUBS; // Default for placeholder
         this.rankValue = 0;
         this.rank = Rank.TWO; // Using Rank.TWO as a low-power default
@@ -31,6 +41,7 @@ public class Card {
     }
 
     public Card(Suit suit, Rank rank, int resourceId) {
+        this.instanceId = java.util.UUID.randomUUID().toString();
         this.suit = suit;
         this.rank = rank;
         this.rankValue = rank != null ? rank.getValue() : 0;
@@ -40,6 +51,7 @@ public class Card {
     }
 
     public Card(Suit suit, int rankValue, boolean hidden) {
+        this.instanceId = java.util.UUID.randomUUID().toString();
         this.suit = suit;
         this.rankValue = rankValue;
         this.rank = mapValueToRank(rankValue);
@@ -54,6 +66,7 @@ public class Card {
     }
 
     public Card(Suit suit, int rankValue) {
+        this.instanceId = java.util.UUID.randomUUID().toString();
         this.suit = suit;
         this.rankValue = rankValue;
         this.rank = mapValueToRank(rankValue);
@@ -70,6 +83,15 @@ public class Card {
     }
 
     // Getters
+    public String getInstanceId() {
+        ensureInstanceId();
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
     public Suit getSuit() {
         return suit;
     }
@@ -141,18 +163,19 @@ public class Card {
         if (o == null || getClass() != o.getClass())
             return false;
         Card card = (Card) o;
-        return suit == card.suit && getRank() == card.getRank();
+        return Objects.equals(getInstanceId(), card.getInstanceId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(suit, getRank());
+        return Objects.hash(getInstanceId());
     }
 
     @Override
     public String toString() {
         return "Card{" +
-                "suit=" + suit +
+                "instanceId='" + getInstanceId() + '\'' +
+                ", suit=" + suit +
                 ", rank=" + getRank() +
                 ", value=" + rankValue +
                 '}';

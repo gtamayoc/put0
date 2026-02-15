@@ -199,6 +199,28 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
         webSocketManager.send("/app/game/play", action);
     }
 
+    public void playCards(String playerId, java.util.List<Card> cards) {
+        if (_currentGameId.getValue() == null || cards == null || cards.isEmpty())
+            return;
+
+        if (cards.size() == 1) {
+            playCard(playerId, cards.get(0));
+            return;
+        }
+
+        CoreLogger.i("[GAME-ACTION] Playing " + cards.size() + " cards for player: " + playerId);
+
+        if (isLocalMode) {
+            localGameController.playCards(playerId, cards);
+            return;
+        }
+
+        // For remote, we attempt to send the list.
+        GameAction action = new GameAction(_currentGameId.getValue(), playerId, cards.get(0));
+        action.cards = cards;
+        webSocketManager.send("/app/game/play", action);
+    }
+
     public void drawCard(String playerId) {
         if (_currentGameId.getValue() == null)
             return;
@@ -237,6 +259,7 @@ public class GameRepository implements GameWebSocketManager.GameStateListener {
         String gameId;
         String playerId;
         Card card;
+        java.util.List<Card> cards;
 
         GameAction(String gameId, String playerId, Card card) {
             this.gameId = gameId;

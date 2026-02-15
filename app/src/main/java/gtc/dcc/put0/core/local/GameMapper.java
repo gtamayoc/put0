@@ -87,6 +87,7 @@ public class GameMapper {
                 toAndroidSuit(coreCard.getSuit()),
                 coreCard.getValue(),
                 coreCard.isHidden());
+        androidCard.setInstanceId(coreCard.getInstanceId());
         return androidCard;
     }
 
@@ -111,6 +112,7 @@ public class GameMapper {
                 androidCard.getRankValue(),
                 toCoreSuit(androidCard.getSuit()));
         coreCard.setHidden(androidCard.isHidden());
+        coreCard.setInstanceId(androidCard.getInstanceId());
         return coreCard;
     }
 

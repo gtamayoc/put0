@@ -117,7 +117,7 @@ public class GameActivity extends AppCompatActivity {
         discardedCardsAdapter = new CardAdapter(new ArrayList<>(), false, false);
 
         playerHandAdapter.setMultipleSelectionEnabled(true);
-        playerHandAdapter.setMaxSelectableCards(1);
+        playerHandAdapter.setMaxSelectableCards(12);
 
         playerAdapter.setOnPlayerClickListener(new PlayerListAdapter.OnPlayerClickListener() {
             @Override
@@ -185,10 +185,8 @@ public class GameActivity extends AppCompatActivity {
             List<Card> selectedCards = playerHandAdapter.getSelectedCards();
             if (!selectedCards.isEmpty()) {
                 String userName = SharedPreferenceManager.getString("user_name", "Player");
-                // Play each selected card (or just the first if server limit)
-                for (Card c : selectedCards) {
-                    viewModel.playCard(viewModel.getCurrentPlayerId().getValue(), c);
-                }
+                // Play all selected cards
+                viewModel.playCards(viewModel.getCurrentPlayerId().getValue(), selectedCards);
                 playerHandAdapter.clearSelection();
             }
         });

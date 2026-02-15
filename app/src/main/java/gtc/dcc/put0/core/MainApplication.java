@@ -12,7 +12,7 @@ import gtc.dcc.put0.core.utils.SharedPreferenceManager;
 
 public class MainApplication extends Application {
 
-    private static String TAG = "PPUT0";
+    private static String tag = "PPUT0";
 
     @Override
     public void onCreate() {
@@ -29,7 +29,7 @@ public class MainApplication extends Application {
                 .showThreadInfo(false) // (Optional) Whether to show thread info or not. Default true
                 .methodCount(0) // (Optional) How many method line to show. Default 2
                 .methodOffset(7) // (Optional) Hides internal method calls up to offset. Default 5
-                .tag(TAG) // (Optional) Global tag for every log. Default PRETTY_LOGGER
+                .tag(tag) // (Optional) Global tag for every log. Default PRETTY_LOGGER
                 .build();
 
         Logger.addLogAdapter(new AndroidLogAdapter(formatStrategy));
