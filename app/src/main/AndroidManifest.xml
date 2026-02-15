@@ -32,13 +32,13 @@
         <activity
             android:name=".core.view.TestActivity"
             android:configChanges="orientation|screenSize"
-            android:screenOrientation="fullSensor"
+            android:screenOrientation="sensorLandscape"
             android:exported="false" />
         <activity
             android:name=".core.view.LoginActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:screenOrientation="fullSensor">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -49,27 +49,31 @@
             android:name=".core.view.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="fullSensor" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".core.view.GameActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="fullSensor" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".core.view.LobbyActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="fullSensor" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".core.view.AccountActivity"
-            android:exported="false" />
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".core.view.SettingsActivity"
-            android:exported="false" />
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".core.view.LegalAcceptanceActivity"
             android:exported="false"
-            android:screenOrientation="fullSensor" />
+            android:screenOrientation="portrait" />
         <activity
             android:name=".core.view.LegalDetailActivity"
             android:exported="false" />
