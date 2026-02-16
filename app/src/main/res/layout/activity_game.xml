@@ -37,6 +37,7 @@
         android:orientation="vertical"
         android:gravity="center_horizontal|bottom"
         android:paddingVertical="2dp"
+        app:layout_constraintVertical_bias="0.1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/guide_start"
         app:layout_constraintTop_toTopOf="parent"
@@ -49,138 +50,19 @@
             android:text="OPPONENTS"
             android:textColor="#66FFFFFF"
             android:textSize="8sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.1"
             android:layout_marginBottom="4dp"/>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/opponentsCluster"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvOpponents"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:paddingEnd="12dp">
-
-            <!-- OPPONENT 1 (Always expected to be present if game starts) -->
-            <!-- Using ID 'opponent1' so Java logic controls this container's visibility -->
-            <LinearLayout
-                android:id="@+id/opponent1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-                
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-                    
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/ivOpponent1"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:src="@drawable/base"
-                        app:civ_border_color="@color/md_primary"
-                        app:civ_border_width="2dp" />
-
-                    <!-- Card Count Badge -->
-                    <TextView
-                        android:id="@+id/tvOpponentCards1"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="bottom|end"
-                        android:background="@drawable/bg_badge_dark"
-                        android:gravity="center"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        android:elevation="4dp"/>
-                </FrameLayout>
-                <!-- Name hidden as per request, but View exists for Java binding -->
-                <TextView android:id="@+id/tvOpponentName1" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
-            </LinearLayout>
-
-            <!-- OPPONENT 2 -->
-            <LinearLayout
-                android:id="@+id/opponent2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:orientation="vertical"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-                
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-                    
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/ivOpponent2"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:src="@drawable/base"
-                        app:civ_border_color="#AAFFFFFF"
-                        app:civ_border_width="1dp" 
-                        android:alpha="0.9"/>
-                    
-                    <TextView
-                        android:id="@+id/tvOpponentStatus2"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="bottom|end"
-                        android:background="@drawable/bg_badge_dark"
-                        android:gravity="center"
-                        android:text="-"
-                        android:textColor="@android:color/white"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        android:elevation="4dp"/>
-                </FrameLayout>
-                 <!-- Name hidden -->
-                <TextView android:id="@+id/tvOpponentName2" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
-            </LinearLayout>
-
-            <!-- OPPONENT 3 -->
-            <LinearLayout
-                android:id="@+id/opponent3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="48dp"
-                android:orientation="vertical"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-                
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-                    
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/ivOpponent3"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:src="@drawable/base"
-                        app:civ_border_color="#88FFFFFF"
-                        app:civ_border_width="1dp" 
-                        android:alpha="0.8"/>
-                    
-                    <TextView
-                        android:id="@+id/tvOpponentCards3"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="bottom|end"
-                        android:background="@drawable/bg_badge_dark"
-                        android:gravity="center"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        android:elevation="4dp"/>
-                </FrameLayout>
-                 <!-- Name hidden -->
-                <TextView android:id="@+id/tvOpponentName3" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            android:paddingEnd="12dp"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_opponent_compact" />
 
 
         <!-- Main Deck -->
@@ -190,7 +72,7 @@
             android:text="MAIN DECK"
             android:textColor="#66FFFFFF"
             android:textSize="8sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.2" />
 
         <TextView
@@ -200,7 +82,7 @@
             android:text="DOUBLE (104)"
             android:textColor="@color/md_primary"
             android:textSize="7sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.1"
             android:alpha="0.8" />
         
@@ -245,7 +127,7 @@
                     android:shadowDy="1"
                     android:shadowRadius="2"
                     android:textSize="18sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
                     android:elevation="6dp" />
             </FrameLayout>
         </FrameLayout>
@@ -258,7 +140,7 @@
             android:text="DISCARD"
             android:textColor="#66FFFFFF"
             android:textSize="8sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.2" />
 
         <FrameLayout
@@ -300,7 +182,7 @@
                 android:shadowDy="1"
                 android:shadowRadius="2"
                 android:textSize="12sp"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
                 android:elevation="10dp" />
         </FrameLayout>
     </LinearLayout>
@@ -312,6 +194,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="bottom"
+        app:layout_constraintVertical_bias="0.1"
         app:layout_constraintStart_toEndOf="@+id/guide_end"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -336,7 +219,7 @@
                 android:textColor="@color/md_primary"
                 android:textSize="9sp"
                 android:letterSpacing="0.1"
-                android:textStyle="bold" 
+                android:fontFamily="sans-serif-medium"
                 android:gravity="center"/>
 
             <!-- Phase Tracker -->
@@ -358,7 +241,7 @@
                     android:text="F1: Robando"
                     android:textColor="#FFFFFF"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
 
             <View
@@ -384,7 +267,8 @@
                     android:layout_marginStart="4dp"
                     android:text="OBJETIVO MESA"
                     android:textColor="#99FFFFFF"
-                    android:textSize="8sp" />
+                    android:textSize="8sp"
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
             
             <TextView
@@ -395,7 +279,7 @@
                 android:text="Cualquier carta"
                 android:textColor="#E6E1E5"
                 android:textSize="10sp"
-                android:textStyle="bold" />
+                android:fontFamily="sans-serif-medium" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -414,7 +298,8 @@
                     android:layout_marginStart="4dp"
                     android:text="RECIENTE"
                     android:textColor="#99FFFFFF"
-                    android:textSize="8sp" />
+                    android:textSize="8sp"
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
             
             <TextView
@@ -426,6 +311,7 @@
                 android:textColor="#E6E1E5"
                 android:textSize="9sp"
                 android:maxLines="2"
+                android:fontFamily="sans-serif"
                 android:ellipsize="end" />
 
             <View
@@ -446,58 +332,70 @@
                     android:layout_weight="1"
                     android:text="TIEMPO"
                     android:textColor="#99FFFFFF"
-                    android:textSize="8sp" />
+                    android:textSize="8sp"
+                    android:fontFamily="sans-serif-medium" />
                 <Chronometer
                     android:id="@+id/gameTimer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@android:color/holo_green_light"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
         </LinearLayout>
 
         <!-- Buttons Panel -->
         <LinearLayout
-            android:layout_width="145dp"
+            android:layout_width="140dp"
             android:layout_height="wrap_content"
             android:background="@drawable/rounded_edittext"
-            android:backgroundTint="#33000000"
+            android:backgroundTint="#CC1C1B1F"
             android:padding="12dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:elevation="6dp">
             
-            <com.google.android.material.button.MaterialButton
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnPlaySelected"
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_btn_green_3d"
                 android:text="JUGAR"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp"
-                app:backgroundTint="#4CAF50"
-                app:icon="@drawable/ic_play_modern"
-                app:iconGravity="textStart"
-                app:iconSize="16dp"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white"
+                android:shadowColor="#33000000"
+                android:shadowDx="1"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:drawableStart="@drawable/ic_play_modern"
+                android:drawableTint="@android:color/white"
+                android:drawablePadding="6dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:stateListAnimator="@null"/>
 
-            <com.google.android.material.button.MaterialButton
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnSkipTurn"
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:layout_marginTop="6dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_btn_orange_3d"
                 android:text="PASAR"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp"
-                app:backgroundTint="#FF9800"
-                app:icon="@drawable/ic_skip_modern"
-                app:iconGravity="textStart"
-                app:iconSize="16dp"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white"
+                android:shadowColor="#33000000"
+                android:shadowDx="1"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:drawableStart="@drawable/ic_double_arrow"
+                android:drawableTint="@android:color/white"
+                android:drawablePadding="6dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:stateListAnimator="@null"/>
         </LinearLayout>
 
     </LinearLayout>
@@ -547,7 +445,8 @@
             android:paddingVertical="4dp"
             android:text="Turn: DeepBot"
             android:textColor="@android:color/white"
-            android:textSize="10sp" />
+            android:textSize="10sp"
+            android:fontFamily="sans-serif-medium" />
     </FrameLayout>
 
     <!-- BOTTOM SECTION: Player Hand Area - FIXED CHAIN PACKED -->
@@ -580,6 +479,7 @@
                 android:text="HIDDEN"
                 android:textSize="8sp"
                 android:textColor="#88FFFFFF"
+                android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="4dp"/>
 
             <FrameLayout
@@ -643,6 +543,7 @@
                 android:text="VISIBLE"
                 android:textSize="8sp"
                 android:textColor="#88FFFFFF"
+                android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="4dp"/>
 
             <FrameLayout
@@ -717,7 +618,7 @@
                     android:text="JUGADOR"
                     android:textColor="#99CAC4D0"
                     android:textSize="7sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
                     android:letterSpacing="0.05" />
                 <TextView
                     android:id="@+id/tvPlayerName"
@@ -726,7 +627,7 @@
                     android:text="Alex Gonzalez"
                     android:textColor="@android:color/white"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
         </LinearLayout>
 
