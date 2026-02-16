@@ -137,9 +137,11 @@ public class PlayerListAdapter extends RecyclerView.Adapter<PlayerListAdapter.Pl
             userName.setText(player.getName());
 
             boolean isTurn = currentPlayerId != null && currentPlayerId.equals(player.getId());
-            String statusText = String.format("%s | Cartas: %d",
-                    isTurn ? "En turno" : "Esperando",
-                    player.getCardCount());
+            int handSize = player.getCardCount()
+                    - (player.getVisibleCards() != null ? player.getVisibleCards().size() : 0)
+                    - (player.getHiddenCards() != null ? player.getHiddenCards().size() : 0);
+
+            String statusText = String.format("Cartas: %d", handSize);
             userStatus.setText(statusText);
 
             // Actualizar colores y estados
