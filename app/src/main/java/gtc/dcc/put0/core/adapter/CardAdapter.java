@@ -39,6 +39,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.cards = new ArrayList<>(cards);
         this.isPlayerHand = isPlayerHand;
         this.isHidden = isHidden;
+        setHasStableIds(true);
     }
 
     public void setOnCardClickListener(OnCardClickListener listener) {

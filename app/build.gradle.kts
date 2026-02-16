@@ -12,7 +12,7 @@ fun versionCodeFrom(semantic: String): Int {
     return major * 10000 + minor * 100 + patch
 }
 
-val semanticVersion = "1.0.1"
+val semanticVersion = "1.0.2"
 val baseVersionCode = versionCodeFrom(semanticVersion)
 val nameVersion = "$semanticVersion-Alpha"
 

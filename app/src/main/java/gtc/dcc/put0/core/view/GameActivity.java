@@ -88,6 +88,12 @@ public class GameActivity extends AppCompatActivity {
     private void setupAdapters() {
         playerAdapter = new PlayerListAdapter(this, new ArrayList<>());
 
+        // Initializing Opponent Adapter (Dynamic Opponents)
+        opponentAdapter = new gtc.dcc.put0.core.adapter.OpponentAdapter(this);
+        binding.rvOpponents.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this,
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
+        binding.rvOpponents.setAdapter(opponentAdapter);
+
         playerHandAdapter = new CardAdapter(new ArrayList<>(), true, false);
         playerHandAdapter.setOnCardClickListener(new CardAdapter.OnCardClickListener() {
             @Override
@@ -160,6 +166,11 @@ public class GameActivity extends AppCompatActivity {
                                                                                                                        // table
         binding.tableCards.setAdapter(tableCardsAdapter);
 
+        // Prevent "ghost" cards during updates/swipes by disabling change animations
+        RecyclerView.ItemAnimator animator = binding.rvPlayerHand.getItemAnimator();
+        if (animator instanceof androidx.recyclerview.widget.SimpleItemAnimator) {
+            ((androidx.recyclerview.widget.SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+        }
     }
 
     private void setupSwipeHelper() {
@@ -203,6 +214,8 @@ public class GameActivity extends AppCompatActivity {
 
         binding.discardPileContainer.setOnClickListener(v -> showDiscardedCardsDialog());
     }
+
+    private final io.reactivex.disposables.CompositeDisposable disposables = new io.reactivex.disposables.CompositeDisposable();
 
     private void setupObservers() {
         viewModel.getError().observe(this, error -> {
@@ -273,12 +286,6 @@ public class GameActivity extends AppCompatActivity {
             checkGameOver(state);
 
             if (myId != null) {
-                // Show last action if available (Local or Server)
-                // if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
-                // //GameMessageHelper.showMessage(binding.getRoot(), state.getLastAction(),
-                // GameMessageHelper.MessageType.INFO);
-                // }
-
                 for (Player p : state.getPlayers()) {
                     if (p.getId().equals(myId)) {
                         // Detect Phase 4 transitions and failures
@@ -325,7 +332,7 @@ public class GameActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getGameEvents()
+        disposables.add(viewModel.getGameEvents()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(event -> {
                     CoreLogger.d("GAME_EVENT", "Received event: " + event);
@@ -338,7 +345,7 @@ public class GameActivity extends AppCompatActivity {
                             break;
                         // Add other events as needed
                     }
-                });
+                }));
     }
 
     private void updateStaticPiles(Player player) {
@@ -404,6 +411,9 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    // Added field
+    private gtc.dcc.put0.core.adapter.OpponentAdapter opponentAdapter;
+
     private void updateOpponentsUI(List<Player> players, String myId) {
         List<Player> opponents = new ArrayList<>();
         for (Player p : players) {
@@ -412,40 +422,9 @@ public class GameActivity extends AppCompatActivity {
             }
         }
 
-        // Slot 1
-        if (opponents.size() > 0) {
-            binding.opponent1.setVisibility(android.view.View.VISIBLE);
-            binding.tvOpponentName1.setText(opponents.get(0).getName());
-            binding.tvOpponentCards1.setText(opponents.get(0).getHand().size() + " cards");
-            binding.opponent1.setAlpha(
-                    opponents.get(0).getId().equals(viewModel.getGameState().getValue().getCurrentPlayerId()) ? 1.0f
-                            : 0.7f);
-        } else {
-            binding.opponent1.setVisibility(android.view.View.GONE);
-        }
-
-        // Slot 2
-        if (opponents.size() > 1) {
-            binding.opponent2.setVisibility(android.view.View.VISIBLE);
-            binding.tvOpponentName2.setText(opponents.get(1).getName());
-            binding.tvOpponentStatus2.setText(opponents.get(1).getHand().size() + " cards");
-            binding.opponent2.setAlpha(
-                    opponents.get(1).getId().equals(viewModel.getGameState().getValue().getCurrentPlayerId()) ? 1.0f
-                            : 0.7f);
-        } else {
-            binding.opponent2.setVisibility(android.view.View.GONE);
-        }
-
-        // Slot 3
-        if (opponents.size() > 2) {
-            binding.opponent3.setVisibility(android.view.View.VISIBLE);
-            binding.tvOpponentName3.setText(opponents.get(2).getName());
-            binding.tvOpponentCards3.setText(opponents.get(2).getHand().size() + " cards");
-            binding.opponent3.setAlpha(
-                    opponents.get(2).getId().equals(viewModel.getGameState().getValue().getCurrentPlayerId()) ? 1.0f
-                            : 0.7f);
-        } else {
-            binding.opponent3.setVisibility(android.view.View.GONE);
+        // Use the adapter for dynamic list
+        if (opponentAdapter != null) {
+            opponentAdapter.updateData(opponents, viewModel.getGameState().getValue().getCurrentPlayerId());
         }
     }
 
@@ -898,5 +877,8 @@ public class GameActivity extends AppCompatActivity {
         }
         // Clean up message helper resources
         GameMessageHelper.cleanup();
+
+        // Fix memory leak
+        disposables.clear();
     }
 }

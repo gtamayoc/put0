@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state: Button moves down (less bottom padding) -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- Background/Shadow layer -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#1B5E20" />
+                </shape>
+            </item>
+            <!-- Face layer - shifted down -->
+            <item android:top="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <gradient 
+                        android:angle="270" 
+                        android:startColor="#66BB6A" 
+                        android:endColor="#43A047" 
+                        android:type="linear"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Default state -->
+    <item>
+        <layer-list>
+            <!-- Background/Shadow layer - acts as the 3D depth -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#1B5E20" />
+                </shape>
+            </item>
+            <!-- Face layer - sits on top with bottom margin -->
+            <item android:bottom="6dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <gradient 
+                        android:angle="270" 
+                        android:startColor="#66BB6A" 
+                        android:endColor="#43A047" 
+                        android:type="linear"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>
