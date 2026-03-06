@@ -1,72 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!--
+    Player list item for the Lobby - API 23-35 compatible
+    - Dark semi-transparent card (no theme-dependent background)
+    - Large readable text with white color hardcoded
+    - No MaterialCardView to avoid theme attr injection issues on some OEMs
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginBottom="6dp"
+    android:background="#30FFFFFF"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical">
 
+    <!-- Avatar placeholder circle -->
+    <ImageView
+        android:id="@+id/userImage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/base"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/app_name" />
+
+    <!-- Name + status column -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <!-- Imagen del usuario -->
-        <ImageView
-            android:id="@+id/userImage"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/base"
-            android:contentDescription="@string/app_name"
-            android:scaleType="centerCrop"
-            android:src="@drawable/base" />
-
-        <!-- Detalles del usuario -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/userName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="Jugador"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:shadowColor="#000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3" />
 
+        <TextView
+            android:id="@+id/userStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Conectado"
+            android:textColor="#CCFFFFFF"
+            android:textSize="13sp" />
 
-            <!-- Detalles del usuario -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/userName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Nombre del Usuario"
-                    android:textColor="@color/black"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-
-            <!-- Detalles del usuario -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/userStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Estado: Jugando"
-                    android:textColor="@color/black"
-                    android:textSize="7sp" />
-
-            </LinearLayout>
-
-
-        </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</LinearLayout>

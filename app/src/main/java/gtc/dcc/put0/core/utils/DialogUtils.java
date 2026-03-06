@@ -124,6 +124,7 @@ public final class DialogUtils {
         // Mode Options
         View cardSoloBot = view.findViewById(R.id.cardSoloBot);
         View cardSoloAmigo = view.findViewById(R.id.cardSoloAmigo);
+        View cardBluetooth = view.findViewById(R.id.cardBluetooth);
 
         MaterialButton btnStartGame = view.findViewById(R.id.btnStartGame);
 
@@ -160,18 +161,21 @@ public final class DialogUtils {
         };
 
         Runnable updateModeUI = () -> {
-            if (cardSoloBot == null || cardSoloAmigo == null)
+            if (cardSoloBot == null || cardSoloAmigo == null || cardBluetooth == null)
                 return;
-            boolean isBot = selectedMode[0] == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT;
 
-            // Selected Mode gets Purple Border (bg_card_selected)
-            // Unselected gets (bg_card_unselected)
-            if (isBot) {
+            // Unselect all
+            cardSoloBot.setBackgroundResource(R.drawable.bg_card_unselected);
+            cardSoloAmigo.setBackgroundResource(R.drawable.bg_card_unselected);
+            cardBluetooth.setBackgroundResource(R.drawable.bg_card_unselected);
+
+            // Select the active mode
+            if (selectedMode[0] == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_BOT) {
                 cardSoloBot.setBackgroundResource(R.drawable.bg_card_selected);
-                cardSoloAmigo.setBackgroundResource(R.drawable.bg_card_unselected);
-            } else {
+            } else if (selectedMode[0] == gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO) {
                 cardSoloAmigo.setBackgroundResource(R.drawable.bg_card_selected);
-                cardSoloBot.setBackgroundResource(R.drawable.bg_card_unselected);
+            } else if (selectedMode[0] == gtc.dcc.put0.core.data.model.MatchMode.BLUETOOTH_OFFLINE) {
+                cardBluetooth.setBackgroundResource(R.drawable.bg_card_selected);
             }
         };
 
@@ -201,6 +205,13 @@ public final class DialogUtils {
         if (cardSoloAmigo != null) {
             cardSoloAmigo.setOnClickListener(v -> {
                 selectedMode[0] = gtc.dcc.put0.core.data.model.MatchMode.SOLO_VS_AMIGO;
+                updateModeUI.run();
+            });
+        }
+
+        if (cardBluetooth != null) {
+            cardBluetooth.setOnClickListener(v -> {
+                selectedMode[0] = gtc.dcc.put0.core.data.model.MatchMode.BLUETOOTH_OFFLINE;
                 updateModeUI.run();
             });
         }
@@ -253,6 +264,75 @@ public final class DialogUtils {
 
         btnCancel.setOnClickListener(v -> bottomSheetDialog.cancel());
 
+        bottomSheetDialog.show();
+    }
+
+    public interface OnJoinModeSelectedListener {
+        void onModeSelected(boolean isBluetooth);
+    }
+
+    public static void showJoinModeSelectionDialog(Activity activity, OnJoinModeSelectedListener listener) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(activity, R.style.BottomSheetDialogTheme);
+        View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_join_selection, null);
+        bottomSheetDialog.setContentView(view);
+
+        // Force bottom sheet to be fully expanded
+        bottomSheetDialog.getBehavior()
+                .setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetDialog.getBehavior().setSkipCollapsed(true);
+
+        // Transparent background to show rounded corners
+        if (bottomSheetDialog.getWindow() != null) {
+            bottomSheetDialog.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet)
+                    .setBackgroundResource(android.R.color.transparent);
+        }
+
+        View cardJoinOnline = view.findViewById(R.id.cardJoinOnline);
+        View cardJoinBluetooth = view.findViewById(R.id.cardJoinBluetooth);
+        MaterialButton btnJoinGame = view.findViewById(R.id.btnJoinGame);
+
+        final boolean[] isBluetoothSelected = { false }; // Default Online
+
+        Runnable updateUI = () -> {
+            if (cardJoinOnline == null || cardJoinBluetooth == null)
+                return;
+
+            if (isBluetoothSelected[0]) {
+                cardJoinBluetooth.setBackgroundResource(R.drawable.bg_card_selected);
+                cardJoinOnline.setBackgroundResource(R.drawable.bg_card_unselected);
+
+                android.widget.ImageView ivBluetooth = cardJoinBluetooth.findViewById(R.id.cardJoinBluetooth)
+                        .findViewById(android.R.id.icon);
+                if (ivBluetooth != null)
+                    ivBluetooth.setColorFilter(activity.getResources().getColor(R.color.brand_green));
+            } else {
+                cardJoinOnline.setBackgroundResource(R.drawable.bg_card_selected);
+                cardJoinBluetooth.setBackgroundResource(R.drawable.bg_card_unselected);
+            }
+        };
+
+        if (cardJoinOnline != null) {
+            cardJoinOnline.setOnClickListener(v -> {
+                isBluetoothSelected[0] = false;
+                updateUI.run();
+            });
+        }
+
+        if (cardJoinBluetooth != null) {
+            cardJoinBluetooth.setOnClickListener(v -> {
+                isBluetoothSelected[0] = true;
+                updateUI.run();
+            });
+        }
+
+        if (btnJoinGame != null) {
+            btnJoinGame.setOnClickListener(v -> {
+                listener.onModeSelected(isBluetoothSelected[0]);
+                bottomSheetDialog.dismiss();
+            });
+        }
+
+        updateUI.run();
         bottomSheetDialog.show();
     }
 }

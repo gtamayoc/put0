@@ -25,6 +25,7 @@ import gtc.dcc.put0.core.utils.SharedPreferenceManager;
 import gtc.dcc.put0.core.viewmodel.MainViewModel;
 import gtc.dcc.put0.core.viewmodel.UserViewModel;
 import gtc.dcc.put0.databinding.ActivityMainBinding;
+import android.content.Intent;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -125,16 +126,29 @@ public class MainActivity extends AppCompatActivity {
                     botCount = 1; // Default 1 bot
                 }
 
-                // Show form only if needed (e.g., custom names or settings), else direct create
-                // For simplicity, direct create for now and verify
-                gameViewModel.createGame(userName, botCount, mode, deckSize);
-                GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_preparing_game,
-                        GameMessageHelper.MessageType.INFO);
+                if (mode == gtc.dcc.put0.core.data.model.MatchMode.BLUETOOTH_OFFLINE) {
+                    Intent intent = new Intent(this, LobbyActivity.class);
+                    intent.putExtra("MATCH_MODE", "BLUETOOTH_HOST");
+                    intent.putExtra("DECK_SIZE", deckSize);
+                    startActivity(intent);
+                } else {
+                    gameViewModel.createGame(userName, botCount, mode, deckSize);
+                    GameMessageHelper.showMessage(binding.getRoot(), R.string.msg_preparing_game,
+                            GameMessageHelper.MessageType.INFO);
+                }
             });
         });
 
         binding.btnJoinGame.setOnClickListener(v -> {
-            viewModel.onJoinGameClicked();
+            DialogUtils.showJoinModeSelectionDialog(this, (isBluetooth) -> {
+                if (isBluetooth) {
+                    Intent intent = new Intent(this, LobbyActivity.class);
+                    intent.putExtra("MATCH_MODE", "BLUETOOTH_CLIENT");
+                    startActivity(intent);
+                } else {
+                    viewModel.onJoinGameClicked();
+                }
+            });
         });
         binding.btnSettings.setOnClickListener(v -> viewModel.onSettingsClicked());
         binding.btnLogout.setOnClickListener(v -> showExitDialog());

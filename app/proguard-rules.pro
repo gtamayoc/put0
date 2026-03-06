@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Bluetooth / Network DTOs requirements to prevent Gson deserialization crashes
+-keep class com.game.core.network.** { *; }
+-keepattributes Signature

@@ -83,6 +83,9 @@ public class GameActivity extends AppCompatActivity {
 
     private void initializeViewModels() {
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
+        if (getIntent().getBooleanExtra("IS_BLUETOOTH", false)) {
+            viewModel.setMatchManager(gtc.dcc.put0.core.network.bluetooth.BluetoothMatchManager.getInstance());
+        }
     }
 
     private void setupAdapters() {

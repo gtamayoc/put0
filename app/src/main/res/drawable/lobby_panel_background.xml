@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Semi-transparent dark panel with rounded corners.
+    Uses only shape drawables — compatible API 1+.
+    No LayerList or ripple overlay to avoid API version issues.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#99000000" />  <!-- ~60% opacity black, visible on all devices -->
+    <corners android:radius="12dp" />
+    <stroke
+        android:width="1dp"
+        android:color="#33FFFFFF" />  <!-- Very subtle white border -->
+</shape>

@@ -16,6 +16,29 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <!-- ============================================================
+         BLUETOOTH MULTIPLAYER - Compatible API 23 to 35
+
+         API 23-30: BLUETOOTH + BLUETOOTH_ADMIN + ACCESS_FINE_LOCATION
+         API 31+  : BLUETOOTH_SCAN (neverForLocation) + BLUETOOTH_CONNECT
+         ============================================================ -->
+    <!-- Legacy Bluetooth - required for API 23-30 -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <!-- Location required for discovery on API 23-30 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+    <!-- Modern Bluetooth - API 31+ -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="31" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
+        tools:targetApi="31" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"
+        tools:targetApi="31" />
+
     <application
         android:name=".core.MainApplication"
         android:resizeableActivity="true"

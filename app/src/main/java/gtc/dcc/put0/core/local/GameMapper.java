@@ -31,23 +31,38 @@ public class GameMapper {
         androidState.setLastAction(coreState.getLastAction());
         androidState.setDeckSize(coreState.getDeckSize());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            androidState.setPlayers(coreState.getPlayers().stream()
-                    .map(GameMapper::toAndroidPlayer)
-                    .collect(Collectors.toList()));
-
-            androidState.setTablePile(coreState.getTablePile().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
-
-            androidState.setMainDeck(coreState.getMainDeck().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
-
-            androidState.setDiscardPile(coreState.getDiscardPile().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
+        // Use loops instead of Streams for backward compatibility (API < 24)
+        List<Player> androidPlayers = new ArrayList<>();
+        if (coreState.getPlayers() != null) {
+            for (com.game.core.model.Player p : coreState.getPlayers()) {
+                androidPlayers.add(toAndroidPlayer(p));
+            }
         }
+        androidState.setPlayers(androidPlayers);
+
+        List<gtc.dcc.put0.core.model.Card> androidTable = new ArrayList<>();
+        if (coreState.getTablePile() != null) {
+            for (com.game.core.model.Card c : coreState.getTablePile()) {
+                androidTable.add(toAndroidCard(c));
+            }
+        }
+        androidState.setTablePile(androidTable);
+
+        List<gtc.dcc.put0.core.model.Card> androidMain = new ArrayList<>();
+        if (coreState.getMainDeck() != null) {
+            for (com.game.core.model.Card c : coreState.getMainDeck()) {
+                androidMain.add(toAndroidCard(c));
+            }
+        }
+        androidState.setMainDeck(androidMain);
+
+        List<gtc.dcc.put0.core.model.Card> androidDiscard = new ArrayList<>();
+        if (coreState.getDiscardPile() != null) {
+            for (com.game.core.model.Card c : coreState.getDiscardPile()) {
+                androidDiscard.add(toAndroidCard(c));
+            }
+        }
+        androidState.setDiscardPile(androidDiscard);
 
         return androidState;
     }
@@ -61,19 +76,29 @@ public class GameMapper {
         androidPlayer.setBot(corePlayer.isBot());
         androidPlayer.setActive(corePlayer.isActive());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            androidPlayer.setHand(corePlayer.getHand().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
-
-            androidPlayer.setVisibleCards(corePlayer.getVisibleCards().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
-
-            androidPlayer.setHiddenCards(corePlayer.getHiddenCards().stream()
-                    .map(GameMapper::toAndroidCard)
-                    .collect(Collectors.toList()));
+        List<gtc.dcc.put0.core.model.Card> hand = new ArrayList<>();
+        if (corePlayer.getHand() != null) {
+            for (com.game.core.model.Card c : corePlayer.getHand()) {
+                hand.add(toAndroidCard(c));
+            }
         }
+        androidPlayer.setHand(hand);
+
+        List<gtc.dcc.put0.core.model.Card> visible = new ArrayList<>();
+        if (corePlayer.getVisibleCards() != null) {
+            for (com.game.core.model.Card c : corePlayer.getVisibleCards()) {
+                visible.add(toAndroidCard(c));
+            }
+        }
+        androidPlayer.setVisibleCards(visible);
+
+        List<gtc.dcc.put0.core.model.Card> hidden = new ArrayList<>();
+        if (corePlayer.getHiddenCards() != null) {
+            for (com.game.core.model.Card c : corePlayer.getHiddenCards()) {
+                hidden.add(toAndroidCard(c));
+            }
+        }
+        androidPlayer.setHiddenCards(hidden);
 
         androidPlayer.setCardCount(corePlayer.getCardCount());
 

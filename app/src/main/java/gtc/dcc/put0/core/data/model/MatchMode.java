@@ -5,6 +5,7 @@ package gtc.dcc.put0.core.data.model;
  */
 public enum MatchMode {
     SOLO_VS_BOT, // Single player vs Bot
-    SOLO_VS_AMIGO, // 1v1 Local/Friend
-    SOLO_VS_AMIGOS // Group
+    SOLO_VS_AMIGO, // 1v1 Local/Friend Online
+    SOLO_VS_AMIGOS, // Group Online
+    BLUETOOTH_OFFLINE // Local Bluetooth Network
 }

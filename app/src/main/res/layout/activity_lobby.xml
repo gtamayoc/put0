@@ -1,128 +1,170 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Lobby Activity Layout — API 23-35 compatible
+    Key decisions:
+    - No android:letterSpacing on API < 21 (safe here since minSdk=23, but kept simple)
+    - No CardView/MaterialButton API-specific attrs that require API 31+
+    - All colors defined as hardcoded hex or from colors.xml (no resource attribute that
+      requires Material3 theme injection at runtime)
+    - Constraints are explicit and don't rely on percent-width chains (more stable)
+    - indeterminateTint fallback handled via colors.xml white for old drawables
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_lobby"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/poker_table_background"
-    android:fitsSystemWindows="true"
     tools:context=".core.view.LobbyActivity">
 
+    <!-- ====== TITLE ====== -->
     <TextView
         android:id="@+id/tv_lobby_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         android:text="LOBBY"
-        android:textColor="@color/white"
+        android:textColor="#FFFFFF"
         android:textSize="32sp"
         android:textStyle="bold"
+        android:shadowColor="#99000000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Left Panel: Game Info -->
+    <!-- ====== LEFT PANEL: Game Info ====== -->
     <LinearLayout
         android:id="@+id/ll_info_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/lobby_panel_background"
         android:orientation="vertical"
         android:gravity="center"
         android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@id/ll_action_buttons"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/rv_lobby_players"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_lobby_title"
-        app:layout_constraintWidth_percent="0.4">
+        app:layout_constraintWidth_percent="0.44">
 
         <TextView
             android:id="@+id/tv_game_code"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CODE"
-            android:textSize="48sp"
+            android:text="----"
+            android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="#FFD700"
-            android:letterSpacing="0.1"
             android:shadowColor="#000000"
-            android:shadowDx="2"
+            android:shadowDx="1"
             android:shadowDy="2"
-            android:shadowRadius="4"/>
+            android:shadowRadius="4"
+            android:gravity="center" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#40FFFFFF"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp" />
 
         <TextView
             android:id="@+id/tv_mode_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Mode: Solo vs Bot"
-            android:textSize="18sp"
-            android:textColor="@color/white"/>
+            android:text="Mode"
+            android:textSize="15sp"
+            android:textStyle="italic"
+            android:textColor="#E0E0E0"
+            android:gravity="center" />
 
         <TextView
             android:id="@+id/tv_player_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Players: 1/1"
-            android:textSize="18sp"
-            android:textColor="@color/white"/>
+            android:layout_marginTop="8dp"
+            android:text="Jugadores: 1"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center" />
 
     </LinearLayout>
 
-    <!-- Right Panel: Player List -->
+    <!-- ====== RIGHT PANEL: Player List ====== -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_lobby_players"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="16dp"
-        android:background="#80000000"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/lobby_panel_background"
         android:padding="8dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/tv_lobby_title"
         app:layout_constraintBottom_toTopOf="@id/ll_action_buttons"
         app:layout_constraintStart_toEndOf="@id/ll_info_container"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_player_list"/>
+        tools:listitem="@layout/user_list_item" />
 
-    <!-- Bottom: Action Buttons -->
+    <!-- ====== BOTTOM BUTTONS ====== -->
     <LinearLayout
         android:id="@+id/ll_action_buttons"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingBottom="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <Button
             android:id="@+id/btn_share_code"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Share Code"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:layout_marginEnd="16dp"/>
+            android:text="Compartir"
+            android:textColor="#CCFFFFFF"
+            android:textSize="14sp"
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginEnd="16dp" />
 
         <Button
             android:id="@+id/btn_start_game"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="START GAME"
-            android:textColor="@color/white"
+            android:text="INICIAR"
+            android:textColor="#FFFFFF"
             android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:background="@drawable/primary_button_gradient"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp" />
 
     </LinearLayout>
 
-    <!-- Native Loading Overlay -->
+    <!-- ====== LOADING OVERLAY ====== -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_loading_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#DC000000"
+        android:background="#E0000000"
         android:clickable="true"
         android:focusable="true"
         android:visibility="visible"
@@ -130,15 +172,16 @@
 
         <ProgressBar
             android:id="@+id/pb_loading"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:indeterminateTint="#FFD700"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            app:layout_constraintBottom_toTopOf="@id/tv_loading_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
 
         <TextView
+            android:id="@+id/tv_loading_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -146,10 +189,10 @@
             android:textColor="#FFD700"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:letterSpacing="0.2"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/pb_loading" />
+            app:layout_constraintTop_toBottomOf="@id/pb_loading"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

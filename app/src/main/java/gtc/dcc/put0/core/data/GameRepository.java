@@ -18,7 +18,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class GameRepository implements GameWebSocketManager.GameStateListener {
+public class GameRepository implements GameWebSocketManager.GameStateListener, gtc.dcc.put0.core.network.MatchManager {
     private static GameRepository instance;
 
     private final GameWebSocketManager webSocketManager;

@@ -22,27 +22,33 @@ public class GameViewModel extends ViewModel {
     private static final String TAG = "GameViewModel";
 
     private final GameRepository repository;
+    private gtc.dcc.put0.core.network.MatchManager matchManager;
 
     public GameViewModel() {
         repository = GameRepository.getInstance();
+        matchManager = repository;
+    }
+
+    public void setMatchManager(gtc.dcc.put0.core.network.MatchManager manager) {
+        this.matchManager = manager;
     }
 
     // --- State ---
 
     public LiveData<GameState> getGameState() {
-        return repository.getGameState();
+        return matchManager.getGameState();
     }
 
     public LiveData<String> getError() {
-        return repository.getError();
+        return matchManager.getError();
     }
 
     public LiveData<String> getCurrentGameId() {
-        return repository.getCurrentGameId();
+        return matchManager.getCurrentGameId();
     }
 
     public LiveData<String> getCurrentPlayerId() {
-        return repository.getCurrentPlayerId();
+        return matchManager.getCurrentPlayerId();
     }
 
     // RxJava Event Stream (Assuming we want to keep it or move it to Repo?
@@ -74,25 +80,25 @@ public class GameViewModel extends ViewModel {
     }
 
     public void leaveGame() {
-        repository.leaveGame();
+        matchManager.leaveGame();
     }
 
     // --- WebSocket Actions ---
 
     public void playCards(String playerId, List<Card> cards) {
-        repository.playCards(playerId, cards);
+        matchManager.playCards(playerId, cards);
     }
 
     public void playCard(String playerId, Card card) {
-        repository.playCard(playerId, card);
+        matchManager.playCard(playerId, card);
     }
 
     public void drawCard(String playerId) {
-        repository.drawCard(playerId);
+        matchManager.drawCard(playerId);
     }
 
     public void collectTable(String playerId) {
-        repository.collectTable(playerId);
+        matchManager.collectTable(playerId);
     }
 
     @Override
