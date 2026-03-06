@@ -235,7 +235,7 @@ public class LobbyActivity extends AppCompatActivity {
         // so we observe BluetoothMatchManager's LiveData, not GameRepository's.
         setupObservers();
 
-        hostService.start(hostId, hostName);
+        hostService.start(hostId, hostName, deckSize);
         Toast.makeText(this, "Esperando conexión Bluetooth...", Toast.LENGTH_SHORT).show();
     }
 

@@ -67,7 +67,7 @@ public class BluetoothHostService {
         CoreLogger.d("BT-HOST: Listener cleared (Activity detached).");
     }
 
-    public synchronized void start(String hostPlayerId, String hostName) {
+    public synchronized void start(String hostPlayerId, String hostName, int deckSize) {
         if (acceptThread != null) {
             acceptThread.cancel();
             acceptThread = null;
@@ -75,6 +75,7 @@ public class BluetoothHostService {
 
         // Initialize state for Lobby
         gameState = new GameState(UUID.randomUUID().toString());
+        gameState.setDeckSize(deckSize);
         gameState.setStatus(com.game.core.model.GameStatus.WAITING);
         Player host = new Player(hostPlayerId, hostName, false);
         gameState.addPlayer(host);
