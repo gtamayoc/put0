@@ -101,4 +101,21 @@
     <string name="btn_delete_account">ELIMINAR MI CUENTA</string>
     <string name="delete_account_confirm">¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible y borrará todos tus datos.</string>
     <string name="legal_accepted_at">Aceptado el: %1$s\nVersión: %2$s</string>
+
+    <!-- Dynamic Bluetooth Messages -->
+    <string name="msg_player_cancelled_cards">%1$s canceló %2$d cartas.</string>
+    <string name="msg_blind_fail_punish">Has descubierto un %1$s. Al no superar la mesa, recoges las cartas.</string>
+    <string name="msg_invalid_card_play">Esta carta no se puede jugar sobre un %1$s.</string>
+    <string name="empty_table">mesa vacía</string>
+
+    <string name="title_game_info">Información de la Partida</string>
+    <string name="title_options">Opciones</string>
+    <string name="title_discarded_cards">Cartas quemadas (%1$d)</string>
+    <string name="option_leave_game">Salir de la partida</string>
+    <string name="option_settings">Ajustes</string>
+    <string name="btn_ok">Aceptar</string>
+    <string name="btn_close">Cerrar</string>
+    <string name="btn_yes">Sí</string>
+    <string name="btn_no">No</string>
+    <string name="msg_are_you_sure">¿Estás seguro?</string>
 </resources>

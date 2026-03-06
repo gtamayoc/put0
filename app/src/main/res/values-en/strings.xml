@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="msg_player_cancelled_cards">%1$s cancelled %2$d cards.</string>
+    <string name="msg_blind_fail_punish">You revealed a %1$s. It doesn\'t beat the table, so you collect the cards.</string>
+    <string name="msg_invalid_card_play">This card cannot be played on a %1$s.</string>
+    <string name="msg_temporary_issue">Temporary issue</string>
+    <string name="msg_connection_lost">Connection lost</string>
+    <string name="msg_wait_turn">Wait for your turn</string>
+    <string name="msg_card_no_match">The card doesn\'t match</string>
+    <string name="msg_card_not_available">Card is not available</string>
+    <string name="msg_cannot_play">Cannot play that</string>
+
+    <string name="title_game_info">Game Info</string>
+    <string name="title_options">Options</string>
+    <string name="title_discarded_cards">Discarded Cards (%1$d)</string>
+    <string name="option_leave_game">Leave Game</string>
+    <string name="option_settings">Settings</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_yes">Yes</string>
+    <string name="btn_no">No</string>
+    <string name="msg_are_you_sure">Are you sure?</string>
+</resources>

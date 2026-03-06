@@ -200,16 +200,15 @@ public class GameEngine {
                             .filter(c -> c.equals(card))
                             .forEach(c -> c.setHidden(false));
 
-                    String msg = String.format("Has descubierto un %s. Al no superar la mesa, recoges las cartas.",
-                            card.toString());
+                    String msg = "ACTION_BLIND_FAIL_PUNISH|" + card.toString();
                     game.setLastAction(msg);
                     game.nextTurn();
                     return;
                 } else {
                     // For hand or visible cards (ALREADY REVEALED), just block the invalid move
                     // This prevents player from "eating table" accidentally on a misplay.
-                    throw new IllegalArgumentException("Esta carta no se puede jugar sobre un "
-                            + (topCard != null ? topCard.getPower() : "mesa vacía"));
+                    throw new IllegalArgumentException(
+                            "ERROR_INVALID_PLAY|" + (topCard != null ? topCard.getPower() : "mesa_vacia"));
                 }
             }
 
@@ -227,9 +226,10 @@ public class GameEngine {
 
             // Check for table clear conditions
             if (card.clearsTable() || game.shouldClearTable()) {
+                int tableSize = game.getTablePile().size();
                 game.clearTable();
-                String clearMsg = String.format("Table CLEARED by %s.", currentPlayer.getName());
-                log.info("[GAME-EVENT] " + clearMsg);
+                String clearMsg = "ACTION_CANCEL_CARDS|" + currentPlayer.getName() + "|" + tableSize;
+                log.info("[GAME-EVENT] Table CLEARED by " + currentPlayer.getName());
                 game.setLastAction(clearMsg);
 
                 // Replenish hand before playing again (Phase 1)
@@ -349,9 +349,10 @@ public class GameEngine {
             game.setLastAction(actionMsg.toString());
 
             if (clearedTable) {
+                int tableSize = game.getTablePile().size();
                 game.clearTable();
-                String clearMsg = String.format("Table CLEARED by %s (Multi-throw).", currentPlayer.getName());
-                log.info("[GAME-EVENT] " + clearMsg);
+                String clearMsg = "ACTION_CANCEL_CARDS|" + currentPlayer.getName() + "|" + tableSize;
+                log.info("[GAME-EVENT] Table CLEARED by " + currentPlayer.getName() + " (Multiples)");
                 game.setLastAction(clearMsg);
 
                 replenishHand(game, currentPlayer);

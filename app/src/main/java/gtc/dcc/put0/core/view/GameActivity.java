@@ -277,7 +277,7 @@ public class GameActivity extends AppCompatActivity {
 
             // 5. Update Match History
             if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
-                String latest = state.getLastAction();
+                String latest = mapActionToFriendlyMessage(state.getLastAction());
                 if (matchHistory.isEmpty() || !matchHistory.get(0).equals(latest)) {
                     matchHistory.add(0, latest);
                     if (matchHistory.size() > 50)
@@ -497,7 +497,7 @@ public class GameActivity extends AppCompatActivity {
 
         // Update Last Action
         if (state.getLastAction() != null && !state.getLastAction().isEmpty()) {
-            binding.tvLastAction.setText(state.getLastAction());
+            binding.tvLastAction.setText(mapActionToFriendlyMessage(state.getLastAction()));
         }
 
         // Update Table Target
@@ -535,18 +535,18 @@ public class GameActivity extends AppCompatActivity {
 
     private void showGameInfoDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Game Info")
-                .setMessage(String.format("Time: %s\nPlayers: %d",
-                        chronometer.getText(),
-                        playerAdapter.getItemCount()))
-                .setPositiveButton("OK", null)
+                .setTitle(R.string.title_game_info)
+                .setMessage(getString(R.string.title_game_info) + "\nTime: " +
+                        chronometer.getText() + "\nPlayers: " +
+                        playerAdapter.getItemCount())
+                .setPositiveButton(R.string.btn_ok, null)
                 .show();
     }
 
     private void showOptionsDialog() {
-        String[] options = { "Leave Game", "Settings" };
+        String[] options = { getString(R.string.option_leave_game), getString(R.string.option_settings) };
         new AlertDialog.Builder(this)
-                .setTitle("Options")
+                .setTitle(R.string.title_options)
                 .setItems(options, (dialog, which) -> {
                     if (which == 0)
                         showExitConfirmationDialog();
@@ -570,21 +570,21 @@ public class GameActivity extends AppCompatActivity {
         rv.setPadding(32, 32, 32, 32);
 
         new AlertDialog.Builder(this)
-                .setTitle("Discarded Cards (" + discarded.size() + ")")
+                .setTitle(getString(R.string.title_discarded_cards, discarded.size()))
                 .setView(rv)
-                .setPositiveButton("Close", null)
+                .setPositiveButton(R.string.btn_close, null)
                 .show();
     }
 
     private void showExitConfirmationDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Leave Game")
-                .setMessage("Are you sure?")
-                .setPositiveButton("Yes", (dialog, which) -> {
+                .setTitle(R.string.msg_leave_game)
+                .setMessage(R.string.msg_are_you_sure)
+                .setPositiveButton(R.string.btn_yes, (dialog, which) -> {
                     viewModel.leaveGame();
                     finish();
                 })
-                .setNegativeButton("No", null)
+                .setNegativeButton(R.string.btn_no, null)
                 .show();
     }
 
@@ -862,14 +862,53 @@ public class GameActivity extends AppCompatActivity {
 
     private String mapErrorToFriendlyMessage(String error) {
         if (error == null)
-            return "Unknown error";
-        if (error.contains("Network"))
-            return "Error de red. Intenta de nuevo.";
-        if (error.contains("not your turn"))
-            return "No es tu turno aún.";
-        if (error.contains("Invalid card"))
-            return "Esta carta no se puede jugar ahora.";
+            return getString(R.string.msg_temporary_issue);
+
+        if (error.startsWith("ERROR_INVALID_PLAY|")) {
+            String arg = error.split("\\|")[1];
+            if (arg.equals("mesa_vacia")) {
+                arg = getString(R.string.empty_table);
+            }
+            return getString(R.string.msg_invalid_card_play, arg);
+        }
+
+        String lowerError = error.toLowerCase();
+
+        if (lowerError.contains("network") || lowerError.contains("connect"))
+            return getString(R.string.msg_connection_lost);
+        if (lowerError.contains("not this player's turn") || lowerError.contains("not your turn")
+                || lowerError.contains("turn"))
+            return getString(R.string.msg_wait_turn);
+        if (lowerError.contains("same rank"))
+            return getString(R.string.msg_card_no_match);
+        if (lowerError.contains("not available"))
+            return getString(R.string.msg_card_not_available);
+        if (lowerError.contains("invalid") || lowerError.contains("playable"))
+            return getString(R.string.msg_cannot_play);
+        if (lowerError.contains("empty"))
+            return getString(R.string.msg_table_empty_alt);
+
         return error;
+    }
+
+    private String mapActionToFriendlyMessage(String action) {
+        if (action == null)
+            return "";
+        try {
+            if (action.startsWith("ACTION_CANCEL_CARDS|")) {
+                String[] parts = action.split("\\|");
+                if (parts.length >= 3) {
+                    return getString(R.string.msg_player_cancelled_cards, parts[1], Integer.parseInt(parts[2]));
+                }
+            } else if (action.startsWith("ACTION_BLIND_FAIL_PUNISH|")) {
+                String[] parts = action.split("\\|");
+                if (parts.length >= 2) {
+                    return getString(R.string.msg_blind_fail_punish, parts[1]);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return action;
     }
 
     @Override

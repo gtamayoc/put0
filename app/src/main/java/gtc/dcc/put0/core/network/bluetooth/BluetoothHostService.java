@@ -170,9 +170,15 @@ public class BluetoothHostService {
             }
         } catch (Exception e) {
             CoreLogger.e("BT-HOST: Error applying event: " + e.getMessage());
-            HostListener l = listenerRef.get();
-            if (l != null) {
-                l.onError(e.getMessage());
+            if (event.getPlayerId().startsWith("client_")) {
+                if (bluetoothConnection != null) {
+                    bluetoothConnection.write("ERROR:" + e.getMessage());
+                }
+            } else {
+                HostListener l = listenerRef.get();
+                if (l != null) {
+                    l.onError(e.getMessage());
+                }
             }
         }
     }

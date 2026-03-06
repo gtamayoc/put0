@@ -152,6 +152,13 @@ public class BluetoothClientService {
             @Override
             public void onMessageReceived(String message) {
                 try {
+                    if (message.startsWith("ERROR:")) {
+                        ClientListener l = listenerRef.get();
+                        if (l != null) {
+                            l.onError(message.substring(6));
+                        }
+                        return;
+                    }
                     GameState state = gson.fromJson(message, GameState.class);
                     if (state != null) {
                         ClientListener l = listenerRef.get();
