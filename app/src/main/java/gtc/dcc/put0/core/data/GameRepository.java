@@ -168,6 +168,17 @@ public class GameRepository implements GameWebSocketManager.GameStateListener, g
         resetGameState();
     }
 
+    @Override
+    public void restartGame() {
+        if (isLocalMode) {
+            localGameController.restartLocalGame();
+        } else {
+            // For online mode, we would need to call the API.
+            // But since this is primarily for Bluetooth/Local for now:
+            CoreLogger.w("Restart game not implemented for remote mode yet.");
+        }
+    }
+
     public void resetGameState() {
         _gameState.postValue(null);
         _currentGameId.postValue(null);

@@ -8,5 +8,8 @@ public enum GameAction {
     PLAY_CARD,
     DRAW_CARD,
     COLLECT_TABLE,
-    PASS
+    PASS,
+    RESTART_GAME,
+    SET_PAUSED,
+    PROMOTE_TO_HOST
 }

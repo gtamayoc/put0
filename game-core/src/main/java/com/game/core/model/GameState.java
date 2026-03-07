@@ -31,6 +31,15 @@ public class GameState {
     private MatchMode mode;
     private int deckSize = 104; // Default to full 104 cards
     private String lastAction;
+    /**
+     * Epoch-ms when the game started. Host sets this; all clients sync their timer
+     * to it.
+     */
+    private long gameStartTime = 0;
+    /**
+     * True when the game ended because a player didn't reconnect in time (abandon).
+     */
+    private boolean wonByAbandonment = false;
 
     public GameState(String gameId) {
         this.gameId = gameId;

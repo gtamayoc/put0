@@ -29,4 +29,6 @@ public interface MatchManager {
     void collectTable(String playerId);
 
     void leaveGame();
+
+    void restartGame();
 }

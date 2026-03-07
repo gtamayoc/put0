@@ -30,6 +30,8 @@ public class Player {
 
     private boolean isBot;
     private boolean isActive = true;
+    private boolean connected = true;
+    private long disconnectedTime = 0;
 
     public Player(String id, String name, boolean isBot) {
         this.id = id;

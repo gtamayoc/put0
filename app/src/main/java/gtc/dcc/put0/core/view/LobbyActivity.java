@@ -64,7 +64,12 @@ public class LobbyActivity extends AppCompatActivity {
 
         handleIntentData();
         setupUI();
-        setupObservers();
+        // Note: setupObservers() is called AFTER the MatchManager is wired
+        // (inside startBluetoothHost / connectToBluetoothHost for BT modes,
+        // or right here for non-BT modes).
+        if (currentMode != MatchMode.BLUETOOTH_OFFLINE) {
+            setupObservers();
+        }
         startLoadingProcess();
     }
 
@@ -194,12 +199,8 @@ public class LobbyActivity extends AppCompatActivity {
         playerListAdapter = new PlayerListAdapter(this, new java.util.ArrayList<>());
         binding.rvLobbyPlayers.setAdapter(playerListAdapter);
 
-        // For non-Bluetooth modes: observers are wired to GameRepository by default.
-        // For Bluetooth, observers are (re)wired after setMatchManager() is called
-        // in startBluetoothHost() / connectToBluetoothHost().
-        if (currentMode != MatchMode.BLUETOOTH_OFFLINE) {
-            setupObservers();
-        }
+        // For Bluetooth modes, observers are set up after the MatchManager is wired.
+        // Nothing to do here.
     }
 
     private void startBluetoothHost() {
@@ -291,7 +292,8 @@ public class LobbyActivity extends AppCompatActivity {
         clientService = new BluetoothClientService(bluetoothHelper.getAdapter(),
                 BluetoothMatchManager.getInstance());
 
-        BluetoothMatchManager.getInstance().initAsClient(clientService, clientId, clientName);
+        BluetoothMatchManager.getInstance().initAsClient(
+                bluetoothHelper.getAdapter(), clientService, clientId, clientName);
         viewModel.setMatchManager(BluetoothMatchManager.getInstance());
 
         // IMPORTANT: wire observers NOW, after the MatchManager is set.

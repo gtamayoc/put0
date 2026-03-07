@@ -83,6 +83,10 @@ public class GameViewModel extends ViewModel {
         matchManager.leaveGame();
     }
 
+    public void restartGame() {
+        matchManager.restartGame();
+    }
+
     // --- WebSocket Actions ---
 
     public void playCards(String playerId, List<Card> cards) {

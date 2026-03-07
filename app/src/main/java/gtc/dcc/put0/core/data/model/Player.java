@@ -32,6 +32,11 @@ public class Player implements Serializable {
     @SerializedName("active")
     private boolean isActive = true;
 
+    @SerializedName("connected")
+    private boolean connected = true;
+
+    private long disconnectedTime = 0;
+
     @SerializedName("cardCount")
     private int cardCount;
 
@@ -90,6 +95,22 @@ public class Player implements Serializable {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public boolean isConnected() {
+        return connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
+    public long getDisconnectedTime() {
+        return disconnectedTime;
+    }
+
+    public void setDisconnectedTime(long disconnectedTime) {
+        this.disconnectedTime = disconnectedTime;
     }
 
     public int getCardCount() {

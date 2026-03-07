@@ -37,6 +37,12 @@ public class GameState implements Serializable {
     @SerializedName("deckSize")
     private int deckSize = 104;
 
+    @SerializedName("gameStartTime")
+    private long gameStartTime = 0;
+
+    @SerializedName("wonByAbandonment")
+    private boolean wonByAbandonment = false;
+
     // Setters
     public void setGameId(String gameId) {
         this.gameId = gameId;
@@ -78,6 +84,14 @@ public class GameState implements Serializable {
         this.deckSize = deckSize;
     }
 
+    public void setGameStartTime(long gameStartTime) {
+        this.gameStartTime = gameStartTime;
+    }
+
+    public void setWonByAbandonment(boolean wonByAbandonment) {
+        this.wonByAbandonment = wonByAbandonment;
+    }
+
     // Getters
     public String getGameId() {
         return gameId;
@@ -117,6 +131,14 @@ public class GameState implements Serializable {
 
     public int getDeckSize() {
         return deckSize;
+    }
+
+    public long getGameStartTime() {
+        return gameStartTime;
+    }
+
+    public boolean isWonByAbandonment() {
+        return wonByAbandonment;
     }
 
     public Player getCurrentPlayer() {

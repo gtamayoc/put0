@@ -61,6 +61,14 @@ public class LocalGameController {
         checkBotTurn();
     }
 
+    public void restartLocalGame() {
+        if (coreState == null)
+            return;
+        coreEngine.restartGame(coreState);
+        notifyListener();
+        checkBotTurn();
+    }
+
     public void playCard(String playerId, Card androidCard) {
         if (coreState == null)
             return;

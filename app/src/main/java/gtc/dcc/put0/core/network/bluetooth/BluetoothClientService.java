@@ -18,6 +18,9 @@ public class BluetoothClientService {
     private final BluetoothAdapter bluetoothAdapter;
     private ConnectThread connectThread;
     private BluetoothConnection bluetoothConnection;
+    /** Last game state received from the host; used for host promotion. */
+    private volatile GameState lastReceivedState;
+    private java.util.Timer hostTimeoutTimer;
 
     private final Gson gson;
     /**
@@ -33,12 +36,26 @@ public class BluetoothClientService {
         void onStateUpdated(GameState newState);
 
         void onError(String message);
+
+        /**
+         * Called when the host disconnects and doesn't reconnect within the timeout.
+         * The UI/Manager should switch this device to host mode.
+         */
+        void onShouldBecomeHost(GameState lastState);
     }
 
     public BluetoothClientService(BluetoothAdapter adapter, ClientListener listener) {
         this.bluetoothAdapter = adapter;
         this.listenerRef = new WeakReference<>(listener);
         this.gson = new Gson();
+    }
+
+    /**
+     * Returns the BluetoothAdapter; used by BluetoothMatchManager for host
+     * promotion.
+     */
+    public BluetoothAdapter getBluetoothAdapter() {
+        return bluetoothAdapter;
     }
 
     /** Eagerly clears the listener. Call from Activity.onDestroy(). */
@@ -161,6 +178,7 @@ public class BluetoothClientService {
                     }
                     GameState state = gson.fromJson(message, GameState.class);
                     if (state != null) {
+                        lastReceivedState = state; // Cache for host promotion
                         ClientListener l = listenerRef.get();
                         CoreLogger.d("BT-CLIENT: GameState received. Listener alive: " + (l != null));
                         if (l != null)
@@ -173,9 +191,16 @@ public class BluetoothClientService {
 
             @Override
             public void onConnectionLost() {
+                CoreLogger.w("BT-CLIENT: Connection to host lost. Promoting to host immediately.");
                 ClientListener l = listenerRef.get();
                 if (l != null)
-                    l.onError("Connection to Host lost.");
+                    l.onError("Conexión con el anfitrión perdida. Transfiriendo rol de anfitrión y esperando...");
+
+                if (l != null && lastReceivedState != null) {
+                    // Start promotion immediately so the previous host can reconnect as client
+                    // without delay
+                    l.onShouldBecomeHost(lastReceivedState);
+                }
             }
         });
         bluetoothConnection.start();

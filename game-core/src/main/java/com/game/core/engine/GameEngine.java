@@ -42,25 +42,63 @@ public class GameEngine {
      * Starts a game by creating and dealing the deck.
      */
     public void startGame(GameState game) {
-        synchronized (game) {
-            if (game.getStatus() == GameStatus.PLAYING) {
-                log.info("Game {} already started, ignoring start request", game.getGameId());
-                return;
+        synchronized (game) { // Keep synchronization for thread safety
+            GameStatus currentStatus = game.getStatus();
+            if (currentStatus == GameStatus.PLAYING) {
+                throw new IllegalStateException("Game is already in progress.");
+            }
+            if (game.getPlayers() == null || game.getPlayers().size() < 2) { // Replaced game.canStart()
+                throw new IllegalStateException("Not enough players to start the game.");
             }
 
-            if (!game.canStart()) {
-                throw new IllegalStateException("Game cannot start - need at least 2 players");
-            }
-
-            // Create and shuffle deck (Configurable size: 52 or 104)
+            // Initialize state
             game.setMainDeck(createDeck(game.getDeckSize()));
-            Collections.shuffle(game.getMainDeck());
+            Collections.shuffle(game.getMainDeck()); // Crucial: Shuffle the deck
+            game.setDiscardPile(new ArrayList<>());
+            game.setTablePile(new ArrayList<>());
+            game.setCurrentPlayerIndex(0);
+            game.setWinnerId(null);
 
-            // Deal cards according to rules: 3 Hidden, 3 Visible, 3 Hand
             dealCards(game);
 
             game.setStatus(GameStatus.PLAYING);
-            log.info("Started game {} with {} players", game.getGameId(), game.getPlayers().size());
+            game.setLastAction("Game Started"); // Added last action
+
+            log.info("Game {} started with {} players.", game.getGameId(), game.getPlayers().size());
+        }
+    }
+
+    /**
+     * Restarts a game by resetting the deck and player cards while keeping existing
+     * players.
+     */
+    public void restartGame(GameState game) {
+        synchronized (game) { // Add synchronization for thread safety
+            if (game.getPlayers() == null || game.getPlayers().isEmpty()) {
+                throw new IllegalStateException("No players to restart the game.");
+            }
+
+            // Reset players' cards
+            for (Player p : game.getPlayers()) {
+                p.setHand(new ArrayList<>());
+                p.setVisibleCards(new ArrayList<>());
+                p.setHiddenCards(new ArrayList<>());
+            }
+
+            // Initialize state
+            game.setMainDeck(createDeck(game.getDeckSize()));
+            Collections.shuffle(game.getMainDeck()); // Crucial: Shuffle the deck
+            game.setDiscardPile(new ArrayList<>());
+            game.setTablePile(new ArrayList<>());
+            game.setCurrentPlayerIndex(0); // Optional: Randomize start player
+            game.setWinnerId(null);
+
+            dealCards(game);
+
+            game.setStatus(GameStatus.PLAYING);
+            game.setLastAction("Game Restarted");
+
+            log.info("Game {} restarted.", game.getGameId());
         }
     }
 

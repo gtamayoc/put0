@@ -68,6 +68,9 @@ public class GameActivity extends AppCompatActivity {
         startChronometer();
     }
 
+    // Tracks the previous game status to detect PAUSED → PLAYING transitions
+    private GameStatus previousStatus = null;
+
     private void loadCompatibility() {
         EdgeToEdge.enable(this);
         binding = ActivityGameBinding.inflate(getLayoutInflater());
@@ -240,6 +243,16 @@ public class GameActivity extends AppCompatActivity {
             if (state == null)
                 return;
 
+            // Resync chronometer only when reconnecting (PAUSED → PLAYING)
+            if (previousStatus == GameStatus.PAUSED && state.getStatus() == GameStatus.PLAYING) {
+                syncChronometer(state.getGameStartTime());
+            }
+            // Restart chronometer from 0 when a new game begins (FINISHED → PLAYING)
+            if (previousStatus == GameStatus.FINISHED && state.getStatus() == GameStatus.PLAYING) {
+                startChronometer();
+            }
+            previousStatus = state.getStatus();
+
             // My Hand (Current Player)
             String myId = viewModel.getCurrentPlayerId().getValue();
 
@@ -349,6 +362,18 @@ public class GameActivity extends AppCompatActivity {
                         // Add other events as needed
                     }
                 }));
+
+        boolean isBluetooth = getIntent().getBooleanExtra("IS_BLUETOOTH", false);
+        if (isBluetooth) {
+            gtc.dcc.put0.core.network.bluetooth.BluetoothMatchManager.getInstance().getHostPromoted().observe(this,
+                    promoted -> {
+                        if (Boolean.TRUE.equals(promoted)) {
+                            gtc.dcc.put0.core.utils.GameMessageHelper.showMessage(binding.getRoot(),
+                                    "¡El anfitrión se desconectó! Ahora tú eres el anfitrión.",
+                                    gtc.dcc.put0.core.utils.GameMessageHelper.MessageType.SUCCESS);
+                        }
+                    });
+        }
     }
 
     private void updateStaticPiles(Player player) {
@@ -451,10 +476,31 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Starts the chronometer locally when the game begins.
+     */
     private void startChronometer() {
         chronometer = binding.gameTimer;
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.start();
+    }
+
+    /**
+     * Resyncs the Chronometer to the host's start time after a reconnection.
+     * Corrects the elapsed time discrepancy caused by the pause/disconnect period.
+     *
+     * @param gameStartEpochMs System.currentTimeMillis() recorded by the host at
+     *                         game start.
+     */
+    private void syncChronometer(long gameStartEpochMs) {
+        if (gameStartEpochMs <= 0)
+            return;
+        chronometer = binding.gameTimer;
+        long elapsedSinceStart = System.currentTimeMillis() - gameStartEpochMs;
+        long base = SystemClock.elapsedRealtime() - elapsedSinceStart;
+        chronometer.setBase(base);
+        chronometer.start();
+        CoreLogger.i("GAME_TIMER", "Chronometer resynced after reconnection. Elapsed: " + elapsedSinceStart + "ms");
     }
 
     private void updateGamePhaseDisplay(GameState state) {
@@ -478,6 +524,10 @@ public class GameActivity extends AppCompatActivity {
                 phaseName = "F4: Ocultas";
                 phaseIndex = 4;
             }
+        }
+
+        if (state.getStatus() == gtc.dcc.put0.core.data.model.GameStatus.PAUSED) {
+            phaseName = "PAUSADO: Esperando reconexión";
         }
 
         // 2. Update Status Panel
@@ -524,7 +574,9 @@ public class GameActivity extends AppCompatActivity {
             binding.tvTurnIndicator.setAlpha(isMyTurn ? 1.0f : 0.7f);
             binding.tvTurnIndicator.setBackgroundResource(isMyTurn ? R.drawable.rounded_edittext : 0);
 
-            boolean canCollect = isMyTurn && state.getTablePile() != null && !state.getTablePile().isEmpty();
+            boolean isPaused = (state.getStatus() == gtc.dcc.put0.core.data.model.GameStatus.PAUSED);
+            boolean canCollect = isMyTurn && state.getTablePile() != null && !state.getTablePile().isEmpty()
+                    && !isPaused;
             binding.btnSkipTurn.setEnabled(canCollect);
             binding.btnSkipTurn.setAlpha(canCollect ? 1.0f : 0.5f);
 
@@ -555,7 +607,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void showDiscardedCardsDialog() {
-        if (viewModel.getGameState().getValue() == null || viewModel.getGameState().getValue().getDiscardPile() == null)
+        if (viewModel.getGameState().getValue() == null)
             return;
 
         List<Card> discarded = new ArrayList<>(viewModel.getGameState().getValue().getDiscardPile());
@@ -727,11 +779,21 @@ public class GameActivity extends AppCompatActivity {
         tvWinnerName.setText(winnerName);
         lottieView.playAnimation();
 
-        // Button listeners
+        // Is this device the Bluetooth host?
+        boolean isBluetooth = getIntent().getBooleanExtra("IS_BLUETOOTH", false);
+        boolean isHost = !isBluetooth
+                || gtc.dcc.put0.core.network.bluetooth.BluetoothMatchManager.getInstance().isHost();
+
+        // Button: 'Nueva Partida' — only host can restart, and only if game ended
+        // naturally
+        gtc.dcc.put0.core.data.model.GameState currentState = viewModel.getGameState().getValue();
+        boolean gameEndedNaturally = currentState != null && !currentState.isWonByAbandonment();
+        btnNewGame.setVisibility(isHost && gameEndedNaturally ? View.VISIBLE : View.GONE);
         btnNewGame.setOnClickListener(v -> {
             dialog.dismiss();
-            viewModel.leaveGame(); // Essential to clear state
-            finish(); // Go back to menu to start fresh
+            gameOverShown = false;
+            viewModel.restartGame();
+            // Intentionally not finishing the activity to allow the game to resume
         });
 
         btnBackToMenu.setOnClickListener(v -> {

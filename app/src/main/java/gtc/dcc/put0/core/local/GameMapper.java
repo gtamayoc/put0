@@ -30,6 +30,8 @@ public class GameMapper {
         androidState.setWinnerId(coreState.getWinnerId());
         androidState.setLastAction(coreState.getLastAction());
         androidState.setDeckSize(coreState.getDeckSize());
+        androidState.setGameStartTime(coreState.getGameStartTime());
+        androidState.setWonByAbandonment(coreState.isWonByAbandonment());
 
         // Use loops instead of Streams for backward compatibility (API < 24)
         List<Player> androidPlayers = new ArrayList<>();

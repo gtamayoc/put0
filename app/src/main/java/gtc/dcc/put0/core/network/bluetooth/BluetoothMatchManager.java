@@ -29,10 +29,17 @@ public class BluetoothMatchManager implements MatchManager,
     private final MutableLiveData<String> _error = new MutableLiveData<>();
     private final MutableLiveData<String> _currentGameId = new MutableLiveData<>();
     private final MutableLiveData<String> _currentPlayerId = new MutableLiveData<>();
+    /** Emits true once when this device has been promoted to host during a game. */
+    private final MutableLiveData<Boolean> _hostPromoted = new MutableLiveData<>();
 
     private BluetoothHostService hostService;
     private BluetoothClientService clientService;
     private boolean isHost = false;
+    /**
+     * Stored for host promotion: the device needs the adapter to start a
+     * HostService.
+     */
+    private android.bluetooth.BluetoothAdapter bluetoothAdapter;
 
     private BluetoothMatchManager() {
     }
@@ -52,12 +59,27 @@ public class BluetoothMatchManager implements MatchManager,
         this._currentPlayerId.setValue(hostPlayerId);
     }
 
-    public void initAsClient(BluetoothClientService clientService, String clientPlayerId, String clientName) {
+    public void initAsClient(android.bluetooth.BluetoothAdapter adapter,
+            BluetoothClientService clientService,
+            String clientPlayerId, String clientName) {
         reset();
+        this.bluetoothAdapter = adapter;
         this.clientService = clientService;
         this.isHost = false;
         this.hostService = null;
         this._currentPlayerId.setValue(clientPlayerId);
+    }
+
+    /** Returns true if this device is acting as the game host. */
+    public boolean isHost() {
+        return isHost;
+    }
+
+    /**
+     * LiveData that emits true once when this device is promoted to host mid-game.
+     */
+    public LiveData<Boolean> getHostPromoted() {
+        return _hostPromoted;
     }
 
     private void reset() {
@@ -76,14 +98,26 @@ public class BluetoothMatchManager implements MatchManager,
             CoreLogger.i("BT-MANAGER: onStateUpdated — status=" + androidState.getStatus()
                     + ", players=" + (androidState.getPlayers() != null ? androidState.getPlayers().size() : 0));
 
-            // CRITICAL FIX: The Host assigns a specific ID ("client_<MAC>") to the Client.
-            // If we are the Client, we MUST adopt this ID so that GameActivity can
-            // recognise
-            // our own cards. In a 2-player BT game, Host is always index 0, Client is index
-            // 1.
+            // CRITICAL FIX: To play correctly, this device must know its ID in the
+            // GameState.
+            // If we are a fresh client, the Host generated an ID for us ("client_<MAC>") at
+            // index 1.
+            // But if we are an old host returning, our ID is already in the GameState!
             if (!isHost && androidState.getPlayers() != null && androidState.getPlayers().size() >= 2) {
-                String assignedClientId = androidState.getPlayers().get(1).getId();
-                if (assignedClientId != null && !assignedClientId.equals(_currentPlayerId.getValue())) {
+                String currentId = _currentPlayerId.getValue();
+                boolean idExists = false;
+                for (gtc.dcc.put0.core.data.model.Player p : androidState.getPlayers()) {
+                    if (p.getId().equals(currentId)) {
+                        idExists = true;
+                        break;
+                    }
+                }
+
+                if (!idExists) {
+                    // Our ID is not in the game state. We must be a new client playing against the
+                    // host.
+                    // The host is index 0. We adopt index 1.
+                    String assignedClientId = androidState.getPlayers().get(1).getId();
                     CoreLogger.i("BT-MANAGER: Adopting host-assigned Client ID: " + assignedClientId);
                     _currentPlayerId.postValue(assignedClientId);
                 }
@@ -112,8 +146,27 @@ public class BluetoothMatchManager implements MatchManager,
 
     @Override
     public void onConnected(String deviceName) {
-        // Log connection or handle specific Client UI updates if needed
         CoreLogger.i("BT-MANAGER: Connected to host: " + deviceName);
+    }
+
+    @Override
+    public void onShouldBecomeHost(com.game.core.model.GameState lastState) {
+        CoreLogger.w("BT-MANAGER: Promoting this device to host after host timeout.");
+        // Stop client service
+        if (clientService != null) {
+            clientService.stop();
+            clientService = null;
+        }
+        if (bluetoothAdapter == null || lastState == null) {
+            CoreLogger.e("BT-MANAGER: Cannot promote — missing adapter or state.");
+            return;
+        }
+        // Create a new HostService that continues the game from where it left off
+        hostService = new BluetoothHostService(bluetoothAdapter, this, lastState, _currentPlayerId.getValue());
+        isHost = true;
+        hostService.startAcceptingConnections(); // Start listening for the old host to reconnect
+        _hostPromoted.postValue(true);
+        CoreLogger.i("BT-MANAGER: Promoted to host. Waiting for old host to reconnect.");
     }
 
     // MatchManager interface
@@ -189,6 +242,13 @@ public class BluetoothMatchManager implements MatchManager,
         _currentGameId.postValue(null);
         _currentPlayerId.postValue(null);
         _error.postValue(null);
+    }
+
+    @Override
+    public void restartGame() {
+        GameEventDTO event = new GameEventDTO(com.game.core.network.GameAction.RESTART_GAME,
+                _currentPlayerId.getValue(), null);
+        sendEvent(event);
     }
 
     /**

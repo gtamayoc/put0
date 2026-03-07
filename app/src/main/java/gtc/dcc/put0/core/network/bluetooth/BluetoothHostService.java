@@ -31,6 +31,7 @@ public class BluetoothHostService {
     private final GameEngine gameEngine;
     private GameState gameState;
     private final Gson gson;
+    private java.util.Timer reconnectionTimer;
 
     /**
      * WeakReference to the listener (typically a LobbyActivity anonymous class).
@@ -58,6 +59,34 @@ public class BluetoothHostService {
     }
 
     /**
+     * Alternative constructor for host promotion.
+     * Accepts an existing GameState so the game continues seamlessly
+     * when a client takes over as the new host.
+     */
+    public BluetoothHostService(BluetoothAdapter adapter, HostListener listener,
+            com.game.core.model.GameState existingState, String newHostPlayerId) {
+        this.bluetoothAdapter = adapter;
+        this.listenerRef = new WeakReference<>(listener);
+        this.gameEngine = new GameEngine();
+        this.gson = new Gson();
+        this.gameState = existingState;
+        this.gameState.setStatus(com.game.core.model.GameStatus.PAUSED); // Paused until old host reconnects
+
+        // Mark players correctly: the new host is connected, the old host is
+        // disconnected
+        for (com.game.core.model.Player p : this.gameState.getPlayers()) {
+            if (p.getId().equals(newHostPlayerId)) {
+                p.setConnected(true);
+            } else {
+                p.setConnected(false);
+                p.setDisconnectedTime(System.currentTimeMillis());
+            }
+        }
+
+        startReconnectionTimer();
+    }
+
+    /**
      * Explicitly clears the listener reference.
      * Call from Activity.onDestroy() to eagerly break the leak chain
      * without waiting for GC to clear the WeakReference.
@@ -78,26 +107,100 @@ public class BluetoothHostService {
         gameState.setDeckSize(deckSize);
         gameState.setStatus(com.game.core.model.GameStatus.WAITING);
         Player host = new Player(hostPlayerId, hostName, false);
-        gameState.addPlayer(host);
+        host.setConnected(true); // Host is always connected
+        gameState.addPlayer(host); // Add host ONCE
 
-        acceptThread = new AcceptThread();
-        acceptThread.start();
-        CoreLogger.d("BT-HOST: Service started, waiting for connections with UUID: " + APP_UUID);
+        startAcceptThread();
 
         broadcastState();
+    }
+
+    /**
+     * Starts or restarts the 60-second timer for player reconnection.
+     * If the timer elapses, the connected player wins by abandonment.
+     */
+    private synchronized void startReconnectionTimer() {
+        if (reconnectionTimer != null) {
+            reconnectionTimer.cancel();
+        }
+        reconnectionTimer = new java.util.Timer();
+        reconnectionTimer.schedule(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                if (gameState != null && gameState.getStatus() == com.game.core.model.GameStatus.PAUSED) {
+                    gameState.setStatus(com.game.core.model.GameStatus.FINISHED);
+                    gameState.setWonByAbandonment(true); // Mark as abandoned
+
+                    // The connected player wins by default
+                    String winnerId = gameState.getPlayers().get(0).getId();
+                    for (com.game.core.model.Player p : gameState.getPlayers()) {
+                        if (p.isConnected()) {
+                            winnerId = p.getId();
+                            break;
+                        }
+                    }
+                    gameState.setWinnerId(winnerId);
+
+                    broadcastState();
+                    HostListener l1 = listenerRef.get();
+                    if (l1 != null) {
+                        l1.onError("Tiempo de reconexión agotado. Partida terminada por abandono.");
+                    }
+                }
+            }
+        }, 60000);
+    }
+
+    private synchronized void startAcceptThread() {
+        if (acceptThread != null) {
+            acceptThread.cancel();
+            acceptThread = null;
+        }
+        acceptThread = new AcceptThread();
+        acceptThread.start();
+        CoreLogger.d("BT-HOST: AcceptThread started, waiting for connections with UUID: " + APP_UUID);
+    }
+
+    /**
+     * Public entry point to start accepting incoming connections.
+     * Used when this device is promoted to host mid-game.
+     */
+    public void startAcceptingConnections() {
+        startAcceptThread();
+        broadcastState(); // Send current state to any connected client
     }
 
     /**
      * Starts the game once players are ready.
      */
     public void startGame() {
-        if (gameState == null || bluetoothConnection == null) {
+        if (gameState == null) {
             HostListener l = listenerRef.get();
             if (l != null)
-                l.onError("Cannot start game: no client connected.");
+                l.onError("Cannot start game: no game state.");
             return;
         }
 
+        if (gameState.getPlayers() == null || gameState.getPlayers().size() < 2) {
+            HostListener l = listenerRef.get();
+            if (l != null)
+                l.onError("No hay suficientes jugadores para iniciar (mínimo 2).");
+            return;
+        }
+
+        if (gameState.getStatus() != com.game.core.model.GameStatus.WAITING) {
+            HostListener l = listenerRef.get();
+            if (l != null)
+                l.onError("La partida ya fue iniciada o está en pausa.");
+            return;
+        }
+
+        if (bluetoothConnection == null) {
+            // Log warning but don't block — state will still be broadcast locally
+            CoreLogger.w("BT-HOST: startGame called but bluetoothConnection is null. Client may not receive update.");
+        }
+
+        gameState.setGameStartTime(System.currentTimeMillis()); // Stamp start time
         gameEngine.startGame(gameState);
         broadcastState();
     }
@@ -166,6 +269,15 @@ public class BluetoothHostService {
                     break;
                 case PASS:
                     // Only used if passing turn without collecting
+                    break;
+                case RESTART_GAME:
+                    // Reset abandonment flag and re-stamp start time for the new game
+                    gameState.setWonByAbandonment(false);
+                    gameState.setGameStartTime(System.currentTimeMillis());
+                    gameEngine.restartGame(gameState);
+                    break;
+                case SET_PAUSED:
+                    gameState.setStatus(com.game.core.model.GameStatus.PAUSED);
                     break;
             }
         } catch (Exception e) {
@@ -285,6 +397,21 @@ public class BluetoothHostService {
             bluetoothConnection.cancel();
             bluetoothConnection = null;
         }
+        final String clientAddress;
+        final String clientId;
+        String devNameTemp = "Unknown Device";
+        try {
+            clientAddress = socket.getRemoteDevice().getAddress();
+            clientId = "client_" + clientAddress;
+            devNameTemp = socket.getRemoteDevice().getName();
+            if (devNameTemp == null)
+                devNameTemp = "Unknown Device";
+        } catch (SecurityException e) {
+            CoreLogger.e("BT-HOST: SecurityException getting remote device info");
+            return;
+        }
+        final String devName = devNameTemp;
+
         bluetoothConnection = new BluetoothConnection(socket, new BluetoothConnection.ConnectionListener() {
             @Override
             public void onMessageReceived(String message) {
@@ -301,32 +428,88 @@ public class BluetoothHostService {
 
             @Override
             public void onConnectionLost() {
+                CoreLogger.w("BT-HOST: Connection lost. Pausing game and starting AcceptThread for reconnections.");
+                if (gameState != null) {
+                    gameState.setStatus(com.game.core.model.GameStatus.PAUSED);
+                    for (Player p : gameState.getPlayers()) {
+                        if (p.getId().equals(clientId)) {
+                            p.setConnected(false);
+                            p.setDisconnectedTime(System.currentTimeMillis());
+                            break;
+                        }
+                    }
+                    broadcastState();
+                    startAcceptThread(); // Allow reconnecting
+                    startReconnectionTimer(); // Start 60s timeout
+                }
                 HostListener l = listenerRef.get();
                 if (l != null)
-                    l.onError("Connection lost with client.");
+                    l.onError("Se ha perdido la conexión. Partida pausada (60s para reconectar).");
             }
         });
         bluetoothConnection.start();
 
         HostListener l = listenerRef.get();
         if (l != null) {
-            try {
-                String devName = socket.getRemoteDevice().getName();
-                if (devName == null)
-                    devName = "Unknown Device";
-
-                // Add client to the lobby state
-                if (gameState != null) {
-                    Player client = new Player(
-                            "client_" + socket.getRemoteDevice().getAddress(), devName, false);
-                    gameState.addPlayer(client);
-                    broadcastState();
+            // Add or Reconnect client in state
+            if (gameState != null) {
+                boolean found = false;
+                for (Player p : gameState.getPlayers()) {
+                    if (p.getId().equals(clientId)) {
+                        p.setConnected(true);
+                        devNameTemp = p.getName(); // keep old name
+                        found = true;
+                        break;
+                    }
+                }
+                // If not found by exact client MAC ID, see if there's a disconnected player we
+                // can reclaim (e.g. old host rejoining)
+                if (!found) {
+                    for (Player p : gameState.getPlayers()) {
+                        if (!p.isConnected()) {
+                            p.setConnected(true);
+                            devNameTemp = p.getName();
+                            found = true;
+                            CoreLogger.i("BT-HOST: Reclaimed disconnected player slot for: " + p.getId());
+                            break;
+                        }
+                    }
                 }
 
-                l.onClientConnected(devName);
-            } catch (SecurityException e) {
-                l.onClientConnected("Client");
+                if (!found) {
+                    Player client = new Player(clientId, devName, false);
+                    client.setConnected(true); // New client is connected
+                    gameState.addPlayer(client);
+                }
+
+                // Cancel reconnection timer if active
+                if (reconnectionTimer != null) {
+                    reconnectionTimer.cancel();
+                    reconnectionTimer = null;
+                    CoreLogger.i("BT-HOST: Reconnection timer cancelled. Client reconnected.");
+                }
+
+                // Automatically resume if not waiting
+                if (gameState.getStatus() == com.game.core.model.GameStatus.PAUSED) {
+                    boolean allConnected = true;
+                    for (Player p : gameState.getPlayers()) {
+                        if (!p.isConnected()) {
+                            allConnected = false;
+                            break;
+                        }
+                    }
+                    if (allConnected) {
+                        gameState.setStatus(com.game.core.model.GameStatus.PLAYING);
+                        // Clear error or pause message if needed
+                        HostListener l1 = listenerRef.get();
+                        if (l1 != null) {
+                            l1.onError("Jugador reconectado. Reanudando partida...");
+                        }
+                    }
+                }
+                broadcastState();
             }
+            l.onClientConnected(devName);
         } else {
             CoreLogger.w("BT-HOST: Listener GC'd before client connected — state will still broadcast.");
             // Still broadcast state even if listener is gone (client needs the update)
