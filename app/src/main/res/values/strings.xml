@@ -107,6 +107,7 @@
     <string name="msg_blind_fail_punish">Has descubierto un %1$s. Al no superar la mesa, recoges las cartas.</string>
     <string name="msg_invalid_card_play">Esta carta no se puede jugar sobre un %1$s.</string>
     <string name="empty_table">mesa vacía</string>
+    <string name="msg_host_promoted">¡El anfitrión se desconectó! Ahora tú eres el anfitrión.</string>
 
     <string name="title_game_info">Información de la Partida</string>
     <string name="title_options">Opciones</string>

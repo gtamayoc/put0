@@ -21,12 +21,22 @@ import java.util.Set;
 
 /**
  * Helper for Bluetooth operations. Compatible with Android API 23 (minSdk)
- * through 35 (targetSdk).
+ * through 35 (targetSdk / Android 15).
  *
  * Permission matrix:
  * API 23-30: BLUETOOTH + BLUETOOTH_ADMIN + ACCESS_FINE_LOCATION (required for
- * device discovery)
- * API 31+ : BLUETOOTH_SCAN (neverForLocation) + BLUETOOTH_CONNECT
+ * BT discovery)
+ * API 31+ : BLUETOOTH_SCAN (neverForLocation) + BLUETOOTH_CONNECT +
+ * BLUETOOTH_ADVERTISE
+ *
+ * Android 15 notes:
+ * • BLUETOOTH_CONNECT is required BEFORE calling BluetoothAdapter.isEnabled()
+ * on API 31+.
+ * Without it a SecurityException is thrown immediately.
+ * • Insecure RFCOMM sockets may be rejected by the stricter Android 15
+ * Bluetooth stack
+ * if the devices are not bonded. The client service falls back to secure
+ * sockets.
  */
 public class BluetoothHelper {
 
@@ -34,14 +44,13 @@ public class BluetoothHelper {
 
     public BluetoothHelper(Context context) {
         BluetoothAdapter adapter = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-            if (bluetoothManager != null) {
-                adapter = bluetoothManager.getAdapter();
-            }
+        BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        if (bluetoothManager != null) {
+            adapter = bluetoothManager.getAdapter();
         }
-        // Fallback for older APIs or if manager returned null
+        // Fallback for rare cases where BluetoothManager returns null
         if (adapter == null) {
+            // noinspection deprecation
             adapter = BluetoothAdapter.getDefaultAdapter();
         }
         this.bluetoothAdapter = adapter;
@@ -55,23 +64,70 @@ public class BluetoothHelper {
         return bluetoothAdapter;
     }
 
-    public boolean isBluetoothEnabled() {
+    /**
+     * Checks whether Bluetooth is currently enabled.
+     *
+     * IMPORTANT: On Android 12+ (API 31+) calling BluetoothAdapter.isEnabled()
+     * without
+     * BLUETOOTH_CONNECT permission immediately throws a SecurityException. This
+     * method
+     * checks the permission first so callers don't need to worry about it.
+     *
+     * @return true if BT is enabled AND all required permissions are granted.
+     */
+    public boolean isBluetoothEnabled(Context context) {
         if (bluetoothAdapter == null) {
             CoreLogger.w("BT-HELP: Bluetooth adapter is null");
             return false;
         }
-        return bluetoothAdapter.isEnabled();
+        // API 31+: BLUETOOTH_CONNECT is required to even call isEnabled()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(context,
+                    Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                CoreLogger.w("BT-HELP: BLUETOOTH_CONNECT not granted — cannot check isEnabled()");
+                return false;
+            }
+        }
+        try {
+            return bluetoothAdapter.isEnabled();
+        } catch (SecurityException e) {
+            CoreLogger.e("BT-HELP: SecurityException calling isEnabled(): " + e.getMessage());
+            return false;
+        }
     }
 
     /**
-     * Returns the runtime permissions required based on API level.
+     * @deprecated Use {@link #isBluetoothEnabled(Context)} which is safe on API
+     *             31+.
+     */
+    @Deprecated
+    public boolean isBluetoothEnabled() {
+        if (bluetoothAdapter == null)
+            return false;
+        try {
+            return bluetoothAdapter.isEnabled();
+        } catch (SecurityException e) {
+            CoreLogger.e("BT-HELP: SecurityException in legacy isBluetoothEnabled(): " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Returns the complete set of runtime permissions required for this app's
+     * Bluetooth multiplayer feature, based on the running API level.
+     *
+     * API 31+ requires all three granular Bluetooth permissions:
+     * • BLUETOOTH_SCAN — to discover / enumerate bonded devices
+     * • BLUETOOTH_CONNECT — to open RFCOMM sockets and call isEnabled()
+     * • BLUETOOTH_ADVERTISE— to expose the host's RFCOMM server socket
      */
     public static String[] getRequiredPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+ (API 31+): New granular Bluetooth permissions
+            // Android 12+ (API 31+): all three granular permissions are needed
             return new String[] {
                     Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_CONNECT
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_ADVERTISE
             };
         } else {
             // Android 6-11 (API 23-30): Location IS required for BT discovery
@@ -81,6 +137,21 @@ public class BluetoothHelper {
                     Manifest.permission.ACCESS_FINE_LOCATION
             };
         }
+    }
+
+    /**
+     * Returns true only if the BLUETOOTH_CONNECT permission is granted.
+     * This is the single most important permission on API 31+ — without it
+     * nearly every BluetoothAdapter / BluetoothSocket call throws
+     * SecurityException.
+     */
+    public static boolean hasConnectPermission(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return ContextCompat.checkSelfPermission(context,
+                    Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+        }
+        // API < 31: no explicit BLUETOOTH_CONNECT needed
+        return true;
     }
 
     public static boolean hasAllPermissions(Context context) {
@@ -102,8 +173,9 @@ public class BluetoothHelper {
 
     /**
      * Returns the list of currently bonded (paired) devices.
-     * The @SuppressLint is intentional — permission is already checked via
+     * Requires BLUETOOTH_CONNECT on API 31+ — already guarded via
      * hasAllPermissions().
+     * The @SuppressLint is intentional; permission is verified before the call.
      */
     @SuppressLint("MissingPermission")
     public List<BluetoothDevice> getPairedDevices(Context context) {

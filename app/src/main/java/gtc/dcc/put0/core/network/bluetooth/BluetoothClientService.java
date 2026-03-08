@@ -102,16 +102,36 @@ public class BluetoothClientService {
         private final BluetoothDevice mmDevice;
 
         public ConnectThread(BluetoothDevice device) {
-            BluetoothSocket tmp = null;
             mmDevice = device;
 
+            // Android 15 (API 35) tightened the Bluetooth stack: insecure RFCOMM sockets
+            // may be rejected when the devices are bonded and the system enforces
+            // authenticated channels. Strategy:
+            // 1. Try the SECURE socket (createRfcommSocketToServiceRecord) first — it uses
+            // an encrypted, authenticated channel and works best on Android 12–15.
+            // 2. Fall back to the INSECURE variant for older Android versions or edge
+            // cases.
+            BluetoothSocket tmp = null;
             try {
-                // Must use the exact same UUID as in Host Service
-                tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                tmp = device.createRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                CoreLogger.d("BT-CLIENT: Created SECURE RFCOMM socket (preferred).");
             } catch (IOException e) {
-                CoreLogger.e("BT-CLIENT: Socket's create() method failed: " + e.getMessage());
+                CoreLogger.w("BT-CLIENT: Secure socket creation failed, trying insecure: " + e.getMessage());
+                try {
+                    tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                    CoreLogger.d("BT-CLIENT: Created INSECURE RFCOMM socket (fallback).");
+                } catch (IOException e2) {
+                    CoreLogger.e("BT-CLIENT: Both socket variants failed: " + e2.getMessage());
+                } catch (SecurityException e2) {
+                    CoreLogger.e("BT-CLIENT: Missing permissions for insecure socket fallback.");
+                }
             } catch (SecurityException e) {
-                CoreLogger.e("BT-CLIENT: Missing Bluetooth permissions for create()");
+                CoreLogger.e("BT-CLIENT: Missing Bluetooth permissions for secure socket creation.");
+                // Last-ditch fallback
+                try {
+                    tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                } catch (IOException | SecurityException ignored) {
+                }
             }
             mmSocket = tmp;
         }

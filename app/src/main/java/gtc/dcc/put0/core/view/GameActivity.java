@@ -365,11 +365,14 @@ public class GameActivity extends AppCompatActivity {
 
         boolean isBluetooth = getIntent().getBooleanExtra("IS_BLUETOOTH", false);
         if (isBluetooth) {
+            // getHostPromoted() uses a one-shot pattern: BluetoothMatchManager posts true
+            // and then immediately posts null so no new session ever sees a stale value.
+            // This observer only reacts when promoted is strictly TRUE (never null/false).
             gtc.dcc.put0.core.network.bluetooth.BluetoothMatchManager.getInstance().getHostPromoted().observe(this,
                     promoted -> {
                         if (Boolean.TRUE.equals(promoted)) {
                             gtc.dcc.put0.core.utils.GameMessageHelper.showMessage(binding.getRoot(),
-                                    "¡El anfitrión se desconectó! Ahora tú eres el anfitrión.",
+                                    getString(R.string.msg_host_promoted),
                                     gtc.dcc.put0.core.utils.GameMessageHelper.MessageType.SUCCESS);
                         }
                     });

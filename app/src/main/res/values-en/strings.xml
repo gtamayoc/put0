@@ -9,6 +9,7 @@
     <string name="msg_card_no_match">The card doesn\'t match</string>
     <string name="msg_card_not_available">Card is not available</string>
     <string name="msg_cannot_play">Cannot play that</string>
+    <string name="msg_host_promoted">The host disconnected! You are now the host.</string>
 
     <string name="title_game_info">Game Info</string>
     <string name="title_options">Options</string>

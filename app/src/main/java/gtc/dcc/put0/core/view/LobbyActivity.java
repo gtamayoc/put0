@@ -203,6 +203,21 @@ public class LobbyActivity extends AppCompatActivity {
         // Nothing to do here.
     }
 
+    private final androidx.activity.result.ActivityResultLauncher<Intent> bluetoothEnableLauncher = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    if (isBluetoothHost) {
+                        startBluetoothHost();
+                    } else if (isBluetoothClient) {
+                        showBluetoothDevicesDialog();
+                    }
+                } else {
+                    Toast.makeText(this, "Bluetooth es obligatorio para jugar en este modo.", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            });
+
     private void startBluetoothHost() {
         if (!bluetoothHelper.isBluetoothSupported()) {
             Toast.makeText(this, "Este dispositivo no soporta Bluetooth.", Toast.LENGTH_LONG).show();
@@ -210,16 +225,15 @@ public class LobbyActivity extends AppCompatActivity {
             return;
         }
 
+        // Android 12+ (API 31+): Must have BLUETOOTH_CONNECT to call isEnabled()
         if (!BluetoothHelper.hasAllPermissions(this)) {
             BluetoothHelper.requestPermissions(this, REQUEST_BLUETOOTH_PERMISSIONS);
-            return; // startBluetoothHost() will be called again in onRequestPermissionsResult
+            return;
         }
 
-        if (!bluetoothHelper.isBluetoothEnabled()) {
-            // Request the system dialog to enable BT — more reliable than just a toast
-            android.content.Intent enableBtIntent = new android.content.Intent(
-                    android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, 1002);
+        if (!bluetoothHelper.isBluetoothEnabled(this)) {
+            Intent enableBtIntent = new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            bluetoothEnableLauncher.launch(enableBtIntent);
             return;
         }
 
@@ -252,10 +266,9 @@ public class LobbyActivity extends AppCompatActivity {
             return;
         }
 
-        if (!bluetoothHelper.isBluetoothEnabled()) {
-            android.content.Intent enableBtIntent = new android.content.Intent(
-                    android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, 1002);
+        if (!bluetoothHelper.isBluetoothEnabled(this)) {
+            Intent enableBtIntent = new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            bluetoothEnableLauncher.launch(enableBtIntent);
             return;
         }
 
@@ -269,7 +282,11 @@ public class LobbyActivity extends AppCompatActivity {
 
         String[] deviceNames = new String[pairedDevices.size()];
         for (int i = 0; i < pairedDevices.size(); i++) {
-            deviceNames[i] = pairedDevices.get(i).getName();
+            try {
+                deviceNames[i] = pairedDevices.get(i).getName();
+            } catch (SecurityException e) {
+                deviceNames[i] = "Dispositivo (Error de Permiso)";
+            }
             if (deviceNames[i] == null)
                 deviceNames[i] = "Dispositivo Desconocido";
         }
@@ -303,7 +320,7 @@ public class LobbyActivity extends AppCompatActivity {
             String deviceName = device.getName() != null ? device.getName() : "Host";
             Toast.makeText(this, "Conectando a " + deviceName + "...", Toast.LENGTH_SHORT).show();
         } catch (SecurityException e) {
-            Toast.makeText(this, "Conectando...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Conectando al anfitrión seleccionado...", Toast.LENGTH_SHORT).show();
         }
         clientService.connect(device);
     }

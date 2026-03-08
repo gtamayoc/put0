@@ -333,13 +333,28 @@ public class BluetoothHostService {
         public AcceptThread() {
             BluetoothServerSocket tmp = null;
             try {
-                // Requires BLUETOOTH_CONNECT permission on Android 12+ (which we checked before
-                // starting)
-                tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                // Android 15 compatibility: Try SECURE server socket first.
+                // It requires bonding but provides a more stable, encrypted channel.
+                tmp = bluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                CoreLogger.d("BT-HOST: Created SECURE server socket.");
             } catch (IOException e) {
-                CoreLogger.e("BT-HOST: Socket's listen() method failed: " + e.getMessage());
+                CoreLogger.w("BT-HOST: Secure server socket failed, trying insecure: " + e.getMessage());
+                try {
+                    // Fallback to INSECURE socket for non-bonded pairings or older devices.
+                    tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                    CoreLogger.d("BT-HOST: Created INSECURE server socket (fallback).");
+                } catch (IOException e2) {
+                    CoreLogger.e("BT-HOST: Both server socket variants failed: " + e2.getMessage());
+                } catch (SecurityException e2) {
+                    CoreLogger.e("BT-HOST: Missing permissions for insecure server socket fallback.");
+                }
             } catch (SecurityException e) {
-                CoreLogger.e("BT-HOST: Missing Bluetooth permissions for listen()");
+                CoreLogger.e("BT-HOST: Missing Bluetooth permissions for secure server socket creation.");
+                // Last-ditch effort if permissions are somehow partially granted
+                try {
+                    tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                } catch (IOException | SecurityException ignored) {
+                }
             }
             mmServerSocket = tmp;
         }

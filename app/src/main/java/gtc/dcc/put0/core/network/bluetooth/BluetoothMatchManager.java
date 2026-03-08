@@ -86,6 +86,9 @@ public class BluetoothMatchManager implements MatchManager,
         _gameState.setValue(null);
         _currentGameId.setValue(null);
         _error.setValue(null);
+        // Clear any pending host-promotion flag so it is never replayed
+        // to observers of a new session.
+        _hostPromoted.setValue(null);
     }
 
     // Called by Bluetooth callbacks (may be on BT thread or main thread)
@@ -165,7 +168,10 @@ public class BluetoothMatchManager implements MatchManager,
         hostService = new BluetoothHostService(bluetoothAdapter, this, lastState, _currentPlayerId.getValue());
         isHost = true;
         hostService.startAcceptingConnections(); // Start listening for the old host to reconnect
+        // Post true so the current observer sees the promotion event …
         _hostPromoted.postValue(true);
+        // … then immediately clear it so new observers (next session) don't replay it.
+        _hostPromoted.postValue(null);
         CoreLogger.i("BT-MANAGER: Promoted to host. Waiting for old host to reconnect.");
     }
 
