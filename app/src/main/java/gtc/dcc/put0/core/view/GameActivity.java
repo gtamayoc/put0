@@ -53,6 +53,7 @@ public class GameActivity extends AppCompatActivity {
 
     // Game status tracking
     private boolean gameOverShown = false;
+    private AlertDialog gameOverDialog = null;
     private List<String> matchHistory = new ArrayList<>();
 
     @Override
@@ -250,6 +251,16 @@ public class GameActivity extends AppCompatActivity {
             // Restart chronometer from 0 when a new game begins (FINISHED → PLAYING)
             if (previousStatus == GameStatus.FINISHED && state.getStatus() == GameStatus.PLAYING) {
                 startChronometer();
+            }
+
+            // If the game transitions out of FINISHED state, we must clear the game over
+            // dialog for clients
+            if (previousStatus == GameStatus.FINISHED && state.getStatus() != GameStatus.FINISHED) {
+                if (gameOverDialog != null && gameOverDialog.isShowing()) {
+                    gameOverDialog.dismiss();
+                    gameOverDialog = null;
+                }
+                gameOverShown = false;
             }
             previousStatus = state.getStatus();
 
@@ -750,14 +761,14 @@ public class GameActivity extends AppCompatActivity {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_game_over, null);
 
         // Create dialog
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+        gameOverDialog = new android.app.AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setCancelable(false)
                 .create();
 
         // Make dialog background transparent
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
+        if (gameOverDialog.getWindow() != null) {
+            gameOverDialog.getWindow().setBackgroundDrawable(
                     new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
@@ -793,19 +804,23 @@ public class GameActivity extends AppCompatActivity {
         boolean gameEndedNaturally = currentState != null && !currentState.isWonByAbandonment();
         btnNewGame.setVisibility(isHost && gameEndedNaturally ? View.VISIBLE : View.GONE);
         btnNewGame.setOnClickListener(v -> {
-            dialog.dismiss();
+            if (gameOverDialog != null) {
+                gameOverDialog.dismiss();
+            }
             gameOverShown = false;
             viewModel.restartGame();
             // Intentionally not finishing the activity to allow the game to resume
         });
 
         btnBackToMenu.setOnClickListener(v -> {
-            dialog.dismiss();
+            if (gameOverDialog != null) {
+                gameOverDialog.dismiss();
+            }
             viewModel.leaveGame(); // Essential to clear state
             finish(); // Go back to MainActivity
         });
 
-        dialog.show();
+        gameOverDialog.show();
     }
 
     /**
