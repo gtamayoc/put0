@@ -37,6 +37,8 @@ public class BluetoothClientService {
 
         void onError(String message);
 
+        void onClientIdAssigned(String id);
+
         /**
          * Called when the host disconnects and doesn't reconnect within the timeout.
          * The UI/Manager should switch this device to host mode.
@@ -75,6 +77,8 @@ public class BluetoothClientService {
         CoreLogger.d("BT-CLIENT: Attempting to connect to host: " + device.getAddress());
     }
 
+    private volatile boolean isRunning = true;
+
     /**
      * Send an action to the host.
      */
@@ -86,6 +90,7 @@ public class BluetoothClientService {
     }
 
     public synchronized void stop() {
+        isRunning = false;
         if (connectThread != null) {
             connectThread.cancel();
             connectThread = null;
@@ -98,42 +103,11 @@ public class BluetoothClientService {
     }
 
     private class ConnectThread extends Thread {
-        private final BluetoothSocket mmSocket;
+        private BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
 
         public ConnectThread(BluetoothDevice device) {
             mmDevice = device;
-
-            // Android 15 (API 35) tightened the Bluetooth stack: insecure RFCOMM sockets
-            // may be rejected when the devices are bonded and the system enforces
-            // authenticated channels. Strategy:
-            // 1. Try the SECURE socket (createRfcommSocketToServiceRecord) first — it uses
-            // an encrypted, authenticated channel and works best on Android 12–15.
-            // 2. Fall back to the INSECURE variant for older Android versions or edge
-            // cases.
-            BluetoothSocket tmp = null;
-            try {
-                tmp = device.createRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
-                CoreLogger.d("BT-CLIENT: Created SECURE RFCOMM socket (preferred).");
-            } catch (IOException e) {
-                CoreLogger.w("BT-CLIENT: Secure socket creation failed, trying insecure: " + e.getMessage());
-                try {
-                    tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
-                    CoreLogger.d("BT-CLIENT: Created INSECURE RFCOMM socket (fallback).");
-                } catch (IOException e2) {
-                    CoreLogger.e("BT-CLIENT: Both socket variants failed: " + e2.getMessage());
-                } catch (SecurityException e2) {
-                    CoreLogger.e("BT-CLIENT: Missing permissions for insecure socket fallback.");
-                }
-            } catch (SecurityException e) {
-                CoreLogger.e("BT-CLIENT: Missing Bluetooth permissions for secure socket creation.");
-                // Last-ditch fallback
-                try {
-                    tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
-                } catch (IOException | SecurityException ignored) {
-                }
-            }
-            mmSocket = tmp;
         }
 
         public void run() {
@@ -146,27 +120,49 @@ public class BluetoothClientService {
                 CoreLogger.e("BT-CLIENT: Missing permissions for cancelDiscovery");
             }
 
+            boolean connected = false;
+
+            // Step 1: Try SECURE
             try {
+                mmSocket = mmDevice.createRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                CoreLogger.d("BT-CLIENT: Connecting via SECURE socket...");
                 mmSocket.connect();
-                CoreLogger.d("BT-CLIENT: mmSocket.connect() succeeded!");
+                connected = true;
+                CoreLogger.d("BT-CLIENT: SECURE connect() succeeded!");
             } catch (IOException connectException) {
-                CoreLogger.e("BT-CLIENT: Unable to connect: " + connectException.getMessage());
+                CoreLogger.w("BT-CLIENT: SECURE connect() failed: " + connectException.getMessage());
+                try {
+                    mmSocket.close();
+                } catch (Exception closeException) {
+                }
+            } catch (SecurityException e) {
+                CoreLogger.e("BT-CLIENT: Missing perms for SECURE connection");
+            }
+
+            // Step 2: Try INSECURE if SECURE failed
+            if (!connected) {
+                try {
+                    mmSocket = mmDevice.createInsecureRfcommSocketToServiceRecord(BluetoothHostService.APP_UUID);
+                    CoreLogger.d("BT-CLIENT: Connecting via INSECURE socket...");
+                    mmSocket.connect();
+                    connected = true;
+                    CoreLogger.d("BT-CLIENT: INSECURE connect() succeeded!");
+                } catch (IOException connectException) {
+                    CoreLogger.e("BT-CLIENT: INSECURE connect() also failed: " + connectException.getMessage());
+                    try {
+                        mmSocket.close();
+                    } catch (Exception closeException) {
+                    }
+                } catch (SecurityException e) {
+                    CoreLogger.e("BT-CLIENT: Missing perms for INSECURE connection");
+                }
+            }
+
+            if (!connected) {
+                CoreLogger.e("BT-CLIENT: Unable to connect via either SECURE or INSECURE methods.");
                 ClientListener l = listenerRef.get();
                 if (l != null)
-                    l.onError("Could not connect to host.");
-                try {
-                    mmSocket.close();
-                } catch (IOException closeException) {
-                    CoreLogger.e("BT-CLIENT: Could not close socket: " + closeException.getMessage());
-                }
-                return;
-            } catch (SecurityException e) {
-                CoreLogger.e("BT-CLIENT: Missing permissions for connect");
-                try {
-                    mmSocket.close();
-                } catch (IOException closeEx) {
-                    CoreLogger.e("BT-CLIENT: Could not close socket after SecurityException: " + closeEx.getMessage());
-                }
+                    l.onError("No se pudo conectar al anfitrión. Por favor, intente nuevamente.");
                 return;
             }
 
@@ -196,6 +192,15 @@ public class BluetoothClientService {
                         }
                         return;
                     }
+                    if (message.startsWith("ASSIGNED_ID:")) {
+                        String assignedId = message.substring(12);
+                        ClientListener l = listenerRef.get();
+                        if (l != null) {
+                            CoreLogger.d("BT-CLIENT: Received assigned ID: " + assignedId);
+                            l.onClientIdAssigned(assignedId);
+                        }
+                        return;
+                    }
                     GameState state = gson.fromJson(message, GameState.class);
                     if (state != null) {
                         lastReceivedState = state; // Cache for host promotion
@@ -211,6 +216,11 @@ public class BluetoothClientService {
 
             @Override
             public void onConnectionLost() {
+                if (!isRunning) {
+                    CoreLogger.d("BT-CLIENT: Connection lost due to manual stop, ignoring.");
+                    return;
+                }
+
                 CoreLogger.w("BT-CLIENT: Connection to host lost. Promoting to host immediately.");
                 ClientListener l = listenerRef.get();
                 if (l != null)

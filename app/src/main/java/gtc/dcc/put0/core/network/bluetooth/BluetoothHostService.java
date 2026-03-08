@@ -25,13 +25,15 @@ public class BluetoothHostService {
     private static final String APP_NAME = "PUT0 Game";
 
     private final BluetoothAdapter bluetoothAdapter;
-    private AcceptThread acceptThread;
+    private AcceptThread mSecureAcceptThread;
+    private AcceptThread mInsecureAcceptThread;
     private BluetoothConnection bluetoothConnection;
 
     private final GameEngine gameEngine;
     private GameState gameState;
     private final Gson gson;
     private java.util.Timer reconnectionTimer;
+    private String currentHostPlayerId;
 
     /**
      * WeakReference to the listener (typically a LobbyActivity anonymous class).
@@ -97,9 +99,20 @@ public class BluetoothHostService {
     }
 
     public synchronized void start(String hostPlayerId, String hostName, int deckSize) {
-        if (acceptThread != null) {
-            acceptThread.cancel();
-            acceptThread = null;
+        isRunning = true; // Reset running flag for a fresh session
+        currentHostPlayerId = hostPlayerId;
+
+        if (mSecureAcceptThread != null) {
+            mSecureAcceptThread.cancel();
+            mSecureAcceptThread = null;
+        }
+        if (mInsecureAcceptThread != null) {
+            mInsecureAcceptThread.cancel();
+            mInsecureAcceptThread = null;
+        }
+        if (bluetoothConnection != null) {
+            bluetoothConnection.cancel();
+            bluetoothConnection = null;
         }
 
         // Initialize state for Lobby
@@ -152,13 +165,19 @@ public class BluetoothHostService {
     }
 
     private synchronized void startAcceptThread() {
-        if (acceptThread != null) {
-            acceptThread.cancel();
-            acceptThread = null;
+        if (mSecureAcceptThread != null) {
+            mSecureAcceptThread.cancel();
+            mSecureAcceptThread = null;
         }
-        acceptThread = new AcceptThread();
-        acceptThread.start();
-        CoreLogger.d("BT-HOST: AcceptThread started, waiting for connections with UUID: " + APP_UUID);
+        if (mInsecureAcceptThread != null) {
+            mInsecureAcceptThread.cancel();
+            mInsecureAcceptThread = null;
+        }
+        mSecureAcceptThread = new AcceptThread(true);
+        mSecureAcceptThread.start();
+        mInsecureAcceptThread = new AcceptThread(false);
+        mInsecureAcceptThread.start();
+        CoreLogger.d("BT-HOST: Both AcceptThreads started, waiting for connections with UUID: " + APP_UUID);
     }
 
     /**
@@ -295,6 +314,8 @@ public class BluetoothHostService {
         }
     }
 
+    private volatile boolean isRunning = true;
+
     private Card findCardInPlayerHand(String playerId, String cardInstanceId) {
         for (Player p : gameState.getPlayers()) {
             if (p.getId().equals(playerId)) {
@@ -316,76 +337,99 @@ public class BluetoothHostService {
     }
 
     public synchronized void stop() {
-        if (acceptThread != null) {
-            acceptThread.cancel();
-            acceptThread = null;
+        isRunning = false;
+        if (mSecureAcceptThread != null) {
+            mSecureAcceptThread.cancel();
+            mSecureAcceptThread = null;
+        }
+        if (mInsecureAcceptThread != null) {
+            mInsecureAcceptThread.cancel();
+            mInsecureAcceptThread = null;
         }
         if (bluetoothConnection != null) {
             bluetoothConnection.cancel();
             bluetoothConnection = null;
+        }
+        if (reconnectionTimer != null) {
+            reconnectionTimer.cancel();
+            reconnectionTimer = null;
         }
         CoreLogger.d("BT-HOST: Service stopped.");
     }
 
     private class AcceptThread extends Thread {
         private final BluetoothServerSocket mmServerSocket;
+        private final boolean mSocketTypeSecure;
 
-        public AcceptThread() {
+        public AcceptThread(boolean secure) {
+            mSocketTypeSecure = secure;
             BluetoothServerSocket tmp = null;
             try {
-                // Android 15 compatibility: Try SECURE server socket first.
-                // It requires bonding but provides a more stable, encrypted channel.
-                tmp = bluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, APP_UUID);
-                CoreLogger.d("BT-HOST: Created SECURE server socket.");
+                if (secure) {
+                    tmp = bluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                    CoreLogger.d("BT-HOST: Created SECURE server socket.");
+                } else {
+                    tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
+                    CoreLogger.d("BT-HOST: Created INSECURE server socket.");
+                }
             } catch (IOException e) {
-                CoreLogger.w("BT-HOST: Secure server socket failed, trying insecure: " + e.getMessage());
-                try {
-                    // Fallback to INSECURE socket for non-bonded pairings or older devices.
-                    tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
-                    CoreLogger.d("BT-HOST: Created INSECURE server socket (fallback).");
-                } catch (IOException e2) {
-                    CoreLogger.e("BT-HOST: Both server socket variants failed: " + e2.getMessage());
-                } catch (SecurityException e2) {
-                    CoreLogger.e("BT-HOST: Missing permissions for insecure server socket fallback.");
-                }
+                CoreLogger
+                        .w("BT-HOST: " + (secure ? "Secure" : "Insecure") + " server socket failed: " + e.getMessage());
             } catch (SecurityException e) {
-                CoreLogger.e("BT-HOST: Missing Bluetooth permissions for secure server socket creation.");
-                // Last-ditch effort if permissions are somehow partially granted
-                try {
-                    tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, APP_UUID);
-                } catch (IOException | SecurityException ignored) {
-                }
+                CoreLogger.e("BT-HOST: Missing Bluetooth permissions for " + (secure ? "secure" : "insecure")
+                        + " server socket creation.");
             }
             mmServerSocket = tmp;
         }
 
         public void run() {
             if (mmServerSocket == null) {
-                CoreLogger.e("BT-HOST: AcceptThread started with null ServerSocket, aborting.");
-                HostListener l = listenerRef.get();
-                if (l != null)
-                    l.onError("Bluetooth server socket could not be created.");
+                CoreLogger.e("BT-HOST: AcceptThread " + (mSocketTypeSecure ? "Secure" : "Insecure")
+                        + " started with null ServerSocket, aborting.");
+                if (mSocketTypeSecure) {
+                    HostListener l = listenerRef.get();
+                    if (l != null)
+                        l.onError("Bluetooth server socket could not be created.");
+                }
                 return;
             }
             BluetoothSocket socket = null;
             while (true) {
                 try {
-                    CoreLogger.d("BT-HOST: AcceptThread listening for incoming connections...");
+                    CoreLogger.d("BT-HOST: AcceptThread " + (mSocketTypeSecure ? "Secure" : "Insecure")
+                            + " listening for incoming connections...");
                     socket = mmServerSocket.accept();
                 } catch (IOException e) {
-                    // This is expected when cancel() closes the ServerSocket intentionally.
-                    CoreLogger.e("BT-HOST: Socket's accept() method failed: " + e.getMessage());
+                    CoreLogger.e("BT-HOST: Socket's accept() failed (" + (mSocketTypeSecure ? "Secure" : "Insecure")
+                            + "): " + e.getMessage());
                     break;
                 } catch (Exception e) {
-                    CoreLogger.e("BT-HOST: Unexpected error in accept(): " + e.getMessage());
+                    CoreLogger.e("BT-HOST: Unexpected error in accept() (" + (mSocketTypeSecure ? "Secure" : "Insecure")
+                            + "): " + e.getMessage());
                     break;
                 }
 
                 if (socket != null) {
-                    CoreLogger.d("BT-HOST: Client socket accepted from: " + socket.getRemoteDevice().getAddress());
+                    CoreLogger.d("BT-HOST: Client socket accepted via " + (mSocketTypeSecure ? "SECURE" : "INSECURE")
+                            + " from: " + socket.getRemoteDevice().getAddress());
+                    // Cancel the other thread so we don't accept multiple simultaneous connections
+                    synchronized (BluetoothHostService.this) {
+                        if (mSocketTypeSecure) {
+                            if (mInsecureAcceptThread != null) {
+                                mInsecureAcceptThread.cancel();
+                                mInsecureAcceptThread = null;
+                            }
+                        } else {
+                            if (mSecureAcceptThread != null) {
+                                mSecureAcceptThread.cancel();
+                                mSecureAcceptThread = null;
+                            }
+                        }
+                    }
+
                     manageConnectedSocket(socket);
+
                     try {
-                        // Close the ServerSocket after accepting one client (1-client design).
                         mmServerSocket.close();
                     } catch (IOException e) {
                         CoreLogger.e("BT-HOST: Could not close ServerSocket: " + e.getMessage());
@@ -443,6 +487,11 @@ public class BluetoothHostService {
 
             @Override
             public void onConnectionLost() {
+                if (!isRunning) {
+                    CoreLogger.d("BT-HOST: Connection lost due to manual stop, ignoring.");
+                    return;
+                }
+
                 CoreLogger.w("BT-HOST: Connection lost. Pausing game and starting AcceptThread for reconnections.");
                 if (gameState != null) {
                     gameState.setStatus(com.game.core.model.GameStatus.PAUSED);
@@ -469,11 +518,13 @@ public class BluetoothHostService {
             // Add or Reconnect client in state
             if (gameState != null) {
                 boolean found = false;
+                String finalClientId = clientId;
                 for (Player p : gameState.getPlayers()) {
                     if (p.getId().equals(clientId)) {
                         p.setConnected(true);
                         devNameTemp = p.getName(); // keep old name
                         found = true;
+                        finalClientId = p.getId();
                         break;
                     }
                 }
@@ -481,10 +532,12 @@ public class BluetoothHostService {
                 // can reclaim (e.g. old host rejoining)
                 if (!found) {
                     for (Player p : gameState.getPlayers()) {
-                        if (!p.isConnected()) {
+                        // Skip the host's own slot — only reclaim real client slots
+                        if (!p.isConnected() && !p.getId().equals(currentHostPlayerId)) {
                             p.setConnected(true);
                             devNameTemp = p.getName();
                             found = true;
+                            finalClientId = p.getId();
                             CoreLogger.i("BT-HOST: Reclaimed disconnected player slot for: " + p.getId());
                             break;
                         }
@@ -492,10 +545,43 @@ public class BluetoothHostService {
                 }
 
                 if (!found) {
-                    Player client = new Player(clientId, devName, false);
-                    client.setConnected(true); // New client is connected
-                    gameState.addPlayer(client);
+                    // Only add a genuinely new player if the game hasn't reached its expected
+                    // player count. This prevents a 3rd phantom player from being created on
+                    // repeated reconnections.
+                    long connectedCount = 0;
+                    for (Player p : gameState.getPlayers()) {
+                        if (p.isConnected())
+                            connectedCount++;
+                    }
+                    int totalSlots = gameState.getPlayers().size();
+
+                    // If there's an open slot (total players < 2, the minimum for a BT game)
+                    // OR if total is already 2 but a slot is disconnected (handled above),
+                    // we only create a brand-new player entry if truly under capacity.
+                    if (totalSlots < 2) {
+                        Player client = new Player(clientId, devName, false);
+                        client.setConnected(true);
+                        gameState.addPlayer(client);
+                        finalClientId = clientId;
+                        CoreLogger.i("BT-HOST: Added brand-new client player: " + clientId);
+                    } else {
+                        // Game is full and no disconnected slot was found — force-reclaim
+                        // any slot that isn't the host (safety fallback)
+                        for (Player p : gameState.getPlayers()) {
+                            if (!p.getId().equals(currentHostPlayerId)) {
+                                p.setConnected(true);
+                                finalClientId = p.getId();
+                                devNameTemp = p.getName();
+                                CoreLogger.w("BT-HOST: Game full, force-reclaiming slot: " + p.getId()
+                                        + " for incoming client: " + clientId);
+                                break;
+                            }
+                        }
+                    }
                 }
+
+                // Explicitly assign the correct Player ID to the connected client
+                bluetoothConnection.write("ASSIGNED_ID:" + finalClientId);
 
                 // Cancel reconnection timer if active
                 if (reconnectionTimer != null) {

@@ -77,6 +77,8 @@ public class GameMapper {
         androidPlayer.setName(corePlayer.getName());
         androidPlayer.setBot(corePlayer.isBot());
         androidPlayer.setActive(corePlayer.isActive());
+        androidPlayer.setConnected(corePlayer.isConnected());
+        androidPlayer.setDisconnectedTime(corePlayer.getDisconnectedTime());
 
         List<gtc.dcc.put0.core.model.Card> hand = new ArrayList<>();
         if (corePlayer.getHand() != null) {
