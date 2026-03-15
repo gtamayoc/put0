@@ -11,6 +11,9 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class BluetoothClientService {
     private static final String TAG = "BluetoothClientService";
@@ -20,7 +23,7 @@ public class BluetoothClientService {
     private BluetoothConnection bluetoothConnection;
     /** Last game state received from the host; used for host promotion. */
     private volatile GameState lastReceivedState;
-    private java.util.Timer hostTimeoutTimer;
+    private ScheduledExecutorService hostTimeoutExecutor;
 
     private final Gson gson;
     /**
@@ -98,6 +101,10 @@ public class BluetoothClientService {
         if (bluetoothConnection != null) {
             bluetoothConnection.cancel();
             bluetoothConnection = null;
+        }
+        if (hostTimeoutExecutor != null) {
+            hostTimeoutExecutor.shutdownNow();
+            hostTimeoutExecutor = null;
         }
         CoreLogger.d("BT-CLIENT: Service stopped.");
     }

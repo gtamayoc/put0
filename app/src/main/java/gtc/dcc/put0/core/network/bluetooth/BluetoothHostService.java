@@ -17,6 +17,9 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class BluetoothHostService {
     private static final String TAG = "BluetoothHostService";
@@ -32,7 +35,7 @@ public class BluetoothHostService {
     private final GameEngine gameEngine;
     private GameState gameState;
     private final Gson gson;
-    private java.util.Timer reconnectionTimer;
+    private ScheduledExecutorService reconnectionExecutor;
     private String currentHostPlayerId;
 
     /**
@@ -133,35 +136,31 @@ public class BluetoothHostService {
      * If the timer elapses, the connected player wins by abandonment.
      */
     private synchronized void startReconnectionTimer() {
-        if (reconnectionTimer != null) {
-            reconnectionTimer.cancel();
+        if (reconnectionExecutor != null) {
+            reconnectionExecutor.shutdownNow();
         }
-        reconnectionTimer = new java.util.Timer();
-        reconnectionTimer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                if (gameState != null && gameState.getStatus() == com.game.core.model.GameStatus.PAUSED) {
-                    gameState.setStatus(com.game.core.model.GameStatus.FINISHED);
-                    gameState.setWonByAbandonment(true); // Mark as abandoned
+        reconnectionExecutor = Executors.newSingleThreadScheduledExecutor();
+        reconnectionExecutor.schedule(() -> {
+            if (gameState != null && gameState.getStatus() == com.game.core.model.GameStatus.PAUSED) {
+                gameState.setStatus(com.game.core.model.GameStatus.FINISHED);
+                gameState.setWonByAbandonment(true);
 
-                    // The connected player wins by default
-                    String winnerId = gameState.getPlayers().get(0).getId();
-                    for (com.game.core.model.Player p : gameState.getPlayers()) {
-                        if (p.isConnected()) {
-                            winnerId = p.getId();
-                            break;
-                        }
-                    }
-                    gameState.setWinnerId(winnerId);
-
-                    broadcastState();
-                    HostListener l1 = listenerRef.get();
-                    if (l1 != null) {
-                        l1.onError("Tiempo de reconexión agotado. Partida terminada por abandono.");
+                String winnerId = gameState.getPlayers().get(0).getId();
+                for (com.game.core.model.Player p : gameState.getPlayers()) {
+                    if (p.isConnected()) {
+                        winnerId = p.getId();
+                        break;
                     }
                 }
+                gameState.setWinnerId(winnerId);
+
+                broadcastState();
+                HostListener l1 = listenerRef.get();
+                if (l1 != null) {
+                    l1.onError("Tiempo de reconexión agotado. Partida terminada por abandono.");
+                }
             }
-        }, 60000);
+        }, 60, TimeUnit.SECONDS);
     }
 
     private synchronized void startAcceptThread() {
@@ -350,9 +349,9 @@ public class BluetoothHostService {
             bluetoothConnection.cancel();
             bluetoothConnection = null;
         }
-        if (reconnectionTimer != null) {
-            reconnectionTimer.cancel();
-            reconnectionTimer = null;
+        if (reconnectionExecutor != null) {
+            reconnectionExecutor.shutdownNow();
+            reconnectionExecutor = null;
         }
         CoreLogger.d("BT-HOST: Service stopped.");
     }
@@ -584,9 +583,9 @@ public class BluetoothHostService {
                 bluetoothConnection.write("ASSIGNED_ID:" + finalClientId);
 
                 // Cancel reconnection timer if active
-                if (reconnectionTimer != null) {
-                    reconnectionTimer.cancel();
-                    reconnectionTimer = null;
+                if (reconnectionExecutor != null) {
+                    reconnectionExecutor.shutdownNow();
+                    reconnectionExecutor = null;
                     CoreLogger.i("BT-HOST: Reconnection timer cancelled. Client reconnected.");
                 }
 
