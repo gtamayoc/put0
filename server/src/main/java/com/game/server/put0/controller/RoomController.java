@@ -37,15 +37,15 @@ public class RoomController {
     @PostMapping("/create")
     public ResponseEntity<RoomResponse> createRoom(@RequestBody CreateRoomRequest request) {
         try {
-            if (request.getMode() == null) {
+            if (request.mode() == null) {
                 return ResponseEntity.badRequest()
                         .body(new RoomResponse(null, null, null, "Match Mode is required", null));
             }
             
             RoomService.RoomCreationResult result = roomService.createRoom(
-                    request.getPlayerName(),
-                    request.getBotCount(),
-                    request.getMode()
+                    request.playerName(),
+                    request.botCount(),
+                    request.mode()
             );
             
             GameState game = gameEngine.getGame(result.gameId());
@@ -55,7 +55,7 @@ public class RoomController {
                     result.playerId(),
                     game,
                     "Room created successfully",
-                    request.getMode()
+                    request.mode()
             );
             
             return ResponseEntity.ok(response);
@@ -73,19 +73,19 @@ public class RoomController {
     @PostMapping("/join")
     public ResponseEntity<RoomResponse> joinRoom(@RequestBody JoinRoomRequest request) {
         try {
-            String playerId = roomService.joinRoom(request.getGameId(), request.getPlayerName());
-            GameState game = gameEngine.getGame(request.getGameId());
+            String playerId = roomService.joinRoom(request.gameId(), request.playerName());
+            GameState game = gameEngine.getGame(request.gameId());
             
             // Notify other players
             GameStateUpdate update = new GameStateUpdate(
                     game,
-                    request.getPlayerName() + " joined the game",
+                    request.playerName() + " joined the game",
                     GameStateUpdate.UpdateType.PLAYER_JOINED
             );
-            messagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), update);
+            messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
             
             RoomResponse response = new RoomResponse(
-                    request.getGameId(),
+                    request.gameId(),
                     playerId,
                     game,
                     "Joined room successfully",
@@ -167,11 +167,11 @@ public class RoomController {
     public ResponseEntity<Void> leaveRoom(@PathVariable String gameId, @RequestBody LeaveRoomRequest request) {
         try {
             // Validate that path variable matches body if body contains gameId
-            if (request.getGameId() != null && !request.getGameId().equals(gameId)) {
+            if (request.gameId() != null && !request.gameId().equals(gameId)) {
                 return ResponseEntity.badRequest().build();
             }
             
-            roomService.leaveRoom(gameId, request.getPlayerId());
+            roomService.leaveRoom(gameId, request.playerId());
             
             // Notify others
             messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateUpdate(null, "Player left", GameStateUpdate.UpdateType.PLAYER_LEFT));

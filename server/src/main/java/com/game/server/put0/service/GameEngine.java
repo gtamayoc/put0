@@ -1,6 +1,7 @@
 package com.game.server.put0.service;
 
 import com.game.core.model.*;
+import com.game.server.put0.exception.GameNotFoundException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class GameEngine {
     public void addPlayer(String gameId, Player player) {
         GameState game = games.get(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new GameNotFoundException(gameId);
         }
         coreEngine.addPlayer(game, player);
     }
@@ -55,7 +56,7 @@ public class GameEngine {
     public void startGame(String gameId) {
         GameState game = games.get(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new GameNotFoundException(gameId);
         }
         coreEngine.startGame(game);
     }
@@ -66,7 +67,7 @@ public class GameEngine {
     public void playCard(String gameId, String playerId, Card card) {
         GameState game = games.get(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new GameNotFoundException(gameId);
         }
         coreEngine.playCard(game, playerId, card);
     }
@@ -77,7 +78,7 @@ public class GameEngine {
     public void drawCard(String gameId, String playerId) {
         GameState game = games.get(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new GameNotFoundException(gameId);
         }
         coreEngine.drawCard(game, playerId);
     }
@@ -88,7 +89,7 @@ public class GameEngine {
     public void collectTable(String gameId, String playerId) {
         GameState game = games.get(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new GameNotFoundException(gameId);
         }
         coreEngine.collectTable(game, playerId);
     }

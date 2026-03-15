@@ -35,9 +35,9 @@ public class GameWebSocketController {
     @MessageMapping("/game/play")
     public void playCard(PlayCardRequest request) {
         try {
-            gameEngine.playCard(request.getGameId(), request.getPlayerId(), request.getCard());
+            gameEngine.playCard(request.gameId(), request.playerId(), request.card());
             
-            GameState game = gameEngine.getGame(request.getGameId());
+            GameState game = gameEngine.getGame(request.gameId());
             
             // Check if table was cleared
             boolean tableCleared = game.getTablePile().isEmpty();
@@ -49,10 +49,10 @@ public class GameWebSocketController {
             );
             
             // Broadcast to all clients in this game
-            messagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), update);
+            messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
             
             // Check if it's a bot's turn next
-            aiBotService.checkAndMakeBotMove(request.getGameId());
+            aiBotService.checkAndMakeBotMove(request.gameId());
             
         } catch (Exception e) {
             log.error("Error playing card: {}", e.getMessage());
@@ -62,7 +62,7 @@ public class GameWebSocketController {
                     GameStateUpdate.UpdateType.ERROR
             );
             messagingTemplate.convertAndSendToUser(
-                    request.getPlayerId(),
+                    request.playerId(),
                     "/queue/errors",
                     errorUpdate
             );
@@ -76,9 +76,9 @@ public class GameWebSocketController {
     @MessageMapping("/game/draw")
     public void drawCard(DrawCardRequest request) {
         try {
-            gameEngine.drawCard(request.getGameId(), request.getPlayerId());
+            gameEngine.drawCard(request.gameId(), request.playerId());
             
-            GameState game = gameEngine.getGame(request.getGameId());
+            GameState game = gameEngine.getGame(request.gameId());
             GameStateUpdate update = new GameStateUpdate(
                     game,
                     "Card drawn",
@@ -86,10 +86,10 @@ public class GameWebSocketController {
             );
             
             // Broadcast to all clients in this game
-            messagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), update);
+            messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
             
             // Check if it's a bot's turn next
-            aiBotService.checkAndMakeBotMove(request.getGameId());
+            aiBotService.checkAndMakeBotMove(request.gameId());
             
         } catch (Exception e) {
             log.error("Error drawing card: {}", e.getMessage());
@@ -99,7 +99,7 @@ public class GameWebSocketController {
                     GameStateUpdate.UpdateType.ERROR
             );
             messagingTemplate.convertAndSendToUser(
-                    request.getPlayerId(),
+                    request.playerId(),
                     "/queue/errors",
                     errorUpdate
             );
@@ -114,9 +114,9 @@ public class GameWebSocketController {
     @MessageMapping("/game/collect")
     public void collectTable(DrawCardRequest request) {
         try {
-            gameEngine.collectTable(request.getGameId(), request.getPlayerId());
+            gameEngine.collectTable(request.gameId(), request.playerId());
             
-            GameState game = gameEngine.getGame(request.getGameId());
+            GameState game = gameEngine.getGame(request.gameId());
             GameStateUpdate update = new GameStateUpdate(
                     game,
                     "Table collected",
@@ -124,10 +124,10 @@ public class GameWebSocketController {
             );
             
             // Broadcast to all clients in this game
-            messagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), update);
+            messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
             
             // Check if it's a bot's turn next
-            aiBotService.checkAndMakeBotMove(request.getGameId());
+            aiBotService.checkAndMakeBotMove(request.gameId());
             
         } catch (Exception e) {
             log.error("Error collecting table: {}", e.getMessage());
@@ -137,7 +137,7 @@ public class GameWebSocketController {
                     GameStateUpdate.UpdateType.ERROR
             );
             messagingTemplate.convertAndSendToUser(
-                    request.getPlayerId(),
+                    request.playerId(),
                     "/queue/errors",
                     errorUpdate
             );

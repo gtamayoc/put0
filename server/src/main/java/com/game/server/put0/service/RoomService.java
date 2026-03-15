@@ -1,37 +1,30 @@
 package com.game.server.put0.service;
 
 import com.game.core.model.Player;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-/**
- * Service for managing rooms and lobbies.
- */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class RoomService {
 
-    private static final Logger log = LoggerFactory.getLogger(RoomService.class);
-    
+    private static final int MAX_BOT_COUNT = 3;
+    private static final int MIN_BOT_COUNT = 0;
+
     private final GameEngine gameEngine;
-    
-    /**
-     * Creates a new game room.
-     * 
-     * @param playerName Name of the player creating the room
-     * @param botCount Number of AI bots to add
-     * @return The game ID and player ID
-     */
+
+    public RoomService(GameEngine gameEngine) {
+        this.gameEngine = gameEngine;
+    }
+
     public RoomCreationResult createRoom(String playerName, int botCount, com.game.core.model.MatchMode mode) {
         if (playerName == null || playerName.trim().isEmpty()) {
             throw new IllegalArgumentException("Player name cannot be empty");
         }
-        if (botCount < 0 || botCount > 3) {
-            throw new IllegalArgumentException("Bot count must be between 0 and 3");
+        if (botCount < MIN_BOT_COUNT || botCount > MAX_BOT_COUNT) {
+            throw new IllegalArgumentException("Bot count must be between " + MIN_BOT_COUNT + " and " + MAX_BOT_COUNT);
         }
         if (mode == null) {
             throw new IllegalArgumentException("Match mode is required");
@@ -39,15 +32,12 @@ public class RoomService {
         String gameId = UUID.randomUUID().toString();
         String playerId = UUID.randomUUID().toString();
         
-        // Create game
         com.game.core.model.GameState game = gameEngine.createGame(gameId);
         game.setMode(mode);
         
-        // Add human player
         Player humanPlayer = new Player(playerId, playerName, false);
         gameEngine.addPlayer(gameId, humanPlayer);
         
-        // Add AI bots
         for (int i = 0; i < botCount; i++) {
             String botId = UUID.randomUUID().toString();
             String botName = "Bot " + (i + 1);
@@ -55,42 +45,30 @@ public class RoomService {
             gameEngine.addPlayer(gameId, bot);
         }
         
-        log.info("Created room {} ({}) with player {} and {} bots", gameId, mode, playerName, botCount);
+        log.info("Created room gameId={} mode={} player={} botCount={}", gameId, mode, playerName, botCount);
         
         return new RoomCreationResult(gameId, playerId);
     }
     
-    /**
-     * Joins an existing game room.
-     */
     public String joinRoom(String gameId, String playerName) {
         String playerId = UUID.randomUUID().toString();
         
         Player player = new Player(playerId, playerName, false);
         gameEngine.addPlayer(gameId, player);
         
-        log.info("Player {} joined room {}", playerName, gameId);
+        log.info("Player joined playerName={} gameId={}", playerName, gameId);
         
         return playerId;
     }
     
-    /**
-     * Starts a game.
-     */
     public void startGame(String gameId) {
         gameEngine.startGame(gameId);
-        log.info("Started game {}", gameId);
+        log.info("Game started gameId={}", gameId);
     }
     
-    /**
-     * Removes a player from a room.
-     */
     public void leaveRoom(String gameId, String playerId) {
         gameEngine.removePlayer(gameId, playerId);
     }
     
-    /**
-     * Result of room creation.
-     */
     public record RoomCreationResult(String gameId, String playerId) {}
 }

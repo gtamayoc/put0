@@ -6,80 +6,93 @@ import com.game.core.model.GameState;
 import com.game.core.model.Player;
 import com.game.core.model.GameStatus;
 import com.game.server.put0.dto.GameStateUpdate;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.game.server.put0.exception.BotNotFoundException;
+import com.game.server.put0.exception.GameNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class AIBotService {
 
-    private static final Logger log = LoggerFactory.getLogger(AIBotService.class);
+    private static final long BOT_MOVE_DELAY_MS = 700L;
 
     private final GameEngine gameEngine;
     private final SimpMessagingTemplate messagingTemplate;
-    // Core Bot Strategy
-    private final BotStrategy botStrategy = new DefaultBotStrategy();
+    private final BotStrategy botStrategy;
+    private final ScheduledExecutorService scheduler;
+
+    public AIBotService(GameEngine gameEngine, SimpMessagingTemplate messagingTemplate) {
+        this.gameEngine = gameEngine;
+        this.messagingTemplate = messagingTemplate;
+        this.botStrategy = new DefaultBotStrategy();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+    }
 
     public void makeMove(String gameId, String botPlayerId) {
         GameState game = gameEngine.getGame(gameId);
         if (game == null) {
-            log.error("Game not found: {}", gameId);
-            return;
+            throw new GameNotFoundException(gameId);
         }
 
         Player bot = game.getPlayers().stream()
                 .filter(p -> p.getId().equals(botPlayerId))
+                .filter(Player::isBot)
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new BotNotFoundException(botPlayerId));
 
-        if (bot == null || !bot.isBot()) {
-            log.error("Bot player not found or not a bot: {}", botPlayerId);
-            return;
-        }
-
-        // Execute move using Core Strategy against Core Engine (exposed by wrapper)
         try {
             botStrategy.playTurn(game, gameEngine.getCore(), bot);
         } catch (Exception e) {
             log.error("Bot strategy failed", e);
             return;
         }
-        
-        // Broadcast update based on Last Action recorded in GameState
+
         String lastAction = game.getLastAction();
-        // Determine update type roughly
-        GameStateUpdate.UpdateType type = GameStateUpdate.UpdateType.CARD_PLAYED; // Default
-        if (lastAction != null) {
-            if (lastAction.contains("collected")) type = GameStateUpdate.UpdateType.TABLE_COLLECTED;
-            if (lastAction.contains("DREW")) type = GameStateUpdate.UpdateType.CARD_DRAWN;
-        }
-        
+        GameStateUpdate.UpdateType type = determineUpdateType(lastAction);
+
         broadcastUpdate(gameId, lastAction != null ? lastAction : "Bot moved", type);
 
-        // Check for next turn (recursive bot turn if sequential)
         checkAndMakeBotMove(gameId);
     }
-    
+
+    private GameStateUpdate.UpdateType determineUpdateType(String lastAction) {
+        if (lastAction == null) {
+            return GameStateUpdate.UpdateType.CARD_PLAYED;
+        }
+        if (lastAction.contains("collected")) {
+            return GameStateUpdate.UpdateType.TABLE_COLLECTED;
+        }
+        if (lastAction.contains("DREW")) {
+            return GameStateUpdate.UpdateType.CARD_DRAWN;
+        }
+        return GameStateUpdate.UpdateType.CARD_PLAYED;
+    }
+
     @Async("gameExecutor")
     public void checkAndMakeBotMove(String gameId) {
-        GameState game = gameEngine.getGame(gameId);
-        if (game == null) return;
-        
-        // Slight delay for UX
-         try {
-            Thread.sleep(700); 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        scheduler.schedule(() -> {
+            try {
+                GameState game = gameEngine.getGame(gameId);
+                if (game == null) {
+                    return;
+                }
 
-        Player currentPlayer = game.getCurrentPlayer();
-        if (currentPlayer != null && currentPlayer.isBot() && game.getStatus() == GameStatus.PLAYING) {
-             makeMove(gameId, currentPlayer.getId());
-        }
+                Player currentPlayer = game.getCurrentPlayer();
+                if (currentPlayer != null && currentPlayer.isBot() && game.getStatus() == GameStatus.PLAYING) {
+                    makeMove(gameId, currentPlayer.getId());
+                }
+            } catch (Exception e) {
+                log.error("Error in bot move scheduling", e);
+            }
+        }, BOT_MOVE_DELAY_MS, TimeUnit.MILLISECONDS);
     }
 
     private void broadcastUpdate(String gameId, String message, GameStateUpdate.UpdateType type) {
