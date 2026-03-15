@@ -26,6 +26,9 @@ import java.io.OutputStream;
  */
 public class BluetoothConnection extends Thread {
     private static final String TAG = "BluetoothConnection";
+    private static final int BUFFER_SIZE = 8192;
+    private static final byte[] REUSABLE_BUFFER = new byte[BUFFER_SIZE];
+    
     private final BluetoothSocket mmSocket;
     private final DataInputStream mmInStream;
     private final DataOutputStream mmOutStream;
@@ -92,12 +95,10 @@ public class BluetoothConnection extends Thread {
                 int length = mmInStream.readInt();
 
                 if (length > 0 && length <= MAX_PAYLOAD_SIZE) {
-                    byte[] buffer = new byte[length];
-                    // readFully blocks until all exactly 'length' bytes are read, preventing
-                    // fragmentation.
-                    mmInStream.readFully(buffer);
+                    byte[] buffer = length <= BUFFER_SIZE ? REUSABLE_BUFFER : new byte[length];
+                    mmInStream.readFully(buffer, 0, length);
 
-                    String message = new String(buffer, "UTF-8");
+                    String message = new String(buffer, 0, length, "UTF-8");
                     CoreLogger.d("BT-CONN: Message received (" + message.length() + " chars): " +
                             (message.length() > 50 ? message.substring(0, 50) + "..." : message));
 

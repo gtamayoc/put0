@@ -15,6 +15,9 @@ import java.util.List;
 @Slf4j
 public class GameEngine {
 
+    private static final int INITIAL_DECK_SIZE = 40;
+    private static final int HAND_SIZE = 3;
+
     /**
      * Initializes a new game state.
      */
@@ -418,24 +421,21 @@ public class GameEngine {
      * Replenishes player's hand to 3 cards if deck is available (Phase 1).
      */
     private void replenishHand(GameState game, Player player) {
-        // Phase 1: Draw from main deck (3 cards target)
-        while (player.getHand().size() < 3 && !game.getMainDeck().isEmpty()) {
-            player.getHand().add(game.getMainDeck().remove(game.getMainDeck().size() - 1));
+        List<Card> hand = player.getHand();
+        List<Card> deck = game.getMainDeck();
+        
+        while (hand.size() < HAND_SIZE && !deck.isEmpty()) {
+            hand.add(deck.remove(deck.size() - 1));
         }
 
-        // Transition to Phase 3 (Visible Cards to hand)
-        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() && !player.getVisibleCards().isEmpty()) {
+        if (hand.isEmpty() && deck.isEmpty() && !player.getVisibleCards().isEmpty()) {
             log.info("[GAME-PHASE] Transitioning player {} to Visible Cards phase (F3).", player.getName());
-            player.getHand().addAll(player.getVisibleCards());
+            hand.addAll(player.getVisibleCards());
             player.getVisibleCards().clear();
         }
 
-        // Transition to Phase 4 (Hidden Cards)
-        // Note: We no longer move them to hand automatically.
-        // They stay in the hidden pile and are played from there.
-        if (player.getHand().isEmpty() && game.getMainDeck().isEmpty() &&
+        if (hand.isEmpty() && deck.isEmpty() &&
                 player.getVisibleCards().isEmpty() && !player.getHiddenCards().isEmpty()) {
-            // Just ensure they are definitely marked as hidden
             for (Card c : player.getHiddenCards()) {
                 c.setHidden(true);
             }

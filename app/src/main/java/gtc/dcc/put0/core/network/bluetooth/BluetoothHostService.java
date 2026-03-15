@@ -16,16 +16,29 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BluetoothHostService {
     private static final String TAG = "BluetoothHostService";
-    // Fixed UUID for the PUT0 game. Must be same on Client and Host.
     public static final UUID APP_UUID = UUID.fromString("1f3f7ea2-2e55-4a55-8d5f-fd4f42ec5301");
     private static final String APP_NAME = "PUT0 Game";
+    private static final Gson GSON = new Gson();
+    private static final ThreadFactory RECONNECTION_THREAD_FACTORY = 
+        new ThreadFactory() {
+            private final AtomicInteger count = new AtomicInteger(1);
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r, "BT-Reconnection-" + count.getAndIncrement());
+                t.setDaemon(true);
+                return t;
+            }
+        };
 
     private final BluetoothAdapter bluetoothAdapter;
     private AcceptThread mSecureAcceptThread;
@@ -34,7 +47,6 @@ public class BluetoothHostService {
 
     private final GameEngine gameEngine;
     private GameState gameState;
-    private final Gson gson;
     private ScheduledExecutorService reconnectionExecutor;
     private String currentHostPlayerId;
 
@@ -60,7 +72,6 @@ public class BluetoothHostService {
         this.bluetoothAdapter = adapter;
         this.listenerRef = new WeakReference<>(listener);
         this.gameEngine = new GameEngine();
-        this.gson = new Gson();
     }
 
     /**
@@ -73,7 +84,6 @@ public class BluetoothHostService {
         this.bluetoothAdapter = adapter;
         this.listenerRef = new WeakReference<>(listener);
         this.gameEngine = new GameEngine();
-        this.gson = new Gson();
         this.gameState = existingState;
         this.gameState.setStatus(com.game.core.model.GameStatus.PAUSED); // Paused until old host reconnects
 
@@ -139,7 +149,7 @@ public class BluetoothHostService {
         if (reconnectionExecutor != null) {
             reconnectionExecutor.shutdownNow();
         }
-        reconnectionExecutor = Executors.newSingleThreadScheduledExecutor();
+        reconnectionExecutor = Executors.newSingleThreadScheduledExecutor(RECONNECTION_THREAD_FACTORY);
         reconnectionExecutor.schedule(() -> {
             if (gameState != null && gameState.getStatus() == com.game.core.model.GameStatus.PAUSED) {
                 gameState.setStatus(com.game.core.model.GameStatus.FINISHED);
@@ -239,7 +249,7 @@ public class BluetoothHostService {
 
         // Notify client if connected
         if (bluetoothConnection != null) {
-            String json = gson.toJson(gameState);
+            String json = GSON.toJson(gameState);
             bluetoothConnection.write(json);
         }
 
@@ -318,19 +328,20 @@ public class BluetoothHostService {
     private Card findCardInPlayerHand(String playerId, String cardInstanceId) {
         for (Player p : gameState.getPlayers()) {
             if (p.getId().equals(playerId)) {
-                for (Card c : p.getHand()) {
-                    if (c.getInstanceId().equals(cardInstanceId))
-                        return c;
-                }
-                for (Card c : p.getVisibleCards()) {
-                    if (c.getInstanceId().equals(cardInstanceId))
-                        return c;
-                }
-                for (Card c : p.getHiddenCards()) {
-                    if (c.getInstanceId().equals(cardInstanceId))
-                        return c;
-                }
+                Card found = findInList(p.getHand(), cardInstanceId);
+                if (found != null) return found;
+                found = findInList(p.getVisibleCards(), cardInstanceId);
+                if (found != null) return found;
+                return findInList(p.getHiddenCards(), cardInstanceId);
             }
+        }
+        return null;
+    }
+
+    private Card findInList(java.util.List<Card> cards, String cardInstanceId) {
+        for (Card c : cards) {
+            if (c.getInstanceId().equals(cardInstanceId))
+                return c;
         }
         return null;
     }
@@ -474,7 +485,7 @@ public class BluetoothHostService {
             @Override
             public void onMessageReceived(String message) {
                 try {
-                    GameEventDTO event = gson.fromJson(message, GameEventDTO.class);
+                    GameEventDTO event = GSON.fromJson(message, GameEventDTO.class);
                     if (event != null && event.getAction() != null) {
                         applyEventToEngine(event);
                         broadcastState();

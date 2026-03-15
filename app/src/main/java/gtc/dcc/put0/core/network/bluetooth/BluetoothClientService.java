@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 public class BluetoothClientService {
     private static final String TAG = "BluetoothClientService";
+    private static final Gson GSON = new Gson();
 
     private final BluetoothAdapter bluetoothAdapter;
     private ConnectThread connectThread;
@@ -25,7 +26,6 @@ public class BluetoothClientService {
     private volatile GameState lastReceivedState;
     private ScheduledExecutorService hostTimeoutExecutor;
 
-    private final Gson gson;
     /**
      * WeakReference to avoid retaining LobbyActivity after it is destroyed.
      * Same leak pattern as BluetoothHostService. See BluetoothHostService for full
@@ -52,7 +52,6 @@ public class BluetoothClientService {
     public BluetoothClientService(BluetoothAdapter adapter, ClientListener listener) {
         this.bluetoothAdapter = adapter;
         this.listenerRef = new WeakReference<>(listener);
-        this.gson = new Gson();
     }
 
     /**
@@ -87,7 +86,7 @@ public class BluetoothClientService {
      */
     public void sendAction(GameEventDTO event) {
         if (bluetoothConnection != null) {
-            String json = gson.toJson(event);
+            String json = GSON.toJson(event);
             bluetoothConnection.write(json);
         }
     }
@@ -208,7 +207,7 @@ public class BluetoothClientService {
                         }
                         return;
                     }
-                    GameState state = gson.fromJson(message, GameState.class);
+                    GameState state = GSON.fromJson(message, GameState.class);
                     if (state != null) {
                         lastReceivedState = state; // Cache for host promotion
                         ClientListener l = listenerRef.get();
