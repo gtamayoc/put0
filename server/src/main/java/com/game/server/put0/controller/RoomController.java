@@ -2,6 +2,7 @@ package com.game.server.put0.controller;
 
 import com.game.server.put0.dto.*;
 import com.game.core.model.GameState;
+import com.game.server.put0.exception.GameNotFoundException;
 import com.game.server.put0.service.AIBotService;
 import com.game.server.put0.service.GameEngine;
 import com.game.server.put0.service.RoomService;
@@ -13,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * REST API controller for room/lobby management.
@@ -36,34 +38,29 @@ public class RoomController {
      */
     @PostMapping("/create")
     public ResponseEntity<RoomResponse> createRoom(@RequestBody CreateRoomRequest request) {
-        try {
-            if (request.mode() == null) {
-                return ResponseEntity.badRequest()
-                        .body(new RoomResponse(null, null, null, "Match Mode is required", null));
-            }
-            
-            RoomService.RoomCreationResult result = roomService.createRoom(
-                    request.playerName(),
-                    request.botCount(),
-                    request.mode()
-            );
-            
-            GameState game = gameEngine.getGame(result.gameId());
-            
-            RoomResponse response = new RoomResponse(
-                    result.gameId(),
-                    result.playerId(),
-                    game,
-                    "Room created successfully",
-                    request.mode()
-            );
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error creating room: {}", e.getMessage());
+        if (request.mode() == null) {
             return ResponseEntity.badRequest()
-                    .body(new RoomResponse(null, null, null, e.getMessage(), null));
+                    .body(new RoomResponse(null, null, null, "Match Mode is required", null));
         }
+        
+        RoomService.RoomCreationResult result = roomService.createRoom(
+                request.playerName(),
+                request.botCount(),
+                request.mode()
+        );
+        
+        GameState game = gameEngine.getGame(result.gameId())
+                .orElseThrow(() -> new IllegalStateException("Game not found after creation"));
+        
+        RoomResponse response = new RoomResponse(
+                result.gameId(),
+                result.playerId(),
+                game,
+                "Room created successfully",
+                request.mode()
+        );
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -72,32 +69,26 @@ public class RoomController {
      */
     @PostMapping("/join")
     public ResponseEntity<RoomResponse> joinRoom(@RequestBody JoinRoomRequest request) {
-        try {
-            String playerId = roomService.joinRoom(request.gameId(), request.playerName());
-            GameState game = gameEngine.getGame(request.gameId());
-            
-            // Notify other players
-            GameStateUpdate update = new GameStateUpdate(
-                    game,
-                    request.playerName() + " joined the game",
-                    GameStateUpdate.UpdateType.PLAYER_JOINED
-            );
-            messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
-            
-            RoomResponse response = new RoomResponse(
-                    request.gameId(),
-                    playerId,
-                    game,
-                    "Joined room successfully",
-                    game.getMode()
-            );
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error joining room: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .body(new RoomResponse(null, null, null, e.getMessage(), null));
-        }
+        String playerId = roomService.joinRoom(request.gameId(), request.playerName());
+        GameState game = gameEngine.getGame(request.gameId())
+                .orElseThrow(() -> new GameNotFoundException(request.gameId()));
+        
+        GameStateUpdate update = new GameStateUpdate(
+                game,
+                request.playerName() + " joined the game",
+                GameStateUpdate.UpdateType.PLAYER_JOINED
+        );
+        messagingTemplate.convertAndSend("/topic/game/" + request.gameId(), update);
+        
+        RoomResponse response = new RoomResponse(
+                request.gameId(),
+                playerId,
+                game,
+                "Joined room successfully",
+                game.getMode()
+        );
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -106,35 +97,28 @@ public class RoomController {
      */
     @PostMapping("/{gameId}/start")
     public ResponseEntity<RoomResponse> startGame(@PathVariable String gameId) {
-        try {
-            roomService.startGame(gameId);
-            GameState game = gameEngine.getGame(gameId);
-            
-            // Notify all players
-            GameStateUpdate update = new GameStateUpdate(
-                    game,
-                    "Game started!",
-                    GameStateUpdate.UpdateType.GAME_STARTED
-            );
-            messagingTemplate.convertAndSend("/topic/game/" + gameId, update);
-            
-            // If first player is a bot, make its move
-            aiBotService.checkAndMakeBotMove(gameId);
-            
-            RoomResponse response = new RoomResponse(
-                    gameId,
-                    null,
-                    game,
-                    "Game started successfully",
-                    game.getMode()
-            );
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error starting game: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .body(new RoomResponse(null, null, null, e.getMessage(), null));
-        }
+        roomService.startGame(gameId);
+        GameState game = gameEngine.getGame(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+        
+        GameStateUpdate update = new GameStateUpdate(
+                game,
+                "Game started!",
+                GameStateUpdate.UpdateType.GAME_STARTED
+        );
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, update);
+        
+        aiBotService.checkAndMakeBotMove(gameId);
+        
+        RoomResponse response = new RoomResponse(
+                gameId,
+                null,
+                game,
+                "Game started successfully",
+                game.getMode()
+        );
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -143,11 +127,9 @@ public class RoomController {
      */
     @GetMapping("/{gameId}")
     public ResponseEntity<GameState> getGameState(@PathVariable String gameId) {
-        GameState game = gameEngine.getGame(gameId);
-        if (game == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(game);
+        return gameEngine.getGame(gameId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
     
     /**
@@ -165,21 +147,15 @@ public class RoomController {
      */
     @PostMapping("/{gameId}/leave")
     public ResponseEntity<Void> leaveRoom(@PathVariable String gameId, @RequestBody LeaveRoomRequest request) {
-        try {
-            // Validate that path variable matches body if body contains gameId
-            if (request.gameId() != null && !request.gameId().equals(gameId)) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            roomService.leaveRoom(gameId, request.playerId());
-            
-            // Notify others
-            messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateUpdate(null, "Player left", GameStateUpdate.UpdateType.PLAYER_LEFT));
-            
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error leaving room: {}", e.getMessage());
+        if (request.gameId() != null && !request.gameId().equals(gameId)) {
             return ResponseEntity.badRequest().build();
         }
+        
+        roomService.leaveRoom(gameId, request.playerId());
+        
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, 
+                new GameStateUpdate(null, "Player left", GameStateUpdate.UpdateType.PLAYER_LEFT));
+        
+        return ResponseEntity.ok().build();
     }
 }

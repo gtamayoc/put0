@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,63 +36,58 @@ public class GameEngine {
     /**
      * Gets a game by ID.
      */
-    public GameState getGame(String gameId) {
-        return games.get(gameId);
+    public Optional<GameState> getGame(String gameId) {
+        return Optional.ofNullable(games.get(gameId));
     }
     
     /**
      * Adds a player to a game.
      */
     public void addPlayer(String gameId, Player player) {
-        GameState game = games.get(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
-        coreEngine.addPlayer(game, player);
+        getGame(gameId).ifPresentOrElse(
+            game -> coreEngine.addPlayer(game, player),
+            () -> { throw new GameNotFoundException(gameId); }
+        );
     }
     
     /**
      * Starts a game by creating and dealing the deck.
      */
     public void startGame(String gameId) {
-        GameState game = games.get(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
-        coreEngine.startGame(game);
+        getGame(gameId).ifPresentOrElse(
+            coreEngine::startGame,
+            () -> { throw new GameNotFoundException(gameId); }
+        );
     }
     
     /**
      * Plays a card from the current player's hand.
      */
     public void playCard(String gameId, String playerId, Card card) {
-        GameState game = games.get(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
-        coreEngine.playCard(game, playerId, card);
+        getGame(gameId).ifPresentOrElse(
+            game -> coreEngine.playCard(game, playerId, card),
+            () -> { throw new GameNotFoundException(gameId); }
+        );
     }
     
     /**
      * Draws a card from the deck for the current player.
      */
     public void drawCard(String gameId, String playerId) {
-        GameState game = games.get(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
-        coreEngine.drawCard(game, playerId);
+        getGame(gameId).ifPresentOrElse(
+            game -> coreEngine.drawCard(game, playerId),
+            () -> { throw new GameNotFoundException(gameId); }
+        );
     }
     
     /**
      * Collects table cards (Voluntary action).
      */
     public void collectTable(String gameId, String playerId) {
-        GameState game = games.get(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
-        coreEngine.collectTable(game, playerId);
+        getGame(gameId).ifPresentOrElse(
+            game -> coreEngine.collectTable(game, playerId),
+            () -> { throw new GameNotFoundException(gameId); }
+        );
     }
     
     /**
@@ -105,11 +101,12 @@ public class GameEngine {
      * Removes a player from the game.
      */
     public void removePlayer(String gameId, String playerId) {
-        GameState game = games.get(gameId);
-        if (game == null) {
+        Optional<GameState> optGame = getGame(gameId);
+        if (optGame.isEmpty()) {
             return;
         }
         
+        GameState game = optGame.get();
         synchronized(game) {
             game.getPlayers().removeIf(p -> p.getId().equals(playerId));
             log.info("Removed player {} from game {}", playerId, gameId);
@@ -117,9 +114,9 @@ public class GameEngine {
             if (game.getPlayers().isEmpty() || game.getPlayers().stream().allMatch(Player::isBot)) {
                 removeGame(gameId);
             } else {
-                 if (game.getStatus() == GameStatus.PLAYING && game.getCurrentPlayerIndex() >= game.getPlayers().size()) {
-                      game.setCurrentPlayerIndex(0); 
-                 }
+                if (game.getStatus() == GameStatus.PLAYING && game.getCurrentPlayerIndex() >= game.getPlayers().size()) {
+                    game.setCurrentPlayerIndex(0); 
+                }
             }
         }
     }
