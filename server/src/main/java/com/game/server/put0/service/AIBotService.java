@@ -37,10 +37,7 @@ public class AIBotService {
     }
 
     public void makeMove(String gameId, String botPlayerId) {
-        GameState game = gameEngine.getGame(gameId);
-        if (game == null) {
-            throw new GameNotFoundException(gameId);
-        }
+        GameState game = gameEngine.getGame(gameId).orElseThrow(() -> new GameNotFoundException(gameId));
 
         Player bot = game.getPlayers().stream()
                 .filter(p -> p.getId().equals(botPlayerId))
@@ -80,7 +77,7 @@ public class AIBotService {
     public void checkAndMakeBotMove(String gameId) {
         scheduler.schedule(() -> {
             try {
-                GameState game = gameEngine.getGame(gameId);
+                GameState game = gameEngine.getGame(gameId).orElse(null);
                 if (game == null) {
                     return;
                 }
@@ -96,7 +93,7 @@ public class AIBotService {
     }
 
     private void broadcastUpdate(String gameId, String message, GameStateUpdate.UpdateType type) {
-        GameState game = gameEngine.getGame(gameId);
+        GameState game = gameEngine.getGame(gameId).orElse(null);
         if (game != null) {
             GameStateUpdate update = new GameStateUpdate(game, message, type);
             messagingTemplate.convertAndSend("/topic/game/" + gameId, update);

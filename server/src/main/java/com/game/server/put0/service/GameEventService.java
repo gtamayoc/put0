@@ -26,17 +26,26 @@ public class GameEventService {
     }
 
     private void handleEvent(String gameId, GameEvent event) {
-        switch (event) {
-            case CardPlayedEvent e -> handleCardPlayed(gameId, e);
-            case CardDrawnEvent e -> handleCardDrawn(gameId, e);
-            case TableClearedEvent e -> handleTableCleared(gameId, e);
-            case TurnChangedEvent e -> handleTurnChanged(gameId, e);
-            case GameStartedEvent e -> handleGameStarted(gameId, e);
-            case GameFinishedEvent e -> handleGameFinished(gameId, e);
-            case PlayerJoinedEvent e -> handlePlayerJoined(gameId, e);
-            case PlayerLeftEvent e -> handlePlayerLeft(gameId, e);
-            case TableCollectedEvent e -> handleTableCollected(gameId, e);
-            case ErrorEvent e -> handleError(gameId, e);
+        if (event instanceof CardPlayedEvent e) {
+            handleCardPlayed(gameId, e);
+        } else if (event instanceof CardDrawnEvent e) {
+            handleCardDrawn(gameId, e);
+        } else if (event instanceof TableClearedEvent e) {
+            handleTableCleared(gameId, e);
+        } else if (event instanceof TurnChangedEvent e) {
+            handleTurnChanged(gameId, e);
+        } else if (event instanceof GameStartedEvent e) {
+            handleGameStarted(gameId, e);
+        } else if (event instanceof GameFinishedEvent e) {
+            handleGameFinished(gameId, e);
+        } else if (event instanceof PlayerJoinedEvent e) {
+            handlePlayerJoined(gameId, e);
+        } else if (event instanceof PlayerLeftEvent e) {
+            handlePlayerLeft(gameId, e);
+        } else if (event instanceof TableCollectedEvent e) {
+            handleTableCollected(gameId, e);
+        } else if (event instanceof ErrorEvent e) {
+            handleError(gameId, e);
         }
     }
 

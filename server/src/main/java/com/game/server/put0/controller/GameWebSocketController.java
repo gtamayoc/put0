@@ -37,7 +37,8 @@ public class GameWebSocketController {
         try {
             gameEngine.playCard(request.gameId(), request.playerId(), request.card());
             
-            GameState game = gameEngine.getGame(request.gameId());
+            GameState game = gameEngine.getGame(request.gameId())
+                    .orElseThrow(() -> new IllegalArgumentException("Game not found"));
             
             // Check if table was cleared
             boolean tableCleared = game.getTablePile().isEmpty();
@@ -78,7 +79,8 @@ public class GameWebSocketController {
         try {
             gameEngine.drawCard(request.gameId(), request.playerId());
             
-            GameState game = gameEngine.getGame(request.gameId());
+            GameState game = gameEngine.getGame(request.gameId())
+                    .orElseThrow(() -> new IllegalArgumentException("Game not found"));
             GameStateUpdate update = new GameStateUpdate(
                     game,
                     "Card drawn",
@@ -116,7 +118,8 @@ public class GameWebSocketController {
         try {
             gameEngine.collectTable(request.gameId(), request.playerId());
             
-            GameState game = gameEngine.getGame(request.gameId());
+            GameState game = gameEngine.getGame(request.gameId())
+                    .orElseThrow(() -> new IllegalArgumentException("Game not found"));
             GameStateUpdate update = new GameStateUpdate(
                     game,
                     "Table collected",

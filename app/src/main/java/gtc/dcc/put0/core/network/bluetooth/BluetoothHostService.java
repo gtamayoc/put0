@@ -1,5 +1,7 @@
 package gtc.dcc.put0.core.network.bluetooth;
 
+import static gtc.dcc.put0.core.engine.GameEvent.PLAY_CARD;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -86,6 +88,7 @@ public class BluetoothHostService {
         this.gameEngine = new GameEngine();
         this.gameState = existingState;
         this.gameState.setStatus(com.game.core.model.GameStatus.PAUSED); // Paused until old host reconnects
+        this.gameState.set(com.game.core.model.GameStatus.PAUSED); // Paused until old host reconnects
 
         // Mark players correctly: the new host is connected, the old host is
         // disconnected
@@ -262,38 +265,38 @@ public class BluetoothHostService {
 
     private void applyEventToEngine(GameEventDTO event) {
         try {
-            switch (event.getAction()) {
+            switch (event.action()) {
                 case PLAY_CARD:
-                    if (event.getPayload() != null && !event.getPayload().isEmpty()) {
+                    if (event.payload() != null && !event.payload().isEmpty()) {
                         // GameEngine currently only supports 1 card played in playCard.
                         // For multiple "playCards", we would pass the whole list.
-                        if (event.getPayload().size() == 1) {
-                            String cardId = event.getPayload().get(0);
-                            Card cardToPlay = findCardInPlayerHand(event.getPlayerId(), cardId);
+                        if (event.payload().size() == 1) {
+                            String cardId = event.payload().get(0);
+                            Card cardToPlay = findCardInPlayerHand(event.playerId(), cardId);
                             if (cardToPlay != null) {
-                                gameEngine.playCard(gameState, event.getPlayerId(), cardToPlay);
+                                gameEngine.playCard(gameState, event.playerId(), cardToPlay);
                             } else {
                                 CoreLogger.w("BT-HOST: Card not found in any pile: " + cardId);
                             }
                         } else {
                             // Multiple cards
                             java.util.List<Card> cards = new java.util.ArrayList<>();
-                            for (String cid : event.getPayload()) {
-                                Card c = findCardInPlayerHand(event.getPlayerId(), cid);
+                            for (String cid : event.payload()) {
+                                Card c = findCardInPlayerHand(event.playerId(), cid);
                                 if (c != null)
                                     cards.add(c);
                             }
                             if (!cards.isEmpty()) {
-                                gameEngine.playCards(gameState, event.getPlayerId(), cards);
+                                gameEngine.playCards(gameState, event.playerId(), cards);
                             }
                         }
                     }
                     break;
                 case DRAW_CARD:
-                    gameEngine.drawCard(gameState, event.getPlayerId());
+                    gameEngine.drawCard(gameState, event.playerId());
                     break;
                 case COLLECT_TABLE:
-                    gameEngine.collectTable(gameState, event.getPlayerId());
+                    gameEngine.collectTable(gameState, event.playerId());
                     break;
                 case PASS:
                     // Only used if passing turn without collecting
@@ -310,7 +313,7 @@ public class BluetoothHostService {
             }
         } catch (Exception e) {
             CoreLogger.e("BT-HOST: Error applying event: " + e.getMessage());
-            if (event.getPlayerId().startsWith("client_")) {
+            if (event.playerId().startsWith("client_")) {
                 if (bluetoothConnection != null) {
                     bluetoothConnection.write("ERROR:" + e.getMessage());
                 }
@@ -486,7 +489,7 @@ public class BluetoothHostService {
             public void onMessageReceived(String message) {
                 try {
                     GameEventDTO event = GSON.fromJson(message, GameEventDTO.class);
-                    if (event != null && event.getAction() != null) {
+                    if (event != null && event.action() != null) {
                         applyEventToEngine(event);
                         broadcastState();
                     }
